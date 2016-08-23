@@ -5,7 +5,7 @@ description:         Please see README.md
 homepage:            https://github.com/bitemyapp/ballast#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Chris Allen
+author:              Alexey Zabelin, Chris Allen
 maintainer:          cma@bitemyapp.com
 copyright:           2016 Chris Allen
 category:            Web
