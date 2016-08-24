@@ -2,11 +2,11 @@ module Ballast.Client where
 
 import           Ballast.Types
 import qualified Data.ByteString            as BS
-import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.ByteString.Char8      as BS8
+import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
-import           Network.HTTP.Types.Status (statusCode)
+import           Network.HTTP.Types.Status  (statusCode)
 import           System.Environment
 
 baseUrl = "https://api.shipwire.com/api/v3"
