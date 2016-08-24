@@ -19,10 +19,12 @@ library
                        Ballast.Client
                        Ballast.Types
   build-depends:       base >= 4.7 && < 5
+                     , aeson
+                     , bytestring
                      , http-client
                      , http-client-tls
                      , http-types
-                     , bytestring
+                     , text
                      , utf8-string
   default-language:    Haskell2010
 

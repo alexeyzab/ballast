@@ -1,7 +1,7 @@
 module Ballast
   ( module Ballast.Client
   , module Ballast.Types
-    ) where
+  ) where
 
 import           Ballast.Client
 import           Ballast.Types
