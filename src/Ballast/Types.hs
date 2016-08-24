@@ -1,21 +1,21 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Ballast.Types
        ( Username(..)
        , Password(..)
        ) where
 
-import Data.Aeson
-import Data.Aeson.Types
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as BS
+import           Data.Aeson
+import           Data.Aeson.Types
+import           Data.ByteString            (ByteString)
+import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
-import qualified Data.Char as DC
-import Data.Text (Text)
-import qualified Data.Text as T
-import GHC.Generics
+import qualified Data.Char                  as DC
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           GHC.Generics
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username { username :: ByteString } deriving (Read, Show, Eq)
@@ -39,6 +39,7 @@ mkSku sku
 data Rate =
   Rate {
     rateOptions :: RateOptions
+  , rateOrder   :: RateOrder
   } deriving (Eq, Generic, Show)
 
 instance ToJSON Rate where
@@ -52,12 +53,89 @@ instance ToJSON Rate where
 
 data RateOptions =
   RateOptions {
-    rateOptionCurrency :: Currency
-  , rateOptionGroupBy :: GroupBy
-  , rateOptionCanSplit :: Integer
+    rateOptionCurrency      :: Currency
+  , rateOptionGroupBy       :: GroupBy
+  , rateOptionCanSplit      :: Integer
   , rateOptionWarehouseArea :: WarehouseArea
-  , rateOptionChannelName :: Maybe Text
+  , rateOptionChannelName   :: Maybe Text
   } deriving (Eq, Generic, Show)
+
+data RateOrder =
+  RateOrder {
+    rateOrderShipTo :: ShipTo
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON RateOrder where
+  toJSON order =
+    genericToJSON options order
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 9
+                       , omitNothingFields = True
+                       }
+
+data ShipTo =
+  ShipTo {
+    shipToAddressLine1 :: AddressLine
+  , shipToAddressLine2 :: AddressLine
+  , shipToAddressLine3 :: AddressLine
+  , shipToCity         :: City
+  , shipToPostalCode   :: PostalCode
+  , shipToRegion       :: Region
+  , shipToCountry      :: Country
+  , shipToIsCommercial :: Bool
+  , shipToIsPoBox      :: Bool
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON ShipTo where
+  toJSON shipto =
+    genericToJSON options shipto
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 6
+                       , omitNothingFields = True
+                       }
+
+defaultShipTo =
+  ShipTo (AddressLine (T.pack "15 Bergen ave")) (AddressLine (T.pack ""))
+         (AddressLine (T.pack "")) (City (T.pack "Jersey City"))
+         (PostalCode (T.pack "123456")) (Region (T.pack "US")) (Country (T.pack "US"))
+         False False
+
+newtype AddressLine =
+  AddressLine Text
+  deriving (Eq, Generic, Show)
+
+instance ToJSON AddressLine where
+  toEncoding = genericToEncoding defaultOptions
+
+newtype City =
+  City Text
+  deriving (Eq, Generic, Show)
+
+instance ToJSON City where
+  toEncoding = genericToEncoding defaultOptions
+
+newtype PostalCode =
+  PostalCode Text
+  deriving (Eq, Generic, Show)
+
+instance ToJSON PostalCode where
+  toEncoding = genericToEncoding defaultOptions
+
+newtype Region =
+  Region Text
+  deriving (Eq, Generic, Show)
+
+instance ToJSON Region where
+  toEncoding = genericToEncoding defaultOptions
+
+newtype Country =
+  Country Text
+  deriving (Eq, Generic, Show)
+
+instance ToJSON Country where
+  toEncoding = genericToEncoding defaultOptions
 
 downcaseHead :: [Char] -> [Char]
 downcaseHead [] = []
