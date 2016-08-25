@@ -5,6 +5,7 @@
 module Ballast.Types
        ( Username(..)
        , Password(..)
+       , defaultRate
        ) where
 
 import           Data.Aeson
@@ -93,7 +94,7 @@ data ShipTo =
 
 data Items =
   Items {
-    itemSku      :: Maybe SKU
+    itemSku      :: SKU
   , itemQuantity :: Integer
   } deriving (Eq, Generic, Show)
 
@@ -109,14 +110,16 @@ instance ToJSON ShipTo where
                        , omitNothingFields = True
                        }
 
+defaultRate = Rate defaultRateOptions defaultRateOrder
+
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
-defaultItems = Items (mkSku (T.pack "123456")) 5
+defaultItems = Items (SKU $ T.pack "Ballasttest") 1
 
 defaultShipTo =
-  ShipTo (AddressLine (T.pack "15 Bergen ave")) (AddressLine (T.pack ""))
-         (AddressLine (T.pack "")) (City (T.pack "Jersey City"))
-         (PostalCode (T.pack "123456")) (Region (T.pack "NJ")) (Country (T.pack "US"))
+  ShipTo (AddressLine (T.pack "6501 Railroad Avenue SE")) (AddressLine (T.pack "Room 315"))
+         (AddressLine (T.pack "")) (City (T.pack "Snoqualmie"))
+         (PostalCode (T.pack "85283")) (Region (T.pack "WA")) (Country (T.pack "US"))
          False False
 
 newtype AddressLine =
