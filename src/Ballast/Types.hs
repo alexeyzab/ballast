@@ -25,13 +25,16 @@ newtype Password = Password { password :: ByteString } deriving (Read, Show, Eq)
 
 newtype SKU =
   SKU { unSku :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 mkSku :: Text -> Maybe SKU
 mkSku sku
   | T.length sku > 16 = Nothing
   | T.length sku < 1 = Nothing
   | otherwise = Just (SKU sku)
+
+instance ToJSON SKU where
+  toEncoding = genericToEncoding defaultOptions
 
 -- max 16 characters
 -- haskellbookskuty
@@ -63,6 +66,7 @@ data RateOptions =
 data RateOrder =
   RateOrder {
     rateOrderShipTo :: ShipTo
+  , rateOrderItems  :: Items
   } deriving (Eq, Generic, Show)
 
 instance ToJSON RateOrder where
@@ -87,6 +91,16 @@ data ShipTo =
   , shipToIsPoBox      :: Bool
   } deriving (Eq, Generic, Show)
 
+data Items =
+  Items {
+    itemSku      :: Maybe SKU
+  , itemQuantity :: Integer
+  } deriving (Eq, Generic, Show)
+
+instance ToJSON Items where
+  toEncoding = genericToEncoding defaultOptions
+
+
 instance ToJSON ShipTo where
   toJSON shipto =
     genericToJSON options shipto
@@ -96,10 +110,14 @@ instance ToJSON ShipTo where
                        , omitNothingFields = True
                        }
 
+defaultRateOrder = RateOrder defaultShipTo defaultItems
+
+defaultItems = Items (mkSku (T.pack "123456")) 5
+
 defaultShipTo =
   ShipTo (AddressLine (T.pack "15 Bergen ave")) (AddressLine (T.pack ""))
          (AddressLine (T.pack "")) (City (T.pack "Jersey City"))
-         (PostalCode (T.pack "123456")) (Region (T.pack "US")) (Country (T.pack "US"))
+         (PostalCode (T.pack "123456")) (Region (T.pack "NJ")) (Country (T.pack "US"))
          False False
 
 newtype AddressLine =
