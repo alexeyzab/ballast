@@ -99,7 +99,13 @@ data Items =
   } deriving (Eq, Generic, Show)
 
 instance ToJSON Items where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON items =
+    genericToJSON options items
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 4
+                       , omitNothingFields = True
+                       }
 
 instance ToJSON ShipTo where
   toJSON shipto =
