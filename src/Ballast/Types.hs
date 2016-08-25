@@ -100,7 +100,6 @@ data Items =
 instance ToJSON Items where
   toEncoding = genericToEncoding defaultOptions
 
-
 instance ToJSON ShipTo where
   toJSON shipto =
     genericToJSON options shipto
@@ -121,35 +120,35 @@ defaultShipTo =
          False False
 
 newtype AddressLine =
-  AddressLine Text
+  AddressLine { unAddressLine :: Text }
   deriving (Eq, Generic, Show)
 
 instance ToJSON AddressLine where
   toEncoding = genericToEncoding defaultOptions
 
 newtype City =
-  City Text
+  City { unCity :: Text }
   deriving (Eq, Generic, Show)
 
 instance ToJSON City where
   toEncoding = genericToEncoding defaultOptions
 
 newtype PostalCode =
-  PostalCode Text
+  PostalCode { unPostalCode :: Text }
   deriving (Eq, Generic, Show)
 
 instance ToJSON PostalCode where
   toEncoding = genericToEncoding defaultOptions
 
 newtype Region =
-  Region Text
+  Region { unRegion :: Text }
   deriving (Eq, Generic, Show)
 
 instance ToJSON Region where
   toEncoding = genericToEncoding defaultOptions
 
 newtype Country =
-  Country Text
+  Country { unCountry :: Text }
   deriving (Eq, Generic, Show)
 
 instance ToJSON Country where
