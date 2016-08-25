@@ -92,20 +92,13 @@ data ShipTo =
   , shipToIsPoBox      :: Bool
   } deriving (Eq, Generic, Show)
 
-data Items =
-  Items {
-    itemSku      :: SKU
-  , itemQuantity :: Integer
-  } deriving (Eq, Generic, Show)
+type Items = [ItemInfo]
+data ItemInfo = ItemInfo (SKU, Quantity) deriving (Eq, Show)
 
-instance ToJSON Items where
-  toJSON items =
-    genericToJSON options items
-    where
-      options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 4
-                       , omitNothingFields = True
-                       }
+instance ToJSON ItemInfo where
+  toJSON (ItemInfo (sku, q)) = object ["sku" .= sku, "quantity" .= q]
+
+type Quantity = Integer
 
 instance ToJSON ShipTo where
   toJSON shipto =
@@ -120,7 +113,7 @@ defaultRate = Rate defaultRateOptions defaultRateOrder
 
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
-defaultItems = Items (SKU $ T.pack "Ballasttest") 1
+defaultItems = [ItemInfo ((SKU $ T.pack "Ballasttest"), 1)]
 
 defaultShipTo =
   ShipTo (AddressLine (T.pack "6501 Railroad Avenue SE")) (AddressLine (T.pack "Room 315"))
