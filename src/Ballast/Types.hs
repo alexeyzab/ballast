@@ -129,38 +129,58 @@ defaultShipTo =
 
 newtype AddressLine =
   AddressLine { unAddressLine :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON AddressLine where
-  toJSON (AddressLine a) = toJSON a
+  toJSON address =
+    genericToJSON options address
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 newtype City =
   City { unCity :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON City where
-  toJSON (City c) = toJSON c
+  toJSON city =
+    genericToJSON options city
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 newtype PostalCode =
   PostalCode { unPostalCode :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON PostalCode where
-  toJSON (PostalCode p) = toJSON p
+  toJSON code =
+    genericToJSON options code
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 newtype Region =
   Region { unRegion :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON Region where
-  toJSON (Region r) = toJSON r
+  toJSON region =
+    genericToJSON options region
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 newtype Country =
   Country { unCountry :: Text }
-  deriving (Eq, Show)
+  deriving (Eq, Generic, Show)
 
 instance ToJSON Country where
-  toJSON (Country c) = toJSON c
+  toJSON country =
+    genericToJSON options country
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 downcaseHead :: [Char] -> [Char]
 downcaseHead [] = []
