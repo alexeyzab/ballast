@@ -35,7 +35,13 @@ mkSku sku
   | otherwise = Just (SKU sku)
 
 instance ToJSON SKU where
-  toEncoding = genericToEncoding defaultOptions
+  -- toEncoding = genericToEncoding defaultOptions
+  -- toJSON (SKU sku) = object ["sku" .= sku]
+  toJSON sku =
+    genericToJSON options sku
+    where
+      options =
+        defaultOptions { unwrapUnaryRecords = True }
 
 -- max 16 characters
 -- haskellbookskuty
@@ -81,15 +87,15 @@ instance ToJSON RateOrder where
 
 data ShipTo =
   ShipTo {
-    shipToAddressLine1 :: AddressLine
-  , shipToAddressLine2 :: AddressLine
-  , shipToAddressLine3 :: AddressLine
+    shipToAddress1     :: AddressLine
+  , shipToAddress2     :: AddressLine
+  , shipToAddress3     :: AddressLine
   , shipToCity         :: City
   , shipToPostalCode   :: PostalCode
   , shipToRegion       :: Region
   , shipToCountry      :: Country
-  , shipToIsCommercial :: Bool
-  , shipToIsPoBox      :: Bool
+  , shipToIsCommercial :: Integer
+  , shipToIsPoBox      :: Integer
   } deriving (Eq, Generic, Show)
 
 type Items = [ItemInfo]
@@ -113,48 +119,48 @@ defaultRate = Rate defaultRateOptions defaultRateOrder
 
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
-defaultItems = [ItemInfo ((SKU $ T.pack "Ballasttest"), 1)]
+defaultItems = [ItemInfo ((SKU "Ballasttest"), 1)]
 
 defaultShipTo =
-  ShipTo (AddressLine (T.pack "6501 Railroad Avenue SE")) (AddressLine (T.pack "Room 315"))
-         (AddressLine (T.pack "")) (City (T.pack "Snoqualmie"))
-         (PostalCode (T.pack "85283")) (Region (T.pack "WA")) (Country (T.pack "US"))
-         False False
+  ShipTo (AddressLine "6501 Railroad Avenue SE") (AddressLine "Room 315")
+         (AddressLine "") (City "Snoqualmie")
+         (PostalCode "85283") (Region "WA") (Country "US")
+         1 0
 
 newtype AddressLine =
   AddressLine { unAddressLine :: Text }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 instance ToJSON AddressLine where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON (AddressLine a) = toJSON a
 
 newtype City =
   City { unCity :: Text }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 instance ToJSON City where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON (City c) = toJSON c
 
 newtype PostalCode =
   PostalCode { unPostalCode :: Text }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 instance ToJSON PostalCode where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON (PostalCode p) = toJSON p
 
 newtype Region =
   Region { unRegion :: Text }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 instance ToJSON Region where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON (Region r) = toJSON r
 
 newtype Country =
   Country { unCountry :: Text }
-  deriving (Eq, Generic, Show)
+  deriving (Eq, Show)
 
 instance ToJSON Country where
-  toEncoding = genericToEncoding defaultOptions
+  toJSON (Country c) = toJSON c
 
 downcaseHead :: [Char] -> [Char]
 downcaseHead [] = []
