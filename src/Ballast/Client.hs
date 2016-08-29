@@ -1,7 +1,7 @@
 module Ballast.Client where
 
 import           Ballast.Types
-import           Data.Aeson                 (encode)
+import           Data.Aeson                 (decode, encode)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
@@ -13,7 +13,7 @@ import           System.Environment
 baseUrl = "https://api.shipwire.com/api/v3"
 sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
-main :: IO ()
+main :: IO RateResponse
 main = do
     manager <- newManager tlsManagerSettings
     initialRequest <- parseRequest $ sandboxUrl ++ "/rate"
@@ -27,6 +27,7 @@ main = do
     let authorizedRequest =
             applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) request
     response <- httpLbs authorizedRequest manager
-    putStrLn $
-        "The status code was: " ++ (show $ statusCode $ responseStatus response)
-    BSL.putStrLn $ responseBody response
+    let mkResult = decode $ responseBody response
+    case mkResult of
+      Just rateResult -> return rateResult
+      Nothing -> error "Something went wrong"

@@ -5,9 +5,11 @@
 module Ballast.Types
        ( Username(..)
        , Password(..)
+       , RateResponse(..)
        , defaultRate
        ) where
 
+import           Control.Monad              (mzero)
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.ByteString            (ByteString)
@@ -35,8 +37,6 @@ mkSku sku
   | otherwise = Just (SKU sku)
 
 instance ToJSON SKU where
-  -- toEncoding = genericToEncoding defaultOptions
-  -- toJSON (SKU sku) = object ["sku" .= sku]
   toJSON sku =
     genericToJSON options sku
     where
@@ -216,13 +216,18 @@ omitNulls = object . filter notNull where
   notNull _              = True
 
 data GroupBy =
-    GroupByAll
-  | GroupByWarehouse
-  deriving (Eq, Show)
+      GroupByAll
+    | GroupByWarehouse
+    deriving (Eq, Generic, Show)
 
 instance ToJSON GroupBy where
   toJSON GroupByAll = String "all"
   toJSON GroupByWarehouse = String "warehouse"
+
+instance FromJSON GroupBy where
+  parseJSON = withText "groupBy" parse
+    where parse "all" = pure GroupByAll
+          parse "warehouse" = pure GroupByWarehouse
 
 data WarehouseArea =
   WarehouseAreaUS
@@ -231,152 +236,79 @@ data WarehouseArea =
 instance ToJSON WarehouseArea where
   toJSON WarehouseAreaUS = String "US"
 
--- {
---     # Rates setup options
---     "options": {
---         # The currency in which rates are presented
---         "currency": "USD",
---         # The criteria by which to group different rates. Valid options are "all" (default), "warehouse"
---         "groupBy": "all",
---         # Specifies whether the items to be shipped can be split into more than one shipments
---         "canSplit": 1,
---         # Area from where shipment can be made (can be continent or country)
---         "warehouseArea": "US",
---         # Used to assign a pre-defined set of shipping and/or customization preferences
---         "channelName": "My Channel"
---     },
---     "order": {
---         # Shipping address
---         "shipTo": {
---             # Recipient's address
---             "address1": "6501 Railroad Avenue SE",
---             "address2": "Room 315",
---             "address3": "",
---             "city": "Snoqualmie",
---             "postalCode": "85283",
---             "region": "WA",
---             "country": "US",
---             # Specifies whether the recipient is a commercial entity. 0 = no, 1 = yes
---             "isCommercial": 0,
---             # Specifies whether the recipient is a PO box. 0 = no, 1 = yes
---             "isPoBox": 0
---         },
---         # The items for which to generate shipping rates
---         "items": [
---             {
---                 # Item's SKU
---                 "sku": "Laura-s_Pen",
---                 # Number of items to shipped
---                 "quantity": 1
---             },
---             {
---                 "sku": "TwinPianos",
---                 "quantity": 1
---             }
---         ]
---     }
--- }
+-- defaultRateResponse :: IO RateResponse
+-- defaultRateResponse = do
+--   file <- BSL.readFile "test4.json"
+--   let decoded = eitherDecode file
+--   case decoded of
+--     Right info -> return info
+--     Left err -> error err
 
--- {
---     "properties": {
---         "options": {
---             "properties": {
---                 "canSplit": {
---                     "type": "integer"
---                 },
---                 "currency": {
---                     "type": "string"
---                 },
---                 "groupBy": {
---                     "type": "string"
---                 },
---                 "warehouseId": {
---                     "type": "integer"
---                 },
---                 "warehouseExternalId": {
---                     "type": "string"
---                 },
---                 "warehouseRegion": {
---                     "type": "string"
---                 },
---                 "warehouseArea": {
---                     "type": "string"
---                 },
---                 "ignoreUnknownSkus": {
---                     "type": "integer"
---                 }
---             },
---             "required": [
---             ],
---             "type": "object"
---         },
---         "order": {
---             "properties": {
---                 "items": {
---                     "items": [
---                         {
---                             "properties": {
---                                 "quantity": {
---                                     "type": "integer"
---                                 },
---                                 "sku": {
---                                     "type": "string"
---                                 }
---                             },
---                             "required": [
---                                 "sku",
---                                 "quantity"
---                             ],
---                             "type": "object"
---                         }
---                     ],
---                     "type": "array"
---                 },
---                 "shipTo": {
---                     "properties": {
---                         "address1": {
---                             "type": "string"
---                         },
---                         "address2": {
---                             "type": "string"
---                         },
---                         "address3": {
---                             "type": "string"
---                         },
---                         "city": {
---                             "type": "string"
---                         },
---                         "postalCode": {
---                             "type": "string"
---                         },
---                         "region": {
---                             "type": "string"
---                         }
---                         "country": {
---                             "type": "string"
---                         },
---                         "isCommercial": {
---                             "type": "integer"
---                         },
---                         "isPoBox": {
---                             "type": "integer"
---                         }
---                     },
---                     "required": [
---                         "country"
---                     ],
---                     "type": "object"
---                 }
---             },
---             "required": [
---                 "shipTo",
---                 "items"
---             ],
---             "type": "object"
---         }
---     },
---     "required": [
---         "order"
---     ],
---     "type": "object"
--- }
+data RateResponse =
+  RateResponse {
+    rateResponseStatus           :: Integer
+  , rateResponseMessage          :: Text
+  , rateResponseWarnings         :: Maybe [Warnings]
+  , rateResponseResourceLocation :: Maybe Text
+  , rateResponseResource         :: Resource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON RateResponse where
+  parseJSON rr =
+    genericParseJSON options rr
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 12 }
+
+data Warnings =
+  Warnings {
+    warningsCode    :: Text
+  , warningsMessage :: Text
+  , warningsType    :: WarningType
+  } deriving (Eq, Generic, Show)
+
+data WarningType =
+    WarningsWarning
+  | WarningsError
+  deriving (Eq, Generic, Show)
+
+instance FromJSON WarningType where
+  parseJSON = withText "warningType" parse
+    where parse "warning" = pure WarningsWarning
+          parse "error" = pure WarningsError
+
+instance FromJSON Warnings where
+  parseJSON w =
+    genericParseJSON options w
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+
+data Resource =
+  Resource {
+    resourceGroupBy :: GroupBy
+  -- , resourceRates   :: Rates
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Resource where
+  parseJSON res =
+    genericParseJSON options res
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+
+data Rates =
+  Rates {
+  rates :: [ServiceOptions]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Rates where
+  parseJSON = genericParseJSON defaultOptions
+
+data ServiceOptions =
+  ServiceOptions {
+  serviceOptions :: (Maybe [Object])
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ServiceOptions where
+  parseJSON = genericParseJSON defaultOptions
