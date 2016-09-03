@@ -16,6 +16,7 @@ import           Data.ByteString            (ByteString)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Char                  as DC
+import           Data.Fixed
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Time.Clock            (UTCTime)
@@ -378,9 +379,9 @@ data Cost =
     costCurrency         :: Text
   , costType             :: Text
   , costName             :: Text
-  , costAmount           :: Float
+  , costAmount           :: Centi
   , costConverted        :: Bool
-  , costOriginalCost     :: Float
+  , costOriginalCost     :: Centi
   , costOriginalCurrency :: Text
   } deriving (Eq, Generic, Show)
 
@@ -396,9 +397,9 @@ data Subtotal =
     subtotalCurrency         :: Text
   , sbutotalType             :: Text
   , subtotalName             :: Text
-  , subtotalAmount           :: Float
+  , subtotalAmount           :: Centi
   , subtotalConverted        :: Bool
-  , subtotalOriginalCost     :: Float
+  , subtotalOriginalCost     :: Centi
   , subtotalOriginalCurrency :: Text
   } deriving (Eq, Generic, Show)
 
@@ -441,7 +442,7 @@ type PieceHeight = PieceLength
 
 data PieceWeight =
   PieceWeight {
-    pwAmount :: Float
+    pwAmount :: Double
   , pwUnits  :: Text
   , pwType   :: Text
   } deriving (Eq, Generic, Show)
