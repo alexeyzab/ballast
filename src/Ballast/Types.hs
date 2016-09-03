@@ -18,6 +18,7 @@ import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Char                  as DC
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
+import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 
 -- | Username type used for HTTP Basic authentication.
@@ -94,9 +95,21 @@ data ShipTo =
   , shipToPostalCode   :: PostalCode
   , shipToRegion       :: Region
   , shipToCountry      :: Country
-  , shipToIsCommercial :: Integer
-  , shipToIsPoBox      :: Integer
+  , shipToIsCommercial :: IsCommercial
+  , shipToIsPoBox      :: IsPoBox
   } deriving (Eq, Generic, Show)
+
+data IsCommercial = Commercial | NotCommercial deriving (Eq, Generic, Show)
+
+instance ToJSON IsCommercial where
+  toJSON Commercial = Number 1
+  toJSON NotCommercial = Number 0
+
+data IsPoBox = PoBox | NotPoBox deriving (Eq, Generic, Show)
+
+instance ToJSON IsPoBox where
+  toJSON PoBox = Number 1
+  toJSON NotPoBox = Number 0
 
 type Items = [ItemInfo]
 data ItemInfo = ItemInfo (SKU, Quantity) deriving (Eq, Show)
@@ -125,12 +138,12 @@ defaultShipTo =
   ShipTo (AddressLine "6501 Railroad Avenue SE") (AddressLine "Room 315")
          (AddressLine "") (City "Snoqualmie")
          (PostalCode "85283") (Region "WA") (Country "US")
-         1 0
+         Commercial NotPoBox
 
 newtype AddressLine =
   AddressLine { unAddressLine :: Text }
   deriving (Eq, Generic, Show)
-
+--
 instance ToJSON AddressLine where
   toJSON address =
     genericToJSON options address
@@ -238,7 +251,7 @@ instance ToJSON WarehouseArea where
 
 -- defaultRateResponse :: IO RateResponse
 -- defaultRateResponse = do
---   file <- BSL.readFile "test4.json"
+--   file <- BSL.readFile "test.json"
 --   let decoded = eitherDecode file
 --   case decoded of
 --     Right info -> return info
@@ -287,7 +300,7 @@ instance FromJSON Warnings where
 data Resource =
   Resource {
     resourceGroupBy :: GroupBy
-  -- , resourceRates   :: Rates
+  , resourceRates   :: Rates
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Resource where
@@ -297,18 +310,160 @@ instance FromJSON Resource where
       options =
         defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
 
-data Rates =
+newtype Rates =
   Rates {
-  rates :: [ServiceOptions]
+    rateServiceOptions :: [ServiceOptions]
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Rates where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON rates =
+    genericParseJSON options rates
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 4
+                       , unwrapUnaryRecords = True
+                       }
 
 data ServiceOptions =
   ServiceOptions {
-  serviceOptions :: (Maybe [Object])
+    serviceOptions  :: [ServiceOption]
+  , groupId         :: Integer
+  , groupExternalId :: Maybe Text
   } deriving (Eq, Generic, Show)
 
 instance FromJSON ServiceOptions where
   parseJSON = genericParseJSON defaultOptions
+
+data ServiceOption =
+  ServiceOption {
+    serviceLevelCode :: Text
+  , serviceLevelName :: Text
+  , shipments        :: [Shipment]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ServiceOption where
+  parseJSON = genericParseJSON defaultOptions
+
+data Shipment =
+  Shipment {
+    warehouseName           :: Text
+  , carrier                 :: Carrier
+  , cost                    :: Cost
+  , subtotals               :: [Subtotal]
+  , pieces                  :: [Piece]
+  , expectedShipDate        :: Maybe UTCTime
+  , expectedDeliveryDateMin :: Maybe UTCTime
+  , expectedDeliveryDateMax :: Maybe UTCTime
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Shipment where
+  parseJSON = genericParseJSON defaultOptions
+
+data Carrier =
+  Carrier {
+    carrierCode       :: Text
+  , carrierName       :: Text
+  , carrierProperties :: [Text]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Carrier where
+  parseJSON car =
+    genericParseJSON options car
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 7 }
+
+data Cost =
+  Cost {
+    costCurrency         :: Text
+  , costType             :: Text
+  , costName             :: Text
+  , costAmount           :: Float
+  , costConverted        :: Bool
+  , costOriginalCost     :: Float
+  , costOriginalCurrency :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Cost where
+  parseJSON cos =
+    genericParseJSON options cos
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 4 }
+
+data Subtotal =
+  Subtotal {
+    subtotalCurrency         :: Text
+  , sbutotalType             :: Text
+  , subtotalName             :: Text
+  , subtotalAmount           :: Float
+  , subtotalConverted        :: Bool
+  , subtotalOriginalCost     :: Float
+  , subtotalOriginalCurrency :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Subtotal where
+  parseJSON sub =
+    genericParseJSON options sub
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+
+data Piece =
+  Piece {
+    pieceLength     :: PieceLength
+  , pieceWidth      :: PieceWidth
+  , pieceHeight     :: PieceHeight
+  , pieceWeight     :: PieceWeight
+  , pieceSubweights :: [PieceSubWeight]
+  , pieceContents   :: [PieceContent]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Piece where
+  parseJSON pi =
+    genericParseJSON options pi
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 5 }
+
+
+data PieceLength =
+  PieceLength {
+    amount :: Integer
+  , units  :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON PieceLength where
+  parseJSON = genericParseJSON defaultOptions
+
+type PieceWidth = PieceLength
+type PieceHeight = PieceLength
+
+data PieceWeight =
+  PieceWeight {
+    pwAmount :: Float
+  , pwUnits  :: Text
+  , pwType   :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON PieceWeight where
+  parseJSON pw =
+    genericParseJSON options pw
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 2 }
+
+type PieceSubWeight = PieceWeight
+
+data PieceContent =
+  PieceContent {
+    pcSku      :: Text
+  , pcQuantity :: Integer
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON PieceContent where
+  parseJSON pc =
+    genericParseJSON options pc
+    where
+      options =
+        defaultOptions { fieldLabelModifier = downcaseHead . drop 2 }
