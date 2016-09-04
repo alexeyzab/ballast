@@ -7,6 +7,8 @@ module Ballast.Types
   , Password(..)
   , RateResponse(..)
   , defaultRate
+  , Reply
+  , Method
   ) where
 
 import           Control.Monad              (mzero)
@@ -21,6 +23,8 @@ import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
+import           Network.HTTP.Client
+import qualified Network.HTTP.Types.Method  as NHTM
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
@@ -540,3 +544,6 @@ instance FromJSON PieceContent where
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 12
         }
+
+type Reply = Network.HTTP.Client.Response BSL.ByteString
+type Method = NHTM.Method

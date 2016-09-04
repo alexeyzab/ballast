@@ -40,7 +40,7 @@ main = do
     Just rateResult -> return rateResult
     Nothing -> error "Something went wrong"
 
-mkRequest :: NHTM.Method -> Text -> Maybe BSL.ByteString -> IO (Response BSL.ByteString)
+mkRequest :: Method -> Text -> Maybe BSL.ByteString -> IO Reply
 mkRequest rMethod endpoint body = do
   manager <- newManager tlsManagerSettings
   initialRequest <- parseRequest $ (T.unpack $ T.append (T.pack sandboxUrl) endpoint)
