@@ -3,11 +3,11 @@
 {-# LANGUAGE RecordWildCards   #-}
 
 module Ballast.Types
-       ( Username(..)
-       , Password(..)
-       , RateResponse(..)
-       , defaultRate
-       ) where
+  ( Username(..)
+  , Password(..)
+  , RateResponse(..)
+  , defaultRate
+  ) where
 
 import           Control.Monad              (mzero)
 import           Data.Aeson
@@ -23,14 +23,18 @@ import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 
 -- | Username type used for HTTP Basic authentication.
-newtype Username = Username { username :: ByteString } deriving (Read, Show, Eq)
+newtype Username = Username
+  { username :: ByteString
+  } deriving (Read, Show, Eq)
 
 -- | Password type used for HTTP Basic authentication.
-newtype Password = Password { password :: ByteString } deriving (Read, Show, Eq)
+newtype Password = Password
+  { password :: ByteString
+  } deriving (Read, Show, Eq)
 
-newtype SKU =
-  SKU { unSku :: Text }
-  deriving (Eq, Generic, Show)
+newtype SKU = SKU
+  { sku :: Text
+  } deriving (Eq, Generic, Show)
 
 mkSku :: Text -> Maybe SKU
 mkSku sku
@@ -39,57 +43,53 @@ mkSku sku
   | otherwise = Just (SKU sku)
 
 instance ToJSON SKU where
-  toJSON sku =
-    genericToJSON options sku
+  toJSON sku = genericToJSON options sku
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
 -- max 16 characters
 -- haskellbookskuty
-
-data Rate =
-  Rate {
-    rateOptions :: RateOptions
+data Rate = Rate
+  { rateOptions :: RateOptions
   , rateOrder   :: RateOrder
   } deriving (Eq, Generic, Show)
 
 instance ToJSON Rate where
-  toJSON rate =
-    genericToJSON options rate
+  toJSON rate = genericToJSON options rate
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 4
-                       , omitNothingFields = True
-                       }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        , omitNothingFields = True
+        }
 
-data RateOptions =
-  RateOptions {
-    rateOptionCurrency      :: Currency
+data RateOptions = RateOptions
+  { rateOptionCurrency      :: Currency
   , rateOptionGroupBy       :: GroupBy
   , rateOptionCanSplit      :: Integer
   , rateOptionWarehouseArea :: WarehouseArea
   , rateOptionChannelName   :: Maybe Text
   } deriving (Eq, Generic, Show)
 
-data RateOrder =
-  RateOrder {
-    rateOrderShipTo :: ShipTo
+data RateOrder = RateOrder
+  { rateOrderShipTo :: ShipTo
   , rateOrderItems  :: Items
   } deriving (Eq, Generic, Show)
 
 instance ToJSON RateOrder where
-  toJSON order =
-    genericToJSON options order
+  toJSON order = genericToJSON options order
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 9
-                       , omitNothingFields = True
-                       }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 9
+        , omitNothingFields = True
+        }
 
-data ShipTo =
-  ShipTo {
-    shipToAddress1     :: AddressLine
+data ShipTo = ShipTo
+  { shipToAddress1     :: AddressLine
   , shipToAddress2     :: AddressLine
   , shipToAddress3     :: AddressLine
   , shipToCity         :: City
@@ -100,20 +100,29 @@ data ShipTo =
   , shipToIsPoBox      :: IsPoBox
   } deriving (Eq, Generic, Show)
 
-data IsCommercial = Commercial | NotCommercial deriving (Eq, Generic, Show)
+data IsCommercial
+  = Commercial
+  | NotCommercial
+  deriving (Eq, Generic, Show)
 
 instance ToJSON IsCommercial where
   toJSON Commercial = Number 1
   toJSON NotCommercial = Number 0
 
-data IsPoBox = PoBox | NotPoBox deriving (Eq, Generic, Show)
+data IsPoBox
+  = PoBox
+  | NotPoBox
+  deriving (Eq, Generic, Show)
 
 instance ToJSON IsPoBox where
   toJSON PoBox = Number 1
   toJSON NotPoBox = Number 0
 
 type Items = [ItemInfo]
-data ItemInfo = ItemInfo (SKU, Quantity) deriving (Eq, Show)
+
+data ItemInfo =
+  ItemInfo (SKU, Quantity)
+  deriving (Eq, Show)
 
 instance ToJSON ItemInfo where
   toJSON (ItemInfo (sku, q)) = object ["sku" .= sku, "quantity" .= q]
@@ -121,13 +130,13 @@ instance ToJSON ItemInfo where
 type Quantity = Integer
 
 instance ToJSON ShipTo where
-  toJSON shipto =
-    genericToJSON options shipto
+  toJSON shipto = genericToJSON options shipto
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 6
-                       , omitNothingFields = True
-                       }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        , omitNothingFields = True
+        }
 
 defaultRate = Rate defaultRateOptions defaultRateOrder
 
@@ -136,82 +145,91 @@ defaultRateOrder = RateOrder defaultShipTo defaultItems
 defaultItems = [ItemInfo ((SKU "Ballasttest"), 1)]
 
 defaultShipTo =
-  ShipTo (AddressLine "6501 Railroad Avenue SE") (AddressLine "Room 315")
-         (AddressLine "") (City "Snoqualmie")
-         (PostalCode "85283") (Region "WA") (Country "US")
-         Commercial NotPoBox
+  ShipTo
+    (AddressLine "6501 Railroad Avenue SE")
+    (AddressLine "Room 315")
+    (AddressLine "")
+    (City "Snoqualmie")
+    (PostalCode "85283")
+    (Region "WA")
+    (Country "US")
+    Commercial
+    NotPoBox
 
-newtype AddressLine =
-  AddressLine { unAddressLine :: Text }
-  deriving (Eq, Generic, Show)
---
+newtype AddressLine = AddressLine
+  { addressLine :: Text
+  } deriving (Eq, Generic, Show)
+
 instance ToJSON AddressLine where
-  toJSON address =
-    genericToJSON options address
+  toJSON address = genericToJSON options address
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
-newtype City =
-  City { unCity :: Text }
-  deriving (Eq, Generic, Show)
+newtype City = City
+  { city :: Text
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON City where
-  toJSON city =
-    genericToJSON options city
+  toJSON city = genericToJSON options city
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
-newtype PostalCode =
-  PostalCode { unPostalCode :: Text }
-  deriving (Eq, Generic, Show)
+newtype PostalCode = PostalCode
+  { postalCode :: Text
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON PostalCode where
-  toJSON code =
-    genericToJSON options code
+  toJSON code = genericToJSON options code
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
-newtype Region =
-  Region { unRegion :: Text }
-  deriving (Eq, Generic, Show)
+newtype Region = Region
+  { region :: Text
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON Region where
-  toJSON region =
-    genericToJSON options region
+  toJSON region = genericToJSON options region
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
-newtype Country =
-  Country { unCountry :: Text }
-  deriving (Eq, Generic, Show)
+newtype Country = Country
+  { country :: Text
+  } deriving (Eq, Generic, Show)
 
 instance ToJSON Country where
-  toJSON country =
-    genericToJSON options country
+  toJSON country = genericToJSON options country
     where
       options =
-        defaultOptions { unwrapUnaryRecords = True }
+        defaultOptions
+        { unwrapUnaryRecords = True
+        }
 
 downcaseHead :: [Char] -> [Char]
 downcaseHead [] = []
-downcaseHead (x:xs) =
-  (DC.toLower x) : xs
+downcaseHead (x:xs) = (DC.toLower x) : xs
 
 instance ToJSON RateOptions where
-  toJSON ro =
-    genericToJSON options ro
+  toJSON ro = genericToJSON options ro
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 10
-                       , omitNothingFields = True
-                       }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 10
+        , omitNothingFields = True
+        }
 
-defaultRateOptions =
-  RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing
+defaultRateOptions = RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing
 
 data Currency =
   USD
@@ -220,19 +238,22 @@ data Currency =
 instance ToJSON Currency where
   toJSON USD = String "USD"
 
-tshow :: Show a => a -> Text
+tshow
+  :: Show a
+  => a -> Text
 tshow = T.pack . show
 
 omitNulls :: [(Text, Value)] -> Value
-omitNulls = object . filter notNull where
-  notNull (_, Null)      = False
-  -- notNull (_, Array a) = (not . V.null) a
-  notNull _              = True
+omitNulls = object . filter notNull
+  where
+    notNull (_, Null) = False
+    -- notNull (_, Array a) = (not . V.null) a
+    notNull _ = True
 
-data GroupBy =
-      GroupByAll
-    | GroupByWarehouse
-    deriving (Eq, Generic, Show)
+data GroupBy
+  = GroupByAll
+  | GroupByWarehouse
+  deriving (Eq, Generic, Show)
 
 instance ToJSON GroupBy where
   toJSON GroupByAll = String "all"
@@ -240,8 +261,9 @@ instance ToJSON GroupBy where
 
 instance FromJSON GroupBy where
   parseJSON = withText "groupBy" parse
-    where parse "all" = pure GroupByAll
-          parse "warehouse" = pure GroupByWarehouse
+    where
+      parse "all" = pure GroupByAll
+      parse "warehouse" = pure GroupByWarehouse
 
 data WarehouseArea =
   WarehouseAreaUS
@@ -258,9 +280,8 @@ instance ToJSON WarehouseArea where
 --     Right info -> return info
 --     Left err -> error err
 
-data RateResponse =
-  RateResponse {
-    rateResponseStatus           :: Integer
+data RateResponse = RateResponse
+  { rateResponseStatus           :: Integer
   , rateResponseMessage          :: Text
   , rateResponseWarnings         :: Maybe [Warnings]
   , rateResponseResourceLocation :: Maybe Text
@@ -268,115 +289,127 @@ data RateResponse =
   } deriving (Eq, Generic, Show)
 
 instance FromJSON RateResponse where
-  parseJSON rr =
-    genericParseJSON options rr
+  parseJSON rr = genericParseJSON options rr
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 12 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 12
+        }
 
-data Warnings =
-  Warnings {
-    warningsCode    :: Text
+data Warnings = Warnings
+  { warningsCode    :: Text
   , warningsMessage :: Text
   , warningsType    :: WarningType
   } deriving (Eq, Generic, Show)
 
-data WarningType =
-    WarningsWarning
+data WarningType
+  = WarningsWarning
   | WarningsError
   deriving (Eq, Generic, Show)
 
 instance FromJSON WarningType where
   parseJSON = withText "warningType" parse
-    where parse "warning" = pure WarningsWarning
-          parse "error" = pure WarningsError
+    where
+      parse "warning" = pure WarningsWarning
+      parse "error" = pure WarningsError
 
 instance FromJSON Warnings where
-  parseJSON w =
-    genericParseJSON options w
+  parseJSON w = genericParseJSON options w
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 8
+        }
 
-data Resource =
-  Resource {
-    resourceGroupBy :: GroupBy
+data Resource = Resource
+  { resourceGroupBy :: GroupBy
   , resourceRates   :: Rates
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Resource where
-  parseJSON res =
-    genericParseJSON options res
+  parseJSON res = genericParseJSON options res
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 8
+        }
 
-newtype Rates =
-  Rates {
-    rateServiceOptions :: [ServiceOptions]
+newtype Rates = Rates
+  { rateServiceOptions :: [ServiceOptions]
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Rates where
-  parseJSON rates =
-    genericParseJSON options rates
+  parseJSON rates = genericParseJSON options rates
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 4
-                       , unwrapUnaryRecords = True
-                       }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        , unwrapUnaryRecords = True
+        }
 
-data ServiceOptions =
-  ServiceOptions {
-    serviceOptions  :: [ServiceOption]
-  , groupId         :: Integer
-  , groupExternalId :: Maybe Text
+data ServiceOptions = ServiceOptions
+  { sOptsServiceOptions  :: [ServiceOption]
+  , sOptsGroupId         :: Integer
+  , sOptsGroupExternalId :: Maybe Text
   } deriving (Eq, Generic, Show)
 
 instance FromJSON ServiceOptions where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON sop = genericParseJSON options sop
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
 
-data ServiceOption =
-  ServiceOption {
-    serviceLevelCode :: Text
-  , serviceLevelName :: Text
-  , shipments        :: [Shipment]
+data ServiceOption = ServiceOption
+  { sOptServiceLevelCode :: Text
+  , sOptServiceLevelName :: Text
+  , sOptShipments        :: [Shipment]
   } deriving (Eq, Generic, Show)
 
 instance FromJSON ServiceOption where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON sopt = genericParseJSON options sopt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
 
-data Shipment =
-  Shipment {
-    warehouseName           :: Text
-  , carrier                 :: Carrier
-  , cost                    :: Cost
-  , subtotals               :: [Subtotal]
-  , pieces                  :: [Piece]
-  , expectedShipDate        :: Maybe UTCTime
-  , expectedDeliveryDateMin :: Maybe UTCTime
-  , expectedDeliveryDateMax :: Maybe UTCTime
+data Shipment = Shipment
+  { shipmentWarehouseName           :: Text
+  , shipmentCarrier                 :: Carrier
+  , shipmentCost                    :: Cost
+  , shipmentSubtotals               :: [Subtotal]
+  , shipmentPieces                  :: [Piece]
+  , shipmentExpectedShipDate        :: Maybe UTCTime
+  , shipmentExpectedDeliveryDateMin :: Maybe UTCTime
+  , shipmentExpectedDeliveryDateMax :: Maybe UTCTime
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Shipment where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON sh = genericParseJSON options sh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 8
+        }
 
-data Carrier =
-  Carrier {
-    carrierCode       :: Text
+data Carrier = Carrier
+  { carrierCode       :: Text
   , carrierName       :: Text
   , carrierProperties :: [Text]
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Carrier where
-  parseJSON car =
-    genericParseJSON options car
+  parseJSON car = genericParseJSON options car
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 7 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 7
+        }
 
-data Cost =
-  Cost {
-    costCurrency         :: Text
+data Cost = Cost
+  { costCurrency         :: Text
   , costType             :: Text
   , costName             :: Text
   , costAmount           :: Centi
@@ -386,15 +419,15 @@ data Cost =
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Cost where
-  parseJSON cos =
-    genericParseJSON options cos
+  parseJSON cos = genericParseJSON options cos
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 4 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
 
-data Subtotal =
-  Subtotal {
-    subtotalCurrency         :: Text
+data Subtotal = Subtotal
+  { subtotalCurrency         :: Text
   , sbutotalType             :: Text
   , subtotalName             :: Text
   , subtotalAmount           :: Centi
@@ -404,15 +437,15 @@ data Subtotal =
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Subtotal where
-  parseJSON sub =
-    genericParseJSON options sub
+  parseJSON sub = genericParseJSON options sub
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 8 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 8
+        }
 
-data Piece =
-  Piece {
-    pieceLength     :: PieceLength
+data Piece = Piece
+  { pieceLength     :: PieceLength
   , pieceWidth      :: PieceWidth
   , pieceHeight     :: PieceHeight
   , pieceWeight     :: PieceWeight
@@ -421,50 +454,89 @@ data Piece =
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Piece where
-  parseJSON pi =
-    genericParseJSON options pi
+  parseJSON pi = genericParseJSON options pi
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 5 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
 
-
-data PieceLength =
-  PieceLength {
-    amount :: Integer
-  , units  :: Text
+data PieceLength = PieceLength
+  { pieceLengthAmount :: Integer
+  , pieceLengthUnits  :: Text
   } deriving (Eq, Generic, Show)
 
 instance FromJSON PieceLength where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON pl = genericParseJSON options pl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 11
+        }
 
-type PieceWidth = PieceLength
-type PieceHeight = PieceLength
+data PieceWidth = PieceWidth
+  { pieceWidthAmount :: Integer
+  , pieceWidthUnits  :: Text
+  } deriving (Eq, Generic, Show)
 
-data PieceWeight =
-  PieceWeight {
-    pwAmount :: Double
-  , pwUnits  :: Text
-  , pwType   :: Text
+instance FromJSON PieceWidth where
+  parseJSON pw = genericParseJSON options pw
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 10
+        }
+
+data PieceHeight = PieceHeight
+  { pieceHeightAmount :: Integer
+  , pieceHeightUnits  :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON PieceHeight where
+  parseJSON ph = genericParseJSON options ph
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 11
+        }
+
+data PieceWeight = PieceWeight
+  { pieceWeightAmount :: Double
+  , pieceWeightUnits  :: Text
+  , pieceWeightType   :: Text
   } deriving (Eq, Generic, Show)
 
 instance FromJSON PieceWeight where
-  parseJSON pw =
-    genericParseJSON options pw
+  parseJSON pw = genericParseJSON options pw
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 2 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 11
+        }
 
-type PieceSubWeight = PieceWeight
+data PieceSubWeight = PieceSubWeight
+  { pieceSubWeightAmount :: Double
+  , pieceSubWeightUnits  :: Text
+  , pieceSubWeightType   :: Text
+  } deriving (Eq, Generic, Show)
 
-data PieceContent =
-  PieceContent {
-    pcSku      :: Text
-  , pcQuantity :: Integer
+instance FromJSON PieceSubWeight where
+  parseJSON psw = genericParseJSON options psw
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 14
+        }
+
+data PieceContent = PieceContent
+  { pieceContentSku      :: Text
+  , pieceContentQuantity :: Integer
   } deriving (Eq, Generic, Show)
 
 instance FromJSON PieceContent where
-  parseJSON pc =
-    genericParseJSON options pc
+  parseJSON pc = genericParseJSON options pc
     where
       options =
-        defaultOptions { fieldLabelModifier = downcaseHead . drop 2 }
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 12
+        }
