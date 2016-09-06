@@ -21,8 +21,8 @@ import           System.Environment
 baseUrl = "https://api.shipwire.com/api/v3"
 sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
-main :: IO RateResponse
-main = do
+exampleResponse :: IO RateResponse
+exampleResponse = do
   manager <- newManager tlsManagerSettings
   initialRequest <- parseRequest $ sandboxUrl ++ "/rate"
   let request =

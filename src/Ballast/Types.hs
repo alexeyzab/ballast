@@ -5,7 +5,27 @@
 module Ballast.Types
   ( Username(..)
   , Password(..)
+  , Rate(..)
   , RateResponse(..)
+  , RateOptions(..)
+  , Currency(..)
+  , GroupBy(..)
+  , WarehouseArea(..)
+  , RateOrder(..)
+  , Items(..)
+  , ItemInfo(..)
+  , ShipTo(..)
+  , SKU(..)
+  , AddressLine(..)
+  , City(..)
+  , PostalCode(..)
+  , Region(..)
+  , Country(..)
+  , IsCommercial(..)
+  , IsPoBox(..)
+  , Rates(..)
+  , ServiceOptions(..)
+  , Resource(..)
   , defaultRate
   , Reply
   , Method
@@ -353,7 +373,7 @@ instance FromJSON Rates where
 
 data ServiceOptions = ServiceOptions
   { sOptsServiceOptions  :: [ServiceOption]
-  , sOptsGroupId         :: Integer
+  , sOptsGroupId         :: Maybe Integer
   , sOptsGroupExternalId :: Maybe Text
   } deriving (Eq, Generic, Show)
 
