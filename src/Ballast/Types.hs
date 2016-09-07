@@ -386,10 +386,31 @@ instance FromJSON ServiceOptions where
         }
 
 data ServiceOption = ServiceOption
-  { sOptServiceLevelCode :: Text
+  { sOptServiceLevelCode :: ServiceLevelCode
   , sOptServiceLevelName :: Text
   , sOptShipments        :: [Shipment]
   } deriving (Eq, Generic, Show)
+
+data ServiceLevelCode
+  = DomesticGround
+  | DomesticTwoDay
+  | DomesticOneDay
+  | InternationalEconomy
+  | InternationalStandard
+  | InternationalPlus
+  | InternationalPremium
+  deriving (Eq, Generic, Show)
+
+instance FromJSON ServiceLevelCode where
+  parseJSON = withText "serviceLevelCode" parse
+    where
+      parse "GD"      = pure DomesticGround
+      parse "2D"      = pure DomesticTwoDay
+      parse "1D"      = pure DomesticOneDay
+      parse "E-INTL"  = pure InternationalEconomy
+      parse "INTL"    = pure InternationalStandard
+      parse "PL-INTL" = pure InternationalPlus
+      parse "PM-INTL" = pure InternationalPremium
 
 instance FromJSON ServiceOption where
   parseJSON sopt = genericParseJSON options sopt
