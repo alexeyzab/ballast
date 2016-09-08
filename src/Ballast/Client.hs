@@ -26,11 +26,12 @@ sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
 -- | Generate a real-time shipping quote
 -- | https://www.shipwire.com/w/developers/rate/
-createRateResponse :: Maybe BSL.ByteString -> ShipWireRequest CreateRateResponse
-createRateResponse body = request
-  where request = mkShipWireRequest NHTM.methodPost url bod
-        url = (T.append sandboxUrl "/rate")
-        bod = body
+createRateRequest :: GetRate -> ShipWireRequest RateRequest
+createRateRequest getRate = request
+  where
+    request = mkShipWireRequest NHTM.methodPost url (Just $ encode getRate)
+    url = (T.append sandboxUrl "/rate")
+    bod = body
 
 dispatch
   :: (FromJSON (ShipWireReturn a))
@@ -52,5 +53,5 @@ dispatch (ShipWireRequest method endpoint body) = do
   return result
 
 -- Test case for dispatch:
--- let rateReq = createRateResponse (Just $ encode defaultRate)
+-- let rateReq = createRateRequest defaultGetRate
 -- dispatch rateReq

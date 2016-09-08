@@ -12,8 +12,8 @@ import qualified Network.HTTP.Types.Method as NHTM
 
 import           Test.Hspec
 
-exampleRate :: Rate
-exampleRate = Rate exampleRateOptions exampleRateOrder
+exampleGetRate :: GetRate
+exampleGetRate = GetRate exampleRateOptions exampleRateOrder
 
 exampleRateOptions :: RateOptions
 exampleRateOptions = RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing
@@ -38,11 +38,12 @@ exampleShipTo =
     NotPoBox
 
 exampleRateResponse :: RateResponse
-exampleRateResponse = RateResponse { rateResponseStatus = 200
-                                   , rateResponseMessage = "Successful"
-                                   , rateResponseWarnings = Nothing
+exampleRateResponse = RateResponse { rateResponseStatus           = 200
+                                   , rateResponseMessage          = "Successful"
+                                   , rateResponseWarnings         = Nothing
+                                   , rateResponseErrors           = Nothing
                                    , rateResponseResourceLocation = Nothing
-                                   , rateResponseResource = exampleResource
+                                   , rateResponseResource         = Just exampleResource
                                    }
 
 exampleResource :: Resource
@@ -57,5 +58,5 @@ main :: IO ()
 main = hspec $ do
   describe "get rates" $ do
     it "gets the correct rates" $ do
-      request <- dispatch (createRateResponse (Just $ encode defaultRate))
+      request <- dispatch $ createRateRequest defaultGetRate
       liftIO $ request `shouldBe` (Right exampleRateResponse)
