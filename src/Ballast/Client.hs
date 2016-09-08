@@ -24,6 +24,8 @@ baseUrl = "https://api.shipwire.com/api/v3"
 sandboxUrl :: Text
 sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
+-- | Generate a real-time shipping quote
+-- | https://www.shipwire.com/w/developers/rate/
 createRateResponse :: Maybe BSL.ByteString -> ShipWireRequest CreateRateResponse
 createRateResponse body = request
   where request = mkShipWireRequest NHTM.methodPost url bod
