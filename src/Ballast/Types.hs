@@ -6,7 +6,7 @@
 module Ballast.Types
   ( Username(..)
   , Password(..)
-  , Rate(..)
+  , GetRate(..)
   , RateResponse(..)
   , RateOptions(..)
   , Currency(..)
@@ -28,10 +28,10 @@ module Ballast.Types
   , ServiceOptions(..)
   , Resource(..)
   , ShipWireRequest(..)
-  , CreateRateResponse
+  , RateRequest
   , mkShipWireRequest
   , ShipWireReturn(..)
-  , defaultRate
+  , defaultGetRate
   , Reply
   , Method
   ) where
@@ -81,12 +81,12 @@ instance ToJSON SKU where
 
 -- max 16 characters
 -- haskellbookskuty
-data Rate = Rate
+data GetRate = GetRate
   { rateOptions :: RateOptions
   , rateOrder   :: RateOrder
   } deriving (Eq, Generic, Show)
 
-instance ToJSON Rate where
+instance ToJSON GetRate where
   toJSON rate = genericToJSON options rate
     where
       options =
@@ -167,7 +167,7 @@ instance ToJSON ShipTo where
         , omitNothingFields = True
         }
 
-defaultRate = Rate defaultRateOptions defaultRateOrder
+defaultGetRate = GetRate defaultRateOptions defaultRateOrder
 
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
@@ -313,8 +313,9 @@ data RateResponse = RateResponse
   { rateResponseStatus           :: Integer
   , rateResponseMessage          :: Text
   , rateResponseWarnings         :: Maybe [Warnings]
+  , rateResponseErrors           :: Maybe [Errors]
   , rateResponseResourceLocation :: Maybe Text
-  , rateResponseResource         :: Resource
+  , rateResponseResource         :: Maybe Resource
   } deriving (Eq, Generic, Show)
 
 instance FromJSON RateResponse where
@@ -350,6 +351,30 @@ instance FromJSON Warnings where
         { fieldLabelModifier = downcaseHead . drop 8
         }
 
+data Errors = Errors
+  { errorsCode    :: Text
+  , errorsMessage :: Text
+  , errorsType    :: ErrorType
+  } deriving (Eq, Generic, Show)
+
+data ErrorType
+  = ErrorsWarning
+  | ErrorsError
+  deriving (Eq, Generic, Show)
+
+instance FromJSON ErrorType where
+  parseJSON = withText "errorType" parse
+    where
+      parse "warning" = pure ErrorsWarning
+      parse "error" = pure ErrorsError
+
+instance FromJSON Errors where
+  parseJSON w = genericParseJSON options w
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
 data Resource = Resource
   { resourceGroupBy :: GroupBy
   , resourceRates   :: Rates
@@ -605,5 +630,5 @@ mkShipWireRequest m e b = ShipWireRequest m e b
 
 type family ShipWireReturn a :: *
 
-data CreateRateResponse
-type instance ShipWireReturn CreateRateResponse = RateResponse
+data RateRequest
+type instance ShipWireReturn RateRequest = RateResponse
