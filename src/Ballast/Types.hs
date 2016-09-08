@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 module Ballast.Types
   ( Username(..)
@@ -26,6 +27,9 @@ module Ballast.Types
   , Rates(..)
   , ServiceOptions(..)
   , Resource(..)
+  , ShipWireRequest(..)
+  , mkShipWireRequest
+  , ShipWireReturn(..)
   , defaultRate
   , Reply
   , Method
@@ -588,3 +592,17 @@ instance FromJSON PieceContent where
 
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
+
+data ShipWireRequest a = ShipWireRequest
+  { rMethod  :: Method
+  , endpoint :: Text
+  , body     :: Maybe BSL.ByteString
+  }
+
+mkShipWireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipWireRequest a
+mkShipWireRequest m e b = ShipWireRequest m e b
+
+type family ShipWireReturn a :: *
+
+-- data CreateRateResponse
+type instance ShipWireReturn RateResponse = RateResponse

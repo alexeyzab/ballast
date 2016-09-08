@@ -57,7 +57,5 @@ main :: IO ()
 main = hspec $ do
   describe "get rates" $ do
     it "gets the correct rates" $ do
-      req <- mkRequest NHTM.methodPost (T.pack "/rate") (Just $ encode exampleRate)
-      let decodedReq = eitherDecode $ responseBody req :: Either String (Maybe RateResponse)
-
-      liftIO $ decodedReq `shouldBe` Right (Just exampleRateResponse)
+      request <- dispatch (createRateResponse (Just $ encode defaultRate))
+      liftIO $ request `shouldBe` (Right exampleRateResponse)

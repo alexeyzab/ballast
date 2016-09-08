@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Ballast.Client where
@@ -15,42 +16,39 @@ import qualified Data.Text                  as T
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import qualified Network.HTTP.Types.Method  as NHTM
-import           Network.HTTP.Types.Status  (statusCode)
 import           System.Environment
 
+baseUrl :: Text
 baseUrl = "https://api.shipwire.com/api/v3"
+
+sandboxUrl :: Text
 sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
-exampleResponse :: IO RateResponse
-exampleResponse = do
+createRateResponse :: Maybe BSL.ByteString -> ShipWireRequest RateResponse
+createRateResponse body = request
+  where request = mkShipWireRequest NHTM.methodPost url bod
+        url = (T.append sandboxUrl "/rate")
+        bod = body
+
+dispatch :: (FromJSON a) => ShipWireRequest a -> IO (Either String a)
+dispatch (ShipWireRequest method endpoint body) = do
   manager <- newManager tlsManagerSettings
-  initialRequest <- parseRequest $ sandboxUrl ++ "/rate"
+  initialRequest <- parseRequest $ (T.unpack endpoint)
   let request =
         initialRequest
-        { method = (BS8.pack "POST")
-        , requestBody = RequestBodyLBS $ encode defaultRate
+        { method = method
+        , requestBody = RequestBodyLBS $ fromMaybe (BSL.pack "") body
         }
   shipwireUser <- getEnv "SHIPWIRE_USER"
   shipwirePass <- getEnv "SHIPWIRE_PASS"
   let authorizedRequest =
         applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) request
   response <- httpLbs authorizedRequest manager
-  let mkResult = decode $ responseBody response
-  case mkResult of
-    Just rateResult -> return rateResult
-    Nothing -> error "Something went wrong"
+  let result = eitherDecode $ responseBody response
+  case result of
+    (Right stuff) -> return $ Right stuff
+    (Left err) -> error err
 
-mkRequest :: Method -> Text -> Maybe BSL.ByteString -> IO Reply
-mkRequest rMethod endpoint body = do
-  manager <- newManager tlsManagerSettings
-  initialRequest <- parseRequest $ (T.unpack $ T.append (T.pack sandboxUrl) endpoint)
-  let reqBody = RequestBodyLBS $ fromMaybe (BSL.pack "") body
-  let req = initialRequest { method = rMethod, requestBody = reqBody }
-  shipwireUser <- liftIO $ getEnv "SHIPWIRE_USER"
-  shipwirePass <- liftIO $ getEnv "SHIPWIRE_PASS"
-  let authorizedRequest =
-        applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) req
-  httpLbs authorizedRequest manager
-
--- Test case for mkRequest:
--- mkRequest NHTM.methodPost (T.pack "/rate") (Just $ encode defaultRate)
+-- Test case for dispatch:
+-- let rateReq = createRateResponse (Just $ encode defaultRate)
+-- dispatch rateReq
