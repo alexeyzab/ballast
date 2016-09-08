@@ -28,6 +28,7 @@ module Ballast.Types
   , ServiceOptions(..)
   , Resource(..)
   , ShipWireRequest(..)
+  , CreateRateResponse
   , mkShipWireRequest
   , ShipWireReturn(..)
   , defaultRate
@@ -604,5 +605,5 @@ mkShipWireRequest m e b = ShipWireRequest m e b
 
 type family ShipWireReturn a :: *
 
--- data CreateRateResponse
-type instance ShipWireReturn RateResponse = RateResponse
+data CreateRateResponse
+type instance ShipWireReturn CreateRateResponse = RateResponse

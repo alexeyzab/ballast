@@ -24,13 +24,15 @@ baseUrl = "https://api.shipwire.com/api/v3"
 sandboxUrl :: Text
 sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
-createRateResponse :: Maybe BSL.ByteString -> ShipWireRequest RateResponse
+createRateResponse :: Maybe BSL.ByteString -> ShipWireRequest CreateRateResponse
 createRateResponse body = request
   where request = mkShipWireRequest NHTM.methodPost url bod
         url = (T.append sandboxUrl "/rate")
         bod = body
 
-dispatch :: (FromJSON a) => ShipWireRequest a -> IO (Either String a)
+dispatch
+  :: (FromJSON (ShipWireReturn a))
+  => ShipWireRequest a -> IO (Either String (ShipWireReturn a))
 dispatch (ShipWireRequest method endpoint body) = do
   manager <- newManager tlsManagerSettings
   initialRequest <- parseRequest $ (T.unpack endpoint)
@@ -45,9 +47,7 @@ dispatch (ShipWireRequest method endpoint body) = do
         applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) request
   response <- httpLbs authorizedRequest manager
   let result = eitherDecode $ responseBody response
-  case result of
-    (Right stuff) -> return $ Right stuff
-    (Left err) -> error err
+  return result
 
 -- Test case for dispatch:
 -- let rateReq = createRateResponse (Just $ encode defaultRate)
