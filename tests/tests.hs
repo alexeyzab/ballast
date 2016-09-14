@@ -43,11 +43,11 @@ exampleRateResponse = RateResponse { rateResponseStatus           = 200
                                    , rateResponseWarnings         = Nothing
                                    , rateResponseErrors           = Nothing
                                    , rateResponseResourceLocation = Nothing
-                                   , rateResponseResource         = Just exampleResource
+                                   , rateResponseResource         = Just exampleRateResource
                                    }
 
-exampleResource :: Resource
-exampleResource = Resource { resourceGroupBy = GroupByAll
+exampleRateResource :: RateResource
+exampleRateResource = RateResource { resourceGroupBy = GroupByAll
                            , resourceRates = exampleRates
                            }
 
