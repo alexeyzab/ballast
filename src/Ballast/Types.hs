@@ -26,7 +26,7 @@ module Ballast.Types
   , IsPoBox(..)
   , Rates(..)
   , ServiceOptions(..)
-  , Resource(..)
+  , RateResource(..)
   , ShipWireRequest(..)
   , RateRequest
   , mkShipWireRequest
@@ -60,6 +60,10 @@ newtype Username = Username
 newtype Password = Password
   { password :: ByteString
   } deriving (Read, Show, Eq)
+
+---------------------------------------------------------------------
+-- Rate Endpoint -- https://www.shipwire.com/w/developers/rate/
+---------------------------------------------------------------------
 
 newtype SKU = SKU
   { sku :: Text
@@ -301,13 +305,13 @@ data WarehouseArea =
 instance ToJSON WarehouseArea where
   toJSON WarehouseAreaUS = String "US"
 
--- defaultRateResponse :: IO RateResponse
--- defaultRateResponse = do
---   file <- BSL.readFile "test.json"
---   let decoded = eitherDecode file
---   case decoded of
---     Right info -> return info
---     Left err -> error err
+defaultRateResponse :: IO StockResponse
+defaultRateResponse = do
+  file <- BSL.readFile "test5.json"
+  let decoded = eitherDecode file
+  case decoded of
+    Right info -> return info
+    Left err -> error err
 
 data RateResponse = RateResponse
   { rateResponseStatus           :: Integer
@@ -315,7 +319,7 @@ data RateResponse = RateResponse
   , rateResponseWarnings         :: Maybe [Warnings]
   , rateResponseErrors           :: Maybe [Errors]
   , rateResponseResourceLocation :: Maybe Text
-  , rateResponseResource         :: Maybe Resource
+  , rateResponseResource         :: Maybe RateResource
   } deriving (Eq, Generic, Show)
 
 instance FromJSON RateResponse where
@@ -375,12 +379,12 @@ instance FromJSON Errors where
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 6
         }
-data Resource = Resource
+data RateResource = RateResource
   { resourceGroupBy :: GroupBy
   , resourceRates   :: Rates
   } deriving (Eq, Generic, Show)
 
-instance FromJSON Resource where
+instance FromJSON RateResource where
   parseJSON res = genericParseJSON options res
     where
       options =
@@ -632,3 +636,108 @@ type family ShipWireReturn a :: *
 
 data RateRequest
 type instance ShipWireReturn RateRequest = RateResponse
+
+---------------------------------------------------------------------
+-- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
+---------------------------------------------------------------------
+
+data StockResponse = StockResponse
+  { stockResponseStatus           :: Integer
+  , stockResponseMessage          :: Text
+  , stockResponseResourceLocation :: Maybe Text
+  , stockResponseResource         :: StockResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockResponse where
+  parseJSON sr = genericParseJSON options sr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 13
+        }
+
+data StockResource = StockResource
+  { stockResponseOffset   :: Integer
+  , stockResponseTotal    :: Integer
+  , stockResponsePrevious :: Maybe Integer
+  , stockResponseNext     :: Maybe Integer
+  , stockResponseItems    :: [StockItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockResource where
+  parseJSON sr = genericParseJSON options sr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 13
+        }
+
+data StockItem = StockItem
+  { stockItemResourceLocation :: Maybe Text
+  , stockItemResource         :: StockItemResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockItem where
+  parseJSON si = genericParseJSON options si
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 9
+        }
+
+data StockItemResource = StockItemResource
+  { sirProductId           :: Integer
+  , sirProductExternalId   :: Maybe Integer
+  , sirSku                 :: Text
+  , sirIsBundle            :: IsBundle
+  , sirIsAlias             :: IsAlias
+  , sirWarehouseRegion     :: Text
+  , sirWarehouseId         :: Integer
+  , sirWarehouseExternalId :: Maybe Integer
+  , sirPending             :: Integer
+  , sirGood                :: Integer
+  , sirReserved            :: Integer
+  , sirBackordered         :: Integer
+  , sirShipping            :: Integer
+  , sirShipped             :: Integer
+  , sirCreating            :: Integer
+  , sirConsuming           :: Integer
+  , sirConsumed            :: Integer
+  , sirCreated             :: Integer
+  , sirDamaged             :: Integer
+  , sirReturned            :: Integer
+  , sirInreview            :: Integer
+  , sirAvailableDate       :: Maybe UTCTime
+  , sirShippedLastDay      :: Integer
+  , sirShippedLastWeek     :: Integer
+  , sirShippedLast4Weeks   :: Integer
+  , sirOrderedLastDay      :: Integer
+  , sirOrderedLastWeek     :: Integer
+  , sirOrderedLast4Weeks   :: Integer
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockItemResource where
+  parseJSON sir = genericParseJSON options sir
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data IsBundle
+  = Bundle
+  | NotBundle
+  deriving (Eq, Generic, Show)
+
+instance FromJSON IsBundle where
+  parseJSON (Number 1) = pure Bundle
+  parseJSON (Number 0) = pure NotBundle
+
+data IsAlias
+  = Alias
+  | NotAlias
+  deriving (Eq, Generic, Show)
+
+instance FromJSON IsAlias where
+  parseJSON (Number 1) = pure Alias
+  parseJSON (Number 0) = pure NotAlias
