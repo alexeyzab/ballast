@@ -4,10 +4,8 @@
 module Ballast.Client where
 
 import           Ballast.Types
-import           Control.Monad.IO.Class
-import           Data.Aeson                 (decode, eitherDecode, encode)
+import           Data.Aeson                 (eitherDecode, encode)
 import           Data.Aeson.Types
-import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Maybe                 (fromMaybe)
@@ -31,23 +29,22 @@ createRateRequest getRate = request
   where
     request = mkShipWireRequest NHTM.methodPost url (Just $ encode getRate)
     url = (T.append sandboxUrl "/rate")
-    bod = body
 
 dispatch
   :: (FromJSON (ShipWireReturn a))
   => ShipWireRequest a -> IO (Either String (ShipWireReturn a))
-dispatch (ShipWireRequest method endpoint body) = do
+dispatch (ShipWireRequest meth ep bod) = do
   manager <- newManager tlsManagerSettings
-  initialRequest <- parseRequest $ (T.unpack endpoint)
-  let request =
+  initialRequest <- parseRequest $ (T.unpack ep)
+  let req =
         initialRequest
-        { method = method
-        , requestBody = RequestBodyLBS $ fromMaybe (BSL.pack "") body
+        { method = meth
+        , requestBody = RequestBodyLBS $ fromMaybe (BSL.pack "") bod
         }
   shipwireUser <- getEnv "SHIPWIRE_USER"
   shipwirePass <- getEnv "SHIPWIRE_PASS"
   let authorizedRequest =
-        applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) request
+        applyBasicAuth (BS8.pack shipwireUser) (BS8.pack shipwirePass) req
   response <- httpLbs authorizedRequest manager
   let result = eitherDecode $ responseBody response
   return result

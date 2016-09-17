@@ -13,7 +13,7 @@ module Ballast.Types
   , GroupBy(..)
   , WarehouseArea(..)
   , RateOrder(..)
-  , Items(..)
+  , Items
   , ItemInfo(..)
   , ShipTo(..)
   , SKU(..)
@@ -30,20 +30,19 @@ module Ballast.Types
   , ShipWireRequest(..)
   , RateRequest
   , mkShipWireRequest
-  , ShipWireReturn(..)
+  , ShipWireReturn
   , defaultGetRate
   , Reply
   , Method
   ) where
 
-import           Control.Monad              (mzero)
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.ByteString            (ByteString)
-import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Char                  as DC
 import           Data.Fixed
+import           Data.Monoid                ((<>))
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Time.Clock            (UTCTime)
@@ -171,12 +170,17 @@ instance ToJSON ShipTo where
         , omitNothingFields = True
         }
 
+
+defaultGetRate :: GetRate
 defaultGetRate = GetRate defaultRateOptions defaultRateOrder
 
+defaultRateOrder :: RateOrder
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
+defaultItems :: Items
 defaultItems = [ItemInfo ((SKU "Ballasttest"), 1)]
 
+defaultShipTo :: ShipTo
 defaultShipTo =
   ShipTo
     (AddressLine "6501 Railroad Avenue SE")
@@ -262,6 +266,7 @@ instance ToJSON RateOptions where
         , omitNothingFields = True
         }
 
+defaultRateOptions :: RateOptions
 defaultRateOptions = RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing
 
 data Currency =
@@ -297,6 +302,7 @@ instance FromJSON GroupBy where
     where
       parse "all" = pure GroupByAll
       parse "warehouse" = pure GroupByWarehouse
+      parse o = fail ("Unexpected groupBy value: " <> show o)
 
 data WarehouseArea =
   WarehouseAreaUS
@@ -346,6 +352,7 @@ instance FromJSON WarningType where
     where
       parse "warning" = pure WarningsWarning
       parse "error" = pure WarningsError
+      parse o = fail ("Unexpected warningType value: " <> show o)
 
 instance FromJSON Warnings where
   parseJSON w = genericParseJSON options w
@@ -371,6 +378,7 @@ instance FromJSON ErrorType where
     where
       parse "warning" = pure ErrorsWarning
       parse "error" = pure ErrorsError
+      parse o = fail ("Unexpected errorType value: " <> show o)
 
 instance FromJSON Errors where
   parseJSON w = genericParseJSON options w
@@ -445,6 +453,7 @@ instance FromJSON ServiceLevelCode where
       parse "INTL"    = pure InternationalStandard
       parse "PL-INTL" = pure InternationalPlus
       parse "PM-INTL" = pure InternationalPremium
+      parse o = fail ("Unexpected serviceLevelCode value: " <> show o)
 
 instance FromJSON ServiceOption where
   parseJSON sopt = genericParseJSON options sopt
@@ -498,7 +507,7 @@ data Cost = Cost
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Cost where
-  parseJSON cos = genericParseJSON options cos
+  parseJSON cost = genericParseJSON options cost
     where
       options =
         defaultOptions
@@ -533,7 +542,7 @@ data Piece = Piece
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Piece where
-  parseJSON pi = genericParseJSON options pi
+  parseJSON piece = genericParseJSON options piece
     where
       options =
         defaultOptions
@@ -732,6 +741,7 @@ data IsBundle
 instance FromJSON IsBundle where
   parseJSON (Number 1) = pure Bundle
   parseJSON (Number 0) = pure NotBundle
+  parseJSON o = fail ("Unexpected isBundle value: " <> show o)
 
 data IsAlias
   = Alias
@@ -741,3 +751,4 @@ data IsAlias
 instance FromJSON IsAlias where
   parseJSON (Number 1) = pure Alias
   parseJSON (Number 0) = pure NotAlias
+  parseJSON o = fail ("Unexpected isAlias value: " <> show o)

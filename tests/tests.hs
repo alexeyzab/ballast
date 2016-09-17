@@ -5,10 +5,6 @@ module Main where
 import           Ballast.Client
 import           Ballast.Types
 import           Control.Monad.IO.Class
-import           Data.Aeson
-import qualified Data.Text                 as T
-import           Network.HTTP.Client
-import qualified Network.HTTP.Types.Method as NHTM
 
 import           Test.Hspec
 
