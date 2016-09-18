@@ -653,6 +653,8 @@ type instance ShipWireReturn RateRequest = RateResponse
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer
   , stockResponseMessage          :: Text
+  , stockResponseWarnings         :: Maybe [Warnings]
+  , stockResponseErrors           :: Maybe [Errors]
   , stockResponseResourceLocation :: Maybe Text
   , stockResponseResource         :: StockResource
   } deriving (Eq, Generic, Show)
