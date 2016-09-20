@@ -29,6 +29,7 @@ module Ballast.Types
   , RateResource(..)
   , ShipWireRequest(..)
   , RateRequest
+  , StockRequest
   , mkShipWireRequest
   , ShipWireReturn
   , defaultGetRate
@@ -633,9 +634,9 @@ type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
 data ShipWireRequest a = ShipWireRequest
-  { rMethod  :: Method
-  , endpoint :: Text
-  , body     :: Maybe BSL.ByteString
+  { rMethod  :: Method -- ^ Method of ShipWireRequest
+  , endpoint :: Text -- ^ Endpoint of ShipWireRequest
+  , body     :: Maybe BSL.ByteString -- ^ Request body of ShipWireRequest
   }
 
 mkShipWireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipWireRequest a
@@ -649,6 +650,9 @@ type instance ShipWireReturn RateRequest = RateResponse
 ---------------------------------------------------------------------
 -- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
 ---------------------------------------------------------------------
+
+data StockRequest
+type instance ShipWireReturn StockRequest = StockResponse
 
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer

@@ -30,6 +30,14 @@ createRateRequest getRate = request
     request = mkShipWireRequest NHTM.methodPost url (Just $ encode getRate)
     url = (T.append sandboxUrl "/rate")
 
+-- | Get stock information for your products.
+-- | https://www.shipwire.com/w/developers/stock/
+createStockRequest :: ShipWireRequest StockRequest
+createStockRequest = request
+  where
+    request = mkShipWireRequest NHTM.methodGet url Nothing
+    url = (T.append sandboxUrl "/stock")
+
 dispatch
   :: (FromJSON (ShipWireReturn a))
   => ShipWireRequest a -> IO (Either String (ShipWireReturn a))
