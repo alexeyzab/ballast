@@ -24,24 +24,24 @@ sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
 -- | Generate a real-time shipping quote
 -- | https://www.shipwire.com/w/developers/rate/
-createRateRequest :: GetRate -> ShipWireRequest RateRequest
+createRateRequest :: GetRate -> ShipwireRequest RateRequest
 createRateRequest getRate = request
   where
-    request = mkShipWireRequest NHTM.methodPost url (Just $ encode getRate)
+    request = mkShipwireRequest NHTM.methodPost url (Just $ encode getRate)
     url = (T.append sandboxUrl "/rate")
 
 -- | Get stock information for your products.
 -- | https://www.shipwire.com/w/developers/stock/
-createStockRequest :: ShipWireRequest StockRequest
+createStockRequest :: ShipwireRequest StockRequest
 createStockRequest = request
   where
-    request = mkShipWireRequest NHTM.methodGet url Nothing
+    request = mkShipwireRequest NHTM.methodGet url Nothing
     url = (T.append sandboxUrl "/stock")
 
 dispatch
-  :: (FromJSON (ShipWireReturn a))
-  => ShipWireRequest a -> IO (Either String (ShipWireReturn a))
-dispatch (ShipWireRequest meth ep bod) = do
+  :: (FromJSON (ShipwireReturn a))
+  => ShipwireRequest a -> IO (Either String (ShipwireReturn a))
+dispatch (ShipwireRequest meth ep bod) = do
   manager <- newManager tlsManagerSettings
   initialRequest <- parseRequest $ (T.unpack ep)
   let req =

@@ -27,11 +27,11 @@ module Ballast.Types
   , Rates(..)
   , ServiceOptions(..)
   , RateResource(..)
-  , ShipWireRequest(..)
+  , ShipwireRequest(..)
   , RateRequest
   , StockRequest
-  , mkShipWireRequest
-  , ShipWireReturn
+  , mkShipwireRequest
+  , ShipwireReturn
   , defaultGetRate
   , Reply
   , Method
@@ -633,26 +633,26 @@ instance FromJSON PieceContent where
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
-data ShipWireRequest a = ShipWireRequest
-  { rMethod  :: Method -- ^ Method of ShipWireRequest
-  , endpoint :: Text -- ^ Endpoint of ShipWireRequest
-  , body     :: Maybe BSL.ByteString -- ^ Request body of ShipWireRequest
+data ShipwireRequest a = ShipwireRequest
+  { rMethod  :: Method -- ^ Method of ShipwireRequest
+  , endpoint :: Text -- ^ Endpoint of ShipwireRequest
+  , body     :: Maybe BSL.ByteString -- ^ Request body of ShipwireRequest
   }
 
-mkShipWireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipWireRequest a
-mkShipWireRequest m e b = ShipWireRequest m e b
+mkShipwireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipwireRequest a
+mkShipwireRequest m e b = ShipwireRequest m e b
 
-type family ShipWireReturn a :: *
+type family ShipwireReturn a :: *
 
 data RateRequest
-type instance ShipWireReturn RateRequest = RateResponse
+type instance ShipwireReturn RateRequest = RateResponse
 
 ---------------------------------------------------------------------
 -- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
 ---------------------------------------------------------------------
 
 data StockRequest
-type instance ShipWireReturn StockRequest = StockResponse
+type instance ShipwireReturn StockRequest = StockResponse
 
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer
