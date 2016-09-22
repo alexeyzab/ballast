@@ -35,11 +35,14 @@ module Ballast.Types
   , defaultGetRate
   , Reply
   , Method
+  , Params
+  , Host
   ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.ByteString            (ByteString)
+import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Char                  as DC
 import           Data.Fixed
@@ -758,3 +761,9 @@ instance FromJSON IsAlias where
   parseJSON (Number 1) = pure Alias
   parseJSON (Number 0) = pure NotAlias
   parseJSON o = fail ("Unexpected isAlias value: " <> show o)
+
+-- Query params for GET requests
+type Params = [(BS8.ByteString, Maybe BS8.ByteString)]
+
+-- Either production or sandbox API host
+type Host = Text
