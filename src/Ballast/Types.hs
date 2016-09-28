@@ -1,7 +1,8 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Ballast.Types
   ( Username(..)
@@ -35,8 +36,13 @@ module Ballast.Types
   , defaultGetRate
   , Reply
   , Method
-  , Params
   , Host
+  , ShipwireConfig(..)
+  , Params(..)
+  , TupleBS8
+  , filterQuery
+  , filterBody
+  , (-&-)
   ) where
 
 import           Data.Aeson
@@ -49,6 +55,7 @@ import           Data.Fixed
 import           Data.Monoid                ((<>))
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
 import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 import           Network.HTTP.Client
@@ -636,19 +643,23 @@ instance FromJSON PieceContent where
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
-data ShipwireRequest a = ShipwireRequest
+data ShipwireRequest a b c = ShipwireRequest
   { rMethod  :: Method -- ^ Method of ShipwireRequest
   , endpoint :: Text -- ^ Endpoint of ShipwireRequest
-  , body     :: Maybe BSL.ByteString -- ^ Request body of ShipwireRequest
+  , params   :: [Params TupleBS8 BSL.ByteString] -- ^ Request params of ShipwireRequest
   }
 
-mkShipwireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipwireRequest a
-mkShipwireRequest m e b = ShipwireRequest m e b
+mkShipwireRequest :: Method
+                  -> Text
+                  -> [Params TupleBS8 BSL.ByteString]
+                  -> ShipwireRequest a b c
+mkShipwireRequest m e p = ShipwireRequest m e p
 
 type family ShipwireReturn a :: *
 
 data RateRequest
 type instance ShipwireReturn RateRequest = RateResponse
+instance ShipwireHasParam RateRequest SKU
 
 ---------------------------------------------------------------------
 -- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
@@ -656,6 +667,7 @@ type instance ShipwireReturn RateRequest = RateResponse
 
 data StockRequest
 type instance ShipwireReturn StockRequest = StockResponse
+instance ShipwireHasParam StockRequest SKU
 
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer
@@ -762,8 +774,55 @@ instance FromJSON IsAlias where
   parseJSON (Number 0) = pure NotAlias
   parseJSON o = fail ("Unexpected isAlias value: " <> show o)
 
--- Query params for GET requests
-type Params = [(BS8.ByteString, Maybe BS8.ByteString)]
-
--- Either production or sandbox API host
+-- | Either production or sandbox API host
 type Host = Text
+
+-- | Shipwire authenticates through
+data ShipwireConfig = ShipwireConfig
+  { host  :: Host
+  , email :: BS8.ByteString
+  , pass  :: BS8.ByteString
+  }
+
+-- | Parameters for each request which include both the query and the body of a
+-- request
+data Params b c
+  = Query TupleBS8
+  | Body BSL.ByteString
+  deriving (Show)
+
+-- | Type alias for query parameters
+type TupleBS8 = (BS8.ByteString, BS8.ByteString)
+
+-- | Convert a parameter to a key/value
+class ToShipwireParam param where
+  toShipwireParam :: param -> [Params TupleBS8 c] -> [Params TupleBS8 c]
+
+instance ToShipwireParam SKU where
+  toShipwireParam (SKU i) =
+    (Query (TE.encodeUtf8 "sku", TE.encodeUtf8 i) :)
+
+class (ToShipwireParam param) => ShipwireHasParam request param where
+
+-- | Add an optional query parameter
+(-&-)
+  :: ShipwireHasParam request param
+  => ShipwireRequest request b c -> param -> ShipwireRequest request b c
+stripeRequest -&- param =
+  stripeRequest
+  { params = toShipwireParam param (params stripeRequest)
+  }
+
+-- | Find the body from the list of [Params TupleBS8 BSL.ByteString]
+filterBody :: [Params b c] -> BSL.ByteString
+filterBody [] = ""
+filterBody xs = case [c | Body c <- xs] of
+               [] -> ""
+               [c] -> c
+               _ -> error "Bad input"
+
+-- | Find the query parameters froom the list of
+-- [Params TupleBS8 BSL.ByteString]
+filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, BS8.ByteString)]
+filterQuery [] = []
+filterQuery xs = [b | Query b <- xs]
