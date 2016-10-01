@@ -65,6 +65,29 @@ shipwire ShipwireConfig {..} ShipwireRequest {..} = do
   let result = eitherDecode $ responseBody response
   return result
 
+-- | Print the JSON body
+debug
+  :: (FromJSON (ShipwireReturn a))
+  => ShipwireConfig
+  -> ShipwireRequest a TupleBS8 BSL.ByteString
+  -> IO BSL.ByteString
+debug ShipwireConfig {..} ShipwireRequest {..} = do
+  manager <- newManager tlsManagerSettings
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
+  let reqBody | rMethod == NHTM.methodGet = mempty
+              | otherwise = filterBody params
+      reqURL  = paramsToByteString $ filterQuery params
+      req = initReq { method = rMethod
+                    , requestBody = RequestBodyLBS reqBody
+                    , queryString = reqURL
+                    }
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
+      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
+  response <- httpLbs authorizedRequest manager
+  let result =  responseBody response
+  return result
+  
 -- shipwire usage:
 -- let config = ShipwireConfig sandboxUrl (BS8.pack *email*) (BS8.pack *pass*)
 -- shipwire config $ getStockInfo -&- (SKU $ T.pack "sku")

@@ -37,9 +37,13 @@ main = hspec $ do
   describe "get stock info" $ do
     it "gets stock info without optional args" $ do
       config <- sandboxEnvConfig
-      result <- shipwire config $ getStockInfo
-      result `shouldSatisfy` isRight
+      -- result <- shipwire config $ getStockInfo
+      -- result `shouldSatisfy` isRight
+      result <- debug config $ getStockInfo
+      result `shouldBe` ""
     it "gets stock info with optional args" $ do
       config <- sandboxEnvConfig
-      result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
-      result `shouldSatisfy` isRight
+      -- result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
+      -- result `shouldSatisfy` isRight
+      result <- debug config $ getStockInfo -&- (SKU "Ballasttest")
+      result `shouldBe` ""
