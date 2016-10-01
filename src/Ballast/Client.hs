@@ -58,8 +58,8 @@ shipwire ShipwireConfig {..} ShipwireRequest {..} = do
                     , requestBody = RequestBodyLBS reqBody
                     , queryString = reqURL
                     }
-      shipwireUser = email
-      shipwirePass = pass
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
       authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
   response <- httpLbs authorizedRequest manager
   let result = eitherDecode $ responseBody response

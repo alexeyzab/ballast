@@ -45,7 +45,7 @@ module Ballast.Types
   , (-&-)
   , ShipwireHost(..)
   , hostUri
-  , configEnv
+  , credentialsEnv
   , prodEnvConfig
   , sandboxEnvConfig
   ) where
@@ -70,12 +70,12 @@ import           System.Environment (getEnv)
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
-  { username :: ByteString
+  { unUsername :: BS8.ByteString
   } deriving (Read, Show, Eq)
 
 -- | Password type used for HTTP Basic authentication.
 newtype Password = Password
-  { password :: ByteString
+  { unPassword :: BS8.ByteString
   } deriving (Read, Show, Eq)
 
 ---------------------------------------------------------------------
@@ -802,26 +802,26 @@ hostUri ShipwireSandbox = "https://api.beta.shipwire.com/api/v3"
 -- | Shipwire authenticates through
 data ShipwireConfig = ShipwireConfig
   { host  :: ShipwireHost
-  , email     :: BS8.ByteString
-  , pass      :: BS8.ByteString
+  , email :: Username
+  , pass  :: Password
   }
 
 -- Possibly a bad idea. I don't know
 -- why they auth like this.
-configEnv :: IO (ByteString, ByteString)
-configEnv = do
+credentialsEnv :: IO (Username, Password)
+credentialsEnv = do
   login <- getEnv "SHIPWIRE_USER"
   passw <- getEnv "SHIPWIRE_PASS"
-  return (BS8.pack login, BS8.pack passw)
+  return (Username $ BS8.pack login, Password $ BS8.pack passw)
 
 prodEnvConfig :: IO ShipwireConfig
 prodEnvConfig = do
-  (login, passw) <- configEnv
+  (login, passw) <- credentialsEnv
   return $ ShipwireConfig ShipwireProduction login passw
 
 sandboxEnvConfig :: IO ShipwireConfig
 sandboxEnvConfig = do
-  (login, passw) <- configEnv
+  (login, passw) <- credentialsEnv
   return $ ShipwireConfig ShipwireProduction login passw
 
 
