@@ -10,7 +10,6 @@ maintainer:          cma@bitemyapp.com
 copyright:           2016 Chris Allen
 category:            Web
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
 
 library
@@ -29,6 +28,21 @@ library
                      , time
                      , transformers
                      , hspec
+                     , hspec-expectations
+  default-language:    Haskell2010
+  ghc-options: -Wall
+
+test-suite tests
+  ghc-options: -Wall
+  type: exitcode-stdio-1.0
+  main-is: tests.hs
+  hs-source-dirs: tests
+  build-depends:       base,
+                       ballast,
+                       bytestring,
+                       hspec                >= 1.8 && <2.3,
+                       hspec-expectations
+                       
   default-language:    Haskell2010
 
 source-repository head

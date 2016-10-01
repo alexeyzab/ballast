@@ -1,7 +1,8 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Ballast.Types
   ( Username(..)
@@ -13,7 +14,7 @@ module Ballast.Types
   , GroupBy(..)
   , WarehouseArea(..)
   , RateOrder(..)
-  , Items(..)
+  , Items
   , ItemInfo(..)
   , ShipTo(..)
   , SKU(..)
@@ -26,40 +27,60 @@ module Ballast.Types
   , IsPoBox(..)
   , Rates(..)
   , ServiceOptions(..)
-  , Resource(..)
-  , ShipWireRequest(..)
+  , RateResource(..)
+  , ShipwireRequest(..)
   , RateRequest
-  , mkShipWireRequest
-  , ShipWireReturn(..)
+  , StockRequest
+  , mkShipwireRequest
+  , ShipwireReturn
   , defaultGetRate
   , Reply
   , Method
+  , Host
+  , ShipwireConfig(..)
+  , Params(..)
+  , TupleBS8
+  , filterQuery
+  , filterBody
+  , (-&-)
+  , ShipwireHost(..)
+  , hostUri
+  , credentialsEnv
+  , prodEnvConfig
+  , sandboxEnvConfig
   ) where
 
-import           Control.Monad              (mzero)
+import           Control.Applicative
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.ByteString            (ByteString)
-import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Char                  as DC
 import           Data.Fixed
+import           Data.Monoid                ((<>))
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
 import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method  as NHTM
+import           System.Environment (getEnv)
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
-  { username :: ByteString
+  { unUsername :: BS8.ByteString
   } deriving (Read, Show, Eq)
 
 -- | Password type used for HTTP Basic authentication.
 newtype Password = Password
-  { password :: ByteString
+  { unPassword :: BS8.ByteString
   } deriving (Read, Show, Eq)
+
+---------------------------------------------------------------------
+-- Rate Endpoint -- https://www.shipwire.com/w/developers/rate/
+---------------------------------------------------------------------
 
 newtype SKU = SKU
   { sku :: Text
@@ -167,12 +188,17 @@ instance ToJSON ShipTo where
         , omitNothingFields = True
         }
 
+
+defaultGetRate :: GetRate
 defaultGetRate = GetRate defaultRateOptions defaultRateOrder
 
+defaultRateOrder :: RateOrder
 defaultRateOrder = RateOrder defaultShipTo defaultItems
 
+defaultItems :: Items
 defaultItems = [ItemInfo ((SKU "Ballasttest"), 1)]
 
+defaultShipTo :: ShipTo
 defaultShipTo =
   ShipTo
     (AddressLine "6501 Railroad Avenue SE")
@@ -258,6 +284,7 @@ instance ToJSON RateOptions where
         , omitNothingFields = True
         }
 
+defaultRateOptions :: RateOptions
 defaultRateOptions = RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing
 
 data Currency =
@@ -293,6 +320,7 @@ instance FromJSON GroupBy where
     where
       parse "all" = pure GroupByAll
       parse "warehouse" = pure GroupByWarehouse
+      parse o = fail ("Unexpected groupBy value: " <> show o)
 
 data WarehouseArea =
   WarehouseAreaUS
@@ -301,13 +329,13 @@ data WarehouseArea =
 instance ToJSON WarehouseArea where
   toJSON WarehouseAreaUS = String "US"
 
--- defaultRateResponse :: IO RateResponse
--- defaultRateResponse = do
---   file <- BSL.readFile "test.json"
---   let decoded = eitherDecode file
---   case decoded of
---     Right info -> return info
---     Left err -> error err
+defaultRateResponse :: IO StockResponse
+defaultRateResponse = do
+  file <- BSL.readFile "test5.json"
+  let decoded = eitherDecode file
+  case decoded of
+    Right info -> return info
+    Left err -> error err
 
 data RateResponse = RateResponse
   { rateResponseStatus           :: Integer
@@ -315,7 +343,7 @@ data RateResponse = RateResponse
   , rateResponseWarnings         :: Maybe [Warnings]
   , rateResponseErrors           :: Maybe [Errors]
   , rateResponseResourceLocation :: Maybe Text
-  , rateResponseResource         :: Maybe Resource
+  , rateResponseResource         :: Maybe RateResource
   } deriving (Eq, Generic, Show)
 
 instance FromJSON RateResponse where
@@ -342,6 +370,7 @@ instance FromJSON WarningType where
     where
       parse "warning" = pure WarningsWarning
       parse "error" = pure WarningsError
+      parse o = fail ("Unexpected warningType value: " <> show o)
 
 instance FromJSON Warnings where
   parseJSON w = genericParseJSON options w
@@ -367,6 +396,7 @@ instance FromJSON ErrorType where
     where
       parse "warning" = pure ErrorsWarning
       parse "error" = pure ErrorsError
+      parse o = fail ("Unexpected errorType value: " <> show o)
 
 instance FromJSON Errors where
   parseJSON w = genericParseJSON options w
@@ -375,12 +405,12 @@ instance FromJSON Errors where
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 6
         }
-data Resource = Resource
+data RateResource = RateResource
   { resourceGroupBy :: GroupBy
   , resourceRates   :: Rates
   } deriving (Eq, Generic, Show)
 
-instance FromJSON Resource where
+instance FromJSON RateResource where
   parseJSON res = genericParseJSON options res
     where
       options =
@@ -441,6 +471,7 @@ instance FromJSON ServiceLevelCode where
       parse "INTL"    = pure InternationalStandard
       parse "PL-INTL" = pure InternationalPlus
       parse "PM-INTL" = pure InternationalPremium
+      parse o = fail ("Unexpected serviceLevelCode value: " <> show o)
 
 instance FromJSON ServiceOption where
   parseJSON sopt = genericParseJSON options sopt
@@ -494,7 +525,7 @@ data Cost = Cost
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Cost where
-  parseJSON cos = genericParseJSON options cos
+  parseJSON cost = genericParseJSON options cost
     where
       options =
         defaultOptions
@@ -529,7 +560,7 @@ data Piece = Piece
   } deriving (Eq, Generic, Show)
 
 instance FromJSON Piece where
-  parseJSON pi = genericParseJSON options pi
+  parseJSON piece = genericParseJSON options piece
     where
       options =
         defaultOptions
@@ -619,16 +650,220 @@ instance FromJSON PieceContent where
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
-data ShipWireRequest a = ShipWireRequest
-  { rMethod  :: Method
-  , endpoint :: Text
-  , body     :: Maybe BSL.ByteString
+data ShipwireRequest a b c = ShipwireRequest
+  { rMethod  :: Method -- ^ Method of ShipwireRequest
+  , endpoint :: Text -- ^ Endpoint of ShipwireRequest
+  , params   :: [Params TupleBS8 BSL.ByteString] -- ^ Request params of ShipwireRequest
   }
 
-mkShipWireRequest :: Method -> Text -> Maybe BSL.ByteString -> ShipWireRequest a
-mkShipWireRequest m e b = ShipWireRequest m e b
+mkShipwireRequest :: Method
+                  -> Text
+                  -> [Params TupleBS8 BSL.ByteString]
+                  -> ShipwireRequest a b c
+mkShipwireRequest m e p = ShipwireRequest m e p
 
-type family ShipWireReturn a :: *
+type family ShipwireReturn a :: *
 
 data RateRequest
-type instance ShipWireReturn RateRequest = RateResponse
+type instance ShipwireReturn RateRequest = RateResponse
+instance ShipwireHasParam RateRequest SKU
+
+---------------------------------------------------------------------
+-- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
+---------------------------------------------------------------------
+
+data StockRequest
+type instance ShipwireReturn StockRequest = StockResponse
+instance ShipwireHasParam StockRequest SKU
+
+data StockResponse = StockResponse
+  { stockResponseStatus           :: Integer
+  , stockResponseMessage          :: Text
+  , stockResponseWarnings         :: Maybe [Warnings]
+  , stockResponseErrors           :: Maybe [Errors]
+  , stockResponseResourceLocation :: Maybe Text
+  , stockResponseResource         :: StockResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockResponse where
+  parseJSON sr = genericParseJSON options sr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 13
+        }
+
+data StockResource = StockResource
+  { stockResponseOffset   :: Integer
+  , stockResponseTotal    :: Integer
+  , stockResponsePrevious :: Maybe Integer
+  , stockResponseNext     :: Maybe Integer
+  , stockResponseItems    :: [StockItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockResource where
+  parseJSON sr = genericParseJSON options sr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 13
+        }
+
+data StockItem = StockItem
+  { stockItemResourceLocation :: Maybe Text
+  , stockItemResource         :: StockItemResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockItem where
+  parseJSON si = genericParseJSON options si
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 9
+        }
+
+data StockItemResource = StockItemResource
+  { sirProductId           :: Integer
+  , sirProductExternalId   :: Maybe Integer
+  , sirSku                 :: Text
+  , sirIsBundle            :: IsBundle
+  , sirIsAlias             :: IsAlias
+  , sirWarehouseRegion     :: Text
+  , sirWarehouseId         :: Integer
+  , sirWarehouseExternalId :: Maybe Integer
+  , sirPending             :: Integer
+  , sirGood                :: Integer
+  , sirReserved            :: Integer
+  , sirBackordered         :: Integer
+  , sirShipping            :: Integer
+  , sirShipped             :: Integer
+  , sirCreating            :: Integer
+  , sirConsuming           :: Integer
+  , sirConsumed            :: Integer
+  , sirCreated             :: Integer
+  , sirDamaged             :: Integer
+  , sirReturned            :: Integer
+  , sirInreview            :: Integer
+  , sirAvailableDate       :: Maybe UTCTime
+  , sirShippedLastDay      :: Integer
+  , sirShippedLastWeek     :: Integer
+  , sirShippedLast4Weeks   :: Integer
+  , sirOrderedLastDay      :: Integer
+  , sirOrderedLastWeek     :: Integer
+  , sirOrderedLast4Weeks   :: Integer
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON StockItemResource where
+  parseJSON sir = genericParseJSON options sir
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data IsBundle
+  = Bundle
+  | NotBundle
+  deriving (Eq, Generic, Show)
+
+instance FromJSON IsBundle where
+  parseJSON (Number 1) = pure Bundle
+  parseJSON (Number 0) = pure NotBundle
+  parseJSON o = fail ("Unexpected isBundle value: " <> show o)
+
+data IsAlias
+  = Alias
+  | NotAlias
+  deriving (Eq, Generic, Show)
+
+instance FromJSON IsAlias where
+  parseJSON (Number 1) = pure Alias
+  parseJSON (Number 0) = pure NotAlias
+  parseJSON o = fail ("Unexpected isAlias value: " <> show o)
+
+-- | Either production or sandbox API host
+type Host = Text
+
+-- baseUrl :: Host
+-- baseUrl = "https://api.shipwire.com/api/v3"
+
+-- sandboxUrl :: Host
+-- sandboxUrl = "https://api.beta.shipwire.com/api/v3"
+
+data ShipwireHost =
+    ShipwireProduction
+  | ShipwireSandbox
+  deriving (Eq, Show)
+
+hostUri :: ShipwireHost -> Text
+hostUri ShipwireProduction = "https://api.shipwire.com/api/v3"
+hostUri ShipwireSandbox = "https://api.beta.shipwire.com/api/v3"
+
+-- | Shipwire authenticates through
+data ShipwireConfig = ShipwireConfig
+  { host  :: ShipwireHost
+  , email :: Username
+  , pass  :: Password
+  }
+
+-- Possibly a bad idea. I don't know
+-- why they auth like this.
+credentialsEnv :: IO (Username, Password)
+credentialsEnv = do
+  login <- getEnv "SHIPWIRE_USER"
+  passw <- getEnv "SHIPWIRE_PASS"
+  return (Username $ BS8.pack login, Password $ BS8.pack passw)
+
+prodEnvConfig :: IO ShipwireConfig
+prodEnvConfig = do
+  (login, passw) <- credentialsEnv
+  return $ ShipwireConfig ShipwireProduction login passw
+
+sandboxEnvConfig :: IO ShipwireConfig
+sandboxEnvConfig = do
+  (login, passw) <- credentialsEnv
+  return $ ShipwireConfig ShipwireSandbox login passw
+
+
+-- | Parameters for each request which include both the query and the body of a
+-- request
+data Params b c
+  = Query TupleBS8
+  | Body BSL.ByteString
+  deriving (Show)
+
+-- | Type alias for query parameters
+type TupleBS8 = (BS8.ByteString, BS8.ByteString)
+
+-- | Convert a parameter to a key/value
+class ToShipwireParam param where
+  toShipwireParam :: param -> [Params TupleBS8 c] -> [Params TupleBS8 c]
+
+instance ToShipwireParam SKU where
+  toShipwireParam (SKU i) =
+    (Query (TE.encodeUtf8 "sku", TE.encodeUtf8 i) :)
+
+class (ToShipwireParam param) => ShipwireHasParam request param where
+
+-- | Add an optional query parameter
+(-&-)
+  :: ShipwireHasParam request param
+  => ShipwireRequest request b c -> param -> ShipwireRequest request b c
+stripeRequest -&- param =
+  stripeRequest
+  { params = toShipwireParam param (params stripeRequest)
+  }
+
+-- | Find the body from the list of [Params TupleBS8 BSL.ByteString]
+filterBody :: [Params b c] -> BSL.ByteString
+filterBody [] = ""
+filterBody xs = case [c | Body c <- xs] of
+               [] -> ""
+               [c] -> c
+               _ -> error "Bad input"
+
+-- | Find the query parameters froom the list of
+-- [Params TupleBS8 BSL.ByteString]
+filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, BS8.ByteString)]
+filterQuery [] = []
+filterQuery xs = [b | Query b <- xs]
