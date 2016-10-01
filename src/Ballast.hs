@@ -1,6 +1,7 @@
-module Lib
-    ( someFunc
-    ) where
+module Ballast
+  ( module Ballast.Client
+  , module Ballast.Types
+  ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import           Ballast.Client
+import           Ballast.Types
