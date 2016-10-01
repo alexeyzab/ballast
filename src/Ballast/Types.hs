@@ -822,7 +822,7 @@ prodEnvConfig = do
 sandboxEnvConfig :: IO ShipwireConfig
 sandboxEnvConfig = do
   (login, passw) <- credentialsEnv
-  return $ ShipwireConfig ShipwireProduction login passw
+  return $ ShipwireConfig ShipwireSandbox login passw
 
 
 -- | Parameters for each request which include both the query and the body of a
