@@ -16,12 +16,6 @@ import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import qualified Network.HTTP.Types.Method  as NHTM
 
-baseUrl :: Host
-baseUrl = "https://api.shipwire.com/api/v3"
-
-sandboxUrl :: Host
-sandboxUrl = "https://api.beta.shipwire.com/api/v3"
-
 -- | Conversion of a key value pair to a query parameterized string
 paramsToByteString
     :: (Monoid m, IsString m)
@@ -56,7 +50,7 @@ shipwire
   -> IO (Either String (ShipwireReturn a))
 shipwire ShipwireConfig {..} ShipwireRequest {..} = do
   manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append host endpoint
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
               | otherwise = filterBody params
       reqURL  = paramsToByteString $ filterQuery params

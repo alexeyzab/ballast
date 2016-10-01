@@ -43,8 +43,14 @@ module Ballast.Types
   , filterQuery
   , filterBody
   , (-&-)
+  , ShipwireHost(..)
+  , hostUri
+  , configEnv
+  , prodEnvConfig
+  , sandboxEnvConfig
   ) where
 
+import           Control.Applicative
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.ByteString            (ByteString)
@@ -60,6 +66,7 @@ import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method  as NHTM
+import           System.Environment (getEnv)
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
@@ -777,12 +784,46 @@ instance FromJSON IsAlias where
 -- | Either production or sandbox API host
 type Host = Text
 
+-- baseUrl :: Host
+-- baseUrl = "https://api.shipwire.com/api/v3"
+
+-- sandboxUrl :: Host
+-- sandboxUrl = "https://api.beta.shipwire.com/api/v3"
+
+data ShipwireHost =
+    ShipwireProduction
+  | ShipwireSandbox
+  deriving (Eq, Show)
+
+hostUri :: ShipwireHost -> Text
+hostUri ShipwireProduction = "https://api.shipwire.com/api/v3"
+hostUri ShipwireSandbox = "https://api.beta.shipwire.com/api/v3"
+
 -- | Shipwire authenticates through
 data ShipwireConfig = ShipwireConfig
-  { host  :: Host
-  , email :: BS8.ByteString
-  , pass  :: BS8.ByteString
+  { host  :: ShipwireHost
+  , email     :: BS8.ByteString
+  , pass      :: BS8.ByteString
   }
+
+-- Possibly a bad idea. I don't know
+-- why they auth like this.
+configEnv :: IO (ByteString, ByteString)
+configEnv = do
+  login <- getEnv "SHIPWIRE_USER"
+  passw <- getEnv "SHIPWIRE_PASS"
+  return (BS8.pack login, BS8.pack passw)
+
+prodEnvConfig :: IO ShipwireConfig
+prodEnvConfig = do
+  (login, passw) <- configEnv
+  return $ ShipwireConfig ShipwireProduction login passw
+
+sandboxEnvConfig :: IO ShipwireConfig
+sandboxEnvConfig = do
+  (login, passw) <- configEnv
+  return $ ShipwireConfig ShipwireProduction login passw
+
 
 -- | Parameters for each request which include both the query and the body of a
 -- request
