@@ -16,12 +16,6 @@ import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import qualified Network.HTTP.Types.Method  as NHTM
 
-baseUrl :: Host
-baseUrl = "https://api.shipwire.com/api/v3"
-
-sandboxUrl :: Host
-sandboxUrl = "https://api.beta.shipwire.com/api/v3"
-
 -- | Conversion of a key value pair to a query parameterized string
 paramsToByteString
     :: (Monoid m, IsString m)
@@ -35,18 +29,16 @@ paramsToByteString ((x,y) : xs) =
 -- | Generate a real-time shipping quote
 -- https://www.shipwire.com/w/developers/rate/
 createRateRequest :: GetRate -> ShipwireRequest RateRequest TupleBS8 BSL.ByteString
-createRateRequest getRate = request
+createRateRequest getRate = mkShipwireRequest NHTM.methodPost url params
   where
-    request = mkShipwireRequest NHTM.methodPost url params
     url = "/rate"
     params = [Body (encode getRate)]
 
 -- | Get stock information for your products.
 -- https://www.shipwire.com/w/developers/stock/
 getStockInfo :: ShipwireRequest StockRequest TupleBS8 c
-getStockInfo = request
+getStockInfo = mkShipwireRequest NHTM.methodGet url params
   where
-    request = mkShipwireRequest NHTM.methodGet url params
     url = "/stock"
     params = []
 
@@ -58,7 +50,7 @@ shipwire
   -> IO (Either String (ShipwireReturn a))
 shipwire ShipwireConfig {..} ShipwireRequest {..} = do
   manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append host endpoint
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
               | otherwise = filterBody params
       reqURL  = paramsToByteString $ filterQuery params
@@ -66,8 +58,8 @@ shipwire ShipwireConfig {..} ShipwireRequest {..} = do
                     , requestBody = RequestBodyLBS reqBody
                     , queryString = reqURL
                     }
-      shipwireUser = email
-      shipwirePass = pass
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
       authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
   response <- httpLbs authorizedRequest manager
   let result = eitherDecode $ responseBody response
