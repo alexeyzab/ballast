@@ -5,14 +5,15 @@ addons:
     - libgmp-dev
 env:
   global:
-    - secure: jFgKYlBdMIZO9lcQ6qAw2ZvaAx3Cbs46gY9ANR/8N7Iz5m7FK10h1lEaPCdE55WuYmfh+q9Acg/899RfklcHlPfkaV+g3Myq4QJspjrcHEneowa1r7vPcdhXqehUcS7tWVqZHK+uG9KCuaY/3NjyazxRUgPE7osp8P7hgWkiqKmJKQ4LEMRCxGfXjO48+irWadm0AdTpbhsU1Evt9JZx36FDFxfgRus7Z46mrZJOqSTBpibV1e3Sr1T4GZp4KX8tmjAldeGqFi81v2sfhaR+AjVbL7CS/ETaiu5AXXqYCKQGo4ebvGBZTACNoQO3EaQ1IjQbGF//DoD/moPDtnQoHr9NNC9x6JP4mFsaOTvjjbahF07vQk6+2LUU/Fd3DtueR2Pu4UQyC8dlRD1U+OFVynxzgRE3Z/ngsJ8Q0Q6qD2puW2+VZvJgzcp+X/Nc+JxcjsdpGAILPOaqBLpmAJYIlqlgJUWRiaDRbGoXPnbmkQqYo0TNisCOvxfDpyDZXpGINOJjCyNmJ5LauT7dOEGbQUdz2VvfohOLxuGEGAfBNNvbidZZPaYTAnGkfd7TISjtkgyIu5NsW3n2mOO8ovQCppG2j34ZgB2nHci/KZWb4pF+WOITIhsezNENX0y+D4zmaJAI0ArB7Q+PFUuPjjk1ceikMJPOQJze/sSxuc16Gr4=
+  - secure: QNH4eEcRrvKujIUtQcWX8rWctNe2/blG03fRDj9inyaNUJ9eq5WAPyi+JlWnnv1qStA28Y/eKCqRXX6x+CAhLm8DWCimAUkpkb8Yy2ebtF32xxN6tPJgyZdItltNhjKe9ylY0XOiNHb1SQSPBd+XoEqnLxX6N5KrHeeLgzcbYvLSNPCvl4p/kFsjeejN8bf57k6TG3xFP6z+B3IyAzra4sECNNd8vZXKdgwpgYxLAICyOyMJvU7xPgzk1dce4QsgnxpJEUdDirmAWEr3NMxwSOfGEuS5Aql+fCnwPE/rhVTQmseXi4o1fhwcYadB0hO4Yz2oC0LtMcD3t6oW6dojhloM9xqutQyXSHf304r0/pAbs/Fr3ED5wd0nTHvLYRMQvAPuIKNmiwgdxU90hrpzxeyTcnWNyb63TlqEWEkv/DIT/AfwNgWx70ZKQLZgqVscm/yz9g2FGpQYbmcJOMLiSS5HQq7RjBFcMYflDeTeF1TQeTM5Mm7S/Qh+OtwQVaHlgEyW8c8y5aTlKnGDOFfL8feUB7fn9dZyWcaNmC31GPZEzjMAwG/XdF4PNYqnb1nPuVFMhmf17RuZ4FX6qivfgDj5FJrFOCC8Ixnrql+s8f5CrA2Keqkwoi7ufrE0pLEV/BGDAvsd4M97aB/pv3rHANIgEyJni132C1wWzz5WM18=
+  - secure: scPc6wCbmXsnOZUubAq9KFHX3n7kcikYRNCuBUg/l9URmG7oQzPsyiVycnV+0RXImGBdKoUvuJKIzEkVgMqucepAbZyyTsbh/xcXg1pMnzk5LZonMaDdoR581KOq14WB+8JuUWlsvktEoYGugiVU3wlyuFZ+IXBLkeV42ENHHT7Jhw4fSgTdZ4us75K2GUq3p703AMLWvClXD9x3M5YJiJodRu5Mpv5CWc8AzIGg55zhNhORwPLKYCwk7Sc62WkZNmvjoMkbohWEXb6by/32UK/1qN9k15c5QrnNjDCBTtanjlQacZQuvVPpAaMurAa82pslQAIT4moIKS2N2aAIAOwMuMOserWVzK2Z+i3QdYn3DTaGMY8Rt1VcrBRJK0i/74kCSL/+WQGWkjTkeAaU2qGyIlK8Qc9X8Lt/CbdUlTyEBUkDHQkLUoA+CZ+31G1pgdQ25bgXDijuQODG8R3bA7jXtQRIy7RVrul6DA58NSDLTRO283wrjQbpdTq04n6JJNfhg/mGDR2RQonNt01jbwftfu3Nli858XLt6PC0xhV1TEJ9swqjGzPGYIrBJsQfr8KLsSzqcXb+Z9GzJvb4V6sFaVr9DLTQaRCfgF0xpL9hTJss3vUFHzE+nFeihTh+dcL3+RZWHtXaTVulmfto2sBer9ezs6ynJs2fYgFFDyY=
   matrix:
   - GHCVER=7.10
-
 install:
 - export STACK_YAML=stack-$GHCVER.yaml
 - mkdir -p ~/.local/bin
-- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v0.1.4.0/stack-0.1.4.0-x86_64-linux.tar.gz | tar -xvzf -
+- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v0.1.4.0/stack-0.1.4.0-x86_64-linux.tar.gz
+  | tar -xvzf -
 - mv stack ~/.local/bin
 - export PATH=~/.local/bin:$PATH
 - stack --version
