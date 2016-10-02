@@ -85,7 +85,7 @@ debug ShipwireConfig {..} ShipwireRequest {..} = do
       shipwirePass = unPassword pass
       authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
   response <- httpLbs authorizedRequest manager
-  let result =  responseBody response
+  let result = responseBody response
   return result
   
 -- shipwire usage:
