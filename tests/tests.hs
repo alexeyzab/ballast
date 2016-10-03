@@ -28,22 +28,18 @@ exampleShipTo =
 
 main :: IO ()
 main = hspec $ do
-  -- describe "get rates" $ do
-  --   it "gets the correct rates" $ do
-  --     config <- sandboxEnvConfig
-  --     let getRt = mkGetRate (RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
-  --     result <- shipwire config $ createRateRequest getRt
-  --     result `shouldSatisfy` isRight
+  describe "get rates" $ do
+    it "gets the correct rates" $ do
+      config <- sandboxEnvConfig
+      let getRt = mkGetRate (RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
+      result <- shipwire config $ createRateRequest getRt
+      result `shouldSatisfy` isRight
   describe "get stock info" $ do
     it "gets stock info without optional args" $ do
       config <- sandboxEnvConfig
-      -- result <- shipwire config $ getStockInfo
-      -- result `shouldSatisfy` isRight
-      result <- debug config $ getStockInfo
-      result `shouldBe` ""
+      result <- shipwire config $ getStockInfo
+      result `shouldSatisfy` isRight
     it "gets stock info with optional args" $ do
       config <- sandboxEnvConfig
-      -- result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
-      -- result `shouldSatisfy` isRight
-      result <- debug config $ getStockInfo -&- (SKU "Ballasttest")
-      result `shouldBe` ""
+      result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
+      result `shouldSatisfy` isRight
