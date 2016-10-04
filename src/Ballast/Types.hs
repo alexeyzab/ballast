@@ -48,6 +48,20 @@ module Ballast.Types
   , credentialsEnv
   , prodEnvConfig
   , sandboxEnvConfig
+  , ParentId(..)
+  , ProductId(..)
+  , ProductExternalId(..)
+  , WarehouseId(..)
+  , WarehouseExternalId(..)
+  , WarehouseRegion(..)
+  , WarehouseAreaParam(..)
+  , ChannelName(..)
+  , IncludeEmpty(..)
+  , VendorId(..)
+  , VendorExternalId(..)
+  , DisableAutoBreakLots(..)
+  , Mode(..)
+  , IncludeEmptyShipwireAnywhere(..)
   ) where
 
 import           Control.Applicative
@@ -66,7 +80,7 @@ import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method  as NHTM
-import           System.Environment (getEnv)
+import           System.Environment         (getEnv)
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
@@ -675,6 +689,20 @@ instance ShipwireHasParam RateRequest SKU
 data StockRequest
 type instance ShipwireReturn StockRequest = StockResponse
 instance ShipwireHasParam StockRequest SKU
+instance ShipwireHasParam StockRequest ParentId
+instance ShipwireHasParam StockRequest ProductId
+instance ShipwireHasParam StockRequest ProductExternalId
+instance ShipwireHasParam StockRequest WarehouseId
+instance ShipwireHasParam StockRequest WarehouseExternalId
+instance ShipwireHasParam StockRequest WarehouseRegion
+instance ShipwireHasParam StockRequest WarehouseAreaParam
+instance ShipwireHasParam StockRequest ChannelName
+instance ShipwireHasParam StockRequest IncludeEmpty
+instance ShipwireHasParam StockRequest VendorId
+instance ShipwireHasParam StockRequest VendorExternalId
+instance ShipwireHasParam StockRequest DisableAutoBreakLots
+instance ShipwireHasParam StockRequest Mode
+instance ShipwireHasParam StockRequest IncludeEmptyShipwireAnywhere
 
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer
@@ -683,6 +711,72 @@ data StockResponse = StockResponse
   , stockResponseErrors           :: Maybe [Errors]
   , stockResponseResourceLocation :: Maybe Text
   , stockResponseResource         :: StockResource
+  } deriving (Eq, Generic, Show)
+
+newtype ParentId = ParentId
+  { parentId :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype ProductId = ProductId
+  { productId :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype ProductExternalId = ProductExternalId
+  { productExternalId :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype WarehouseId = WarehouseId
+  { warehouseId :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype WarehouseExternalId = WarehouseExternalId
+  { warehouseExternalId :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype WarehouseRegion = WarehouseRegion
+  { warehouseRegion :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype WarehouseAreaParam = WarehouseAreaParam
+  { warehouseAreaParam :: [Text]
+  } deriving (Eq, Generic, Show)
+
+newtype ChannelName = ChannelName
+  { channelName :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype IncludeEmpty = IncludeEmpty
+  { includeEmpty :: Integer
+  } deriving (Eq, Generic, Show)
+
+newtype VendorId = VendorId
+  { vendorId :: [Integer]
+  } deriving (Eq, Generic, Show)
+
+newtype VendorExternalId = VendorExternalId
+  { vendorExternalId :: [Integer]
+  } deriving (Eq, Generic, Show)
+
+newtype DisableAutoBreakLots = DisableAutoBreakLots
+  { disableAutoBreakLots :: Text
+  } deriving (Eq, Generic, Show)
+
+data Mode
+  = IncludingHigherLevelQuantitiesWithLots
+  | IncludingHigherLevelQuantitiesWithoutLots
+  | NotIncludingHigherLevelQuantitiesWithLots
+  | NotIncludingHigherLevelQuantitiesWithoutLots
+  deriving (Eq, Generic, Show)
+
+modeToBS8 :: Mode -> BS8.ByteString
+modeToBS8 IncludingHigherLevelQuantitiesWithLots = "IncludingHigherLevelQuantitiesWithLots"
+modeToBS8 IncludingHigherLevelQuantitiesWithoutLots = "IncludingHigherLevelQuantitiesWithoutLots"
+modeToBS8 NotIncludingHigherLevelQuantitiesWithLots = "NotIncludingHigherLevelQuantitiesWithLots"
+modeToBS8 NotIncludingHigherLevelQuantitiesWithoutLots = "NotIncludingHigherLevelQuantitiesWithoutLots"
+modeToBS8 _ = error "Bad input"
+
+newtype IncludeEmptyShipwireAnywhere = IncludeEmptyShipwireAnywhere
+  { inclEmptyShipwireAnywhere :: Text
   } deriving (Eq, Generic, Show)
 
 instance FromJSON StockResponse where
@@ -841,8 +935,64 @@ class ToShipwireParam param where
 
 instance ToShipwireParam SKU where
   toShipwireParam (SKU i) =
-    (Query (TE.encodeUtf8 "sku", TE.encodeUtf8 i) :)
+    (Query ("sku", TE.encodeUtf8 i) :)
 
+instance ToShipwireParam ParentId where
+  toShipwireParam (ParentId i) =
+    (Query ("parentId", TE.encodeUtf8 i) :)
+
+instance ToShipwireParam ProductId where
+  toShipwireParam (ProductId xs) =
+    (Query ("productId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam ProductExternalId where
+  toShipwireParam (ProductExternalId xs) =
+    (Query ("productExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam WarehouseId where
+  toShipwireParam (WarehouseId xs) =
+    (Query ("warehouseId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam WarehouseExternalId where
+  toShipwireParam (WarehouseExternalId xs) =
+    (Query ("warehouseExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam WarehouseRegion where
+  toShipwireParam (WarehouseRegion xs) =
+    (Query ("warehouseRegion", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam WarehouseAreaParam where
+  toShipwireParam (WarehouseAreaParam xs) =
+    (Query ("warehouseArea", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+instance ToShipwireParam ChannelName where
+  toShipwireParam (ChannelName n) =
+    (Query ("channelName", TE.encodeUtf8 n) :)
+
+instance ToShipwireParam IncludeEmpty where
+  toShipwireParam (IncludeEmpty b) =
+    (Query ("includeEmpty", TE.encodeUtf8 $ (T.pack . show) b) :)
+
+instance ToShipwireParam VendorId where
+  toShipwireParam (VendorId vi) =
+    (Query ("vendorId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vi) :)
+
+instance ToShipwireParam VendorExternalId where
+  toShipwireParam (VendorExternalId vei) =
+    (Query ("vendorExternalId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vei) :)
+
+instance ToShipwireParam DisableAutoBreakLots where
+  toShipwireParam (DisableAutoBreakLots d) =
+    (Query ("disableAutoBreakLots", TE.encodeUtf8 d) :)
+
+instance ToShipwireParam Mode where
+  toShipwireParam m =
+    (Query ("mode", (modeToBS8 m)) :)
+
+instance ToShipwireParam IncludeEmptyShipwireAnywhere where
+  toShipwireParam (IncludeEmptyShipwireAnywhere i) =
+    (Query ("includeEmptyShipwireAnywhere", TE.encodeUtf8 i) :)  
+    
 class (ToShipwireParam param) => ShipwireHasParam request param where
 
 -- | Add an optional query parameter
