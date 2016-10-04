@@ -202,7 +202,6 @@ instance ToJSON ShipTo where
         , omitNothingFields = True
         }
 
-
 defaultGetRate :: GetRate
 defaultGetRate = GetRate defaultRateOptions defaultRateOrder
 
@@ -680,7 +679,6 @@ type family ShipwireReturn a :: *
 
 data RateRequest
 type instance ShipwireReturn RateRequest = RateResponse
-instance ShipwireHasParam RateRequest SKU
 
 ---------------------------------------------------------------------
 -- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
@@ -917,7 +915,6 @@ sandboxEnvConfig :: IO ShipwireConfig
 sandboxEnvConfig = do
   (login, passw) <- credentialsEnv
   return $ ShipwireConfig ShipwireSandbox login passw
-
 
 -- | Parameters for each request which include both the query and the body of a
 -- request
