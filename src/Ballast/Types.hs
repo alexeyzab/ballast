@@ -48,20 +48,25 @@ module Ballast.Types
   , credentialsEnv
   , prodEnvConfig
   , sandboxEnvConfig
-  , ParentId(..)
-  , ProductId(..)
-  , ProductExternalId(..)
-  , WarehouseId(..)
-  , WarehouseExternalId(..)
-  , WarehouseRegion(..)
-  , WarehouseAreaParam(..)
-  , ChannelName(..)
-  , IncludeEmpty(..)
-  , VendorId(..)
-  , VendorExternalId(..)
-  , DisableAutoBreakLots(..)
+  , ParentId
+  , ProductId
+  , ProductExternalId
+  , WarehouseId
+  , WarehouseExternalId
+  , WarehouseRegion
+  , WarehouseAreaParam
+  , ChannelName
+  , IncludeEmpty
+  , VendorId
+  , VendorExternalId
+  , DisableAutoBreakLots
   , Mode(..)
-  , IncludeEmptyShipwireAnywhere(..)
+  , IncludeEmptyShipwireAnywhere
+  , Offset
+  , Total
+  , Previous
+  , Next
+  , Limit
   ) where
 
 import           Control.Applicative
@@ -701,6 +706,11 @@ instance ShipwireHasParam StockRequest VendorExternalId
 instance ShipwireHasParam StockRequest DisableAutoBreakLots
 instance ShipwireHasParam StockRequest Mode
 instance ShipwireHasParam StockRequest IncludeEmptyShipwireAnywhere
+instance ShipwireHasParam StockRequest Offset
+instance ShipwireHasParam StockRequest Total
+instance ShipwireHasParam StockRequest Previous
+instance ShipwireHasParam StockRequest Next
+instance ShipwireHasParam StockRequest Limit
 
 data StockResponse = StockResponse
   { stockResponseStatus           :: Integer
@@ -777,6 +787,26 @@ newtype IncludeEmptyShipwireAnywhere = IncludeEmptyShipwireAnywhere
   { inclEmptyShipwireAnywhere :: Text
   } deriving (Eq, Generic, Show)
 
+newtype Offset = Offset
+  { offset :: Integer
+  } deriving (Eq, Generic, Show)
+
+newtype Total = Total
+  { total :: Integer
+  } deriving (Eq, Generic, Show)
+
+newtype Previous = Previous
+  { previous :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype Next = Next
+  { next :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype Limit = Limit
+  { limit :: Integer
+  } deriving (Eq, Generic, Show)
+
 instance FromJSON StockResponse where
   parseJSON sr = genericParseJSON options sr
     where
@@ -788,8 +818,8 @@ instance FromJSON StockResponse where
 data StockResource = StockResource
   { stockResponseOffset   :: Integer
   , stockResponseTotal    :: Integer
-  , stockResponsePrevious :: Maybe Integer
-  , stockResponseNext     :: Maybe Integer
+  , stockResponsePrevious :: Maybe Text
+  , stockResponseNext     :: Maybe Text
   , stockResponseItems    :: [StockItem]
   } deriving (Eq, Generic, Show)
 
@@ -988,10 +1018,30 @@ instance ToShipwireParam Mode where
 
 instance ToShipwireParam IncludeEmptyShipwireAnywhere where
   toShipwireParam (IncludeEmptyShipwireAnywhere i) =
-    (Query ("includeEmptyShipwireAnywhere", TE.encodeUtf8 i) :)  
+    (Query ("includeEmptyShipwireAnywhere", TE.encodeUtf8 i) :)
+
+instance ToShipwireParam Offset where
+  toShipwireParam (Offset o) =
+    (Query ("offset", TE.encodeUtf8 $ (T.pack . show) o) :)
+
+instance ToShipwireParam Total where
+  toShipwireParam (Total t) =
+    (Query ("total", TE.encodeUtf8 $ (T.pack . show) t) :)
+
+instance ToShipwireParam Previous where
+  toShipwireParam (Previous p) =
+    (Query ("previous", TE.encodeUtf8 p) :)
+
+instance ToShipwireParam Next where
+  toShipwireParam (Next n) =
+    (Query ("next", TE.encodeUtf8 n) :)
+
+instance ToShipwireParam Limit where
+  toShipwireParam (Limit l) =
+    (Query ("limit", TE.encodeUtf8 $ (T.pack . show) l) :)
     
 class (ToShipwireParam param) => ShipwireHasParam request param where
-
+  
 -- | Add an optional query parameter
 (-&-)
   :: ShipwireHasParam request param
