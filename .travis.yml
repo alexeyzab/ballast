@@ -5,14 +5,14 @@ addons:
     - libgmp-dev
 env:
   global:
-    - secure: jFgKYlBdMIZO9lcQ6qAw2ZvaAx3Cbs46gY9ANR/8N7Iz5m7FK10h1lEaPCdE55WuYmfh+q9Acg/899RfklcHlPfkaV+g3Myq4QJspjrcHEneowa1r7vPcdhXqehUcS7tWVqZHK+uG9KCuaY/3NjyazxRUgPE7osp8P7hgWkiqKmJKQ4LEMRCxGfXjO48+irWadm0AdTpbhsU1Evt9JZx36FDFxfgRus7Z46mrZJOqSTBpibV1e3Sr1T4GZp4KX8tmjAldeGqFi81v2sfhaR+AjVbL7CS/ETaiu5AXXqYCKQGo4ebvGBZTACNoQO3EaQ1IjQbGF//DoD/moPDtnQoHr9NNC9x6JP4mFsaOTvjjbahF07vQk6+2LUU/Fd3DtueR2Pu4UQyC8dlRD1U+OFVynxzgRE3Z/ngsJ8Q0Q6qD2puW2+VZvJgzcp+X/Nc+JxcjsdpGAILPOaqBLpmAJYIlqlgJUWRiaDRbGoXPnbmkQqYo0TNisCOvxfDpyDZXpGINOJjCyNmJ5LauT7dOEGbQUdz2VvfohOLxuGEGAfBNNvbidZZPaYTAnGkfd7TISjtkgyIu5NsW3n2mOO8ovQCppG2j34ZgB2nHci/KZWb4pF+WOITIhsezNENX0y+D4zmaJAI0ArB7Q+PFUuPjjk1ceikMJPOQJze/sSxuc16Gr4=
+  - secure: THcnNqboMrUCxN7ilzYXPA6HfObIs0VXOWaUbqkF4MmKXiI3zrQLYn6p8rfydgkvfNwRUXBVwKJMhzQlKdImES4+9e6wNYqVbuuzvyWwH8mAXogEN6MWKqJej5Bh6tVwEBgBcNqYbKd98zzfBOQi5PtAqBZMdmyRVSDMeFa+t4mqjUxzmL/SLeEU0izC4/Z+YLgNkFD1uLJfJNUe50LJmn5JjPnWAcKRNDQ02u9IbgVfm7NQN4jdZqkyKNbJRcvSTkRECplCpKc57pN3WUdIisVPTMiz1Ua+0IlNk96pSRfYwYDfxsKdJe3TfXc7sOJB5QrOyZRz4fofGRs8O34EVPAywfT9KtSez3b0IChS8/LJFIrGlJ69r2at2XGpzIPsf5hBxUECnMJ0VJCjbTJ/fTFB9SPlhvDZaaYSOqHJOSx1d0Rn12GmvfWs71heCwT/Uh3kEvoN7UkH6/pRhCHvnhb2T1UT4oFdiNO4i3JoOve8BRkq2B2hc8NaNvobE7+72iU/dHrMDPWKVLP8ZysUGuchXkj8UpxvW8gs2a22f6EUBigEMcwPY89DRvmUFF9wXUciQ9hqgMAUGkTK6kNjopu16lCKeY+e+zVC9YmaquN6BvqOjq/sF188LWMXR5KBY/lRqmAANN0PRGhFtjpoS25ok2Ehd9y+WMoz5QncOy8=
   matrix:
   - GHCVER=7.10
-
 install:
 - export STACK_YAML=stack-$GHCVER.yaml
 - mkdir -p ~/.local/bin
-- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v0.1.4.0/stack-0.1.4.0-x86_64-linux.tar.gz | tar -xvzf -
+- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v0.1.4.0/stack-0.1.4.0-x86_64-linux.tar.gz
+  | tar -xvzf -
 - mv stack ~/.local/bin
 - export PATH=~/.local/bin:$PATH
 - stack --version

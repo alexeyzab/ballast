@@ -4,7 +4,6 @@ module Main where
 
 import           Ballast.Client
 import           Ballast.Types
-
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 
