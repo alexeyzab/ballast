@@ -49,16 +49,16 @@ module Ballast.Types
   , prodEnvConfig
   , sandboxEnvConfig
   , ParentId
-  , ProductId
-  , ProductExternalId
-  , WarehouseId
-  , WarehouseExternalId
-  , WarehouseRegion
+  , ProductIdParam
+  , ProductExternalIdParam
+  , WarehouseIdParam
+  , WarehouseExternalIdParam
+  , WarehouseRegionParam
   , WarehouseAreaParam
   , ChannelName
   , IncludeEmpty
-  , VendorId
-  , VendorExternalId
+  , VendorIdParam
+  , VendorExternalIdParam
   , DisableAutoBreakLots
   , Mode(..)
   , IncludeEmptyShipwireAnywhere
@@ -693,16 +693,16 @@ data StockRequest
 type instance ShipwireReturn StockRequest = StockResponse
 instance ShipwireHasParam StockRequest SKU
 instance ShipwireHasParam StockRequest ParentId
-instance ShipwireHasParam StockRequest ProductId
-instance ShipwireHasParam StockRequest ProductExternalId
-instance ShipwireHasParam StockRequest WarehouseId
-instance ShipwireHasParam StockRequest WarehouseExternalId
-instance ShipwireHasParam StockRequest WarehouseRegion
+instance ShipwireHasParam StockRequest ProductIdParam
+instance ShipwireHasParam StockRequest ProductExternalIdParam
+instance ShipwireHasParam StockRequest WarehouseIdParam
+instance ShipwireHasParam StockRequest WarehouseExternalIdParam
+instance ShipwireHasParam StockRequest WarehouseRegionParam
 instance ShipwireHasParam StockRequest WarehouseAreaParam
 instance ShipwireHasParam StockRequest ChannelName
 instance ShipwireHasParam StockRequest IncludeEmpty
-instance ShipwireHasParam StockRequest VendorId
-instance ShipwireHasParam StockRequest VendorExternalId
+instance ShipwireHasParam StockRequest VendorIdParam
+instance ShipwireHasParam StockRequest VendorExternalIdParam
 instance ShipwireHasParam StockRequest DisableAutoBreakLots
 instance ShipwireHasParam StockRequest Mode
 instance ShipwireHasParam StockRequest IncludeEmptyShipwireAnywhere
@@ -725,24 +725,24 @@ newtype ParentId = ParentId
   { parentId :: Text
   } deriving (Eq, Generic, Show)
 
-newtype ProductId = ProductId
-  { productId :: [Text]
+newtype ProductIdParam = ProductIdParam
+  { productIdParam :: [Text]
   } deriving (Eq, Generic, Show)
 
-newtype ProductExternalId = ProductExternalId
-  { productExternalId :: [Text]
+newtype ProductExternalIdParam = ProductExternalIdParam
+  { productExternalIdParam :: [Text]
   } deriving (Eq, Generic, Show)
 
-newtype WarehouseId = WarehouseId
-  { warehouseId :: [Text]
+newtype WarehouseIdParam = WarehouseIdParam
+  { warehouseIdParam :: [Text]
   } deriving (Eq, Generic, Show)
 
-newtype WarehouseExternalId = WarehouseExternalId
-  { warehouseExternalId :: [Text]
+newtype WarehouseExternalIdParam = WarehouseExternalIdParam
+  { warehouseExternalIdParam :: [Text]
   } deriving (Eq, Generic, Show)
 
-newtype WarehouseRegion = WarehouseRegion
-  { warehouseRegion :: [Text]
+newtype WarehouseRegionParam = WarehouseRegionParam
+  { warehouseRegionParam :: [Text]
   } deriving (Eq, Generic, Show)
 
 newtype WarehouseAreaParam = WarehouseAreaParam
@@ -757,12 +757,12 @@ newtype IncludeEmpty = IncludeEmpty
   { includeEmpty :: Integer
   } deriving (Eq, Generic, Show)
 
-newtype VendorId = VendorId
-  { vendorId :: [Integer]
+newtype VendorIdParam = VendorIdParam
+  { vendorIdParam :: [Integer]
   } deriving (Eq, Generic, Show)
 
-newtype VendorExternalId = VendorExternalId
-  { vendorExternalId :: [Integer]
+newtype VendorExternalIdParam = VendorExternalIdParam
+  { vendorExternalIdParam :: [Integer]
   } deriving (Eq, Generic, Show)
 
 newtype DisableAutoBreakLots = DisableAutoBreakLots
@@ -968,24 +968,24 @@ instance ToShipwireParam ParentId where
   toShipwireParam (ParentId i) =
     (Query ("parentId", TE.encodeUtf8 i) :)
 
-instance ToShipwireParam ProductId where
-  toShipwireParam (ProductId xs) =
+instance ToShipwireParam ProductIdParam where
+  toShipwireParam (ProductIdParam xs) =
     (Query ("productId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
-instance ToShipwireParam ProductExternalId where
-  toShipwireParam (ProductExternalId xs) =
+instance ToShipwireParam ProductExternalIdParam where
+  toShipwireParam (ProductExternalIdParam xs) =
     (Query ("productExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
-instance ToShipwireParam WarehouseId where
-  toShipwireParam (WarehouseId xs) =
+instance ToShipwireParam WarehouseIdParam where
+  toShipwireParam (WarehouseIdParam xs) =
     (Query ("warehouseId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
-instance ToShipwireParam WarehouseExternalId where
-  toShipwireParam (WarehouseExternalId xs) =
+instance ToShipwireParam WarehouseExternalIdParam where
+  toShipwireParam (WarehouseExternalIdParam xs) =
     (Query ("warehouseExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
-instance ToShipwireParam WarehouseRegion where
-  toShipwireParam (WarehouseRegion xs) =
+instance ToShipwireParam WarehouseRegionParam where
+  toShipwireParam (WarehouseRegionParam xs) =
     (Query ("warehouseRegion", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
 instance ToShipwireParam WarehouseAreaParam where
@@ -1000,12 +1000,12 @@ instance ToShipwireParam IncludeEmpty where
   toShipwireParam (IncludeEmpty b) =
     (Query ("includeEmpty", TE.encodeUtf8 $ (T.pack . show) b) :)
 
-instance ToShipwireParam VendorId where
-  toShipwireParam (VendorId vi) =
+instance ToShipwireParam VendorIdParam where
+  toShipwireParam (VendorIdParam vi) =
     (Query ("vendorId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vi) :)
 
-instance ToShipwireParam VendorExternalId where
-  toShipwireParam (VendorExternalId vei) =
+instance ToShipwireParam VendorExternalIdParam where
+  toShipwireParam (VendorExternalIdParam vei) =
     (Query ("vendorExternalId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vei) :)
 
 instance ToShipwireParam DisableAutoBreakLots where
