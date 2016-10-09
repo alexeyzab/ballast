@@ -1064,3 +1064,118 @@ filterBody xs = case [c | Body c <- xs] of
 filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, BS8.ByteString)]
 filterQuery [] = []
 filterQuery xs = [b | Query b <- xs]
+
+-------------------------------------------------------------------------
+-- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving
+-------------------------------------------------------------------------
+
+data CreateReceiving = CreateReceiving
+  { createReceivingExternalId   :: Text
+  , createReceivingExpectedDate :: ExpectedDate
+  , createReceivingOptions      :: ReceivingOptions
+  , createReceivingArrangement  :: ReceivingArrangement
+  , createReceivingShipments    :: ReceivingShipments
+  , createReceivingLabels       :: ReceivingLabels
+  , createReceivingTrackings    :: ReceivingTrackings
+  , createReceivingItems        :: ReceivingItems
+  , createReceivingShipFrom     :: ReceivingShipFrom
+  } deriving (Eq, Generic, Show)
+
+-- | The expected format is YYYY-MM-DDThh:mm:ssTZD
+-- "2014-05-27T00:00:00-07:00"
+type ExpectedDate = Text
+
+data ReceivingOptions = ReceivingOptions
+  { roProperties :: ReceivingOptsProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingOptsProperties = ReceivingOptsProperties
+  { ropWarehouseId         :: Maybe Integer
+  , ropWarehouseExternalId :: Maybe Text
+  , ropWarehouseRegion     :: Maybe Text
+  } deriving (Eq, Generic, Show)
+
+data ReceivingArrangement = ReceivingArrangement
+  { raProperties :: ReceivingArrangementProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingArrangementProperties = ReceivingArrangementProperties
+  { rapContact :: Maybe Text
+  , rapPhone   :: Maybe Text
+  , rapType    :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingShipments = ReceivingShipments
+  { rsItems :: ReceivingShipmentsItems
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingShipmentsItems = ReceivingShipmentsItems
+  { rshiProperties :: ReceivingShipmentsItemsProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingShipmentsItemsProperties = ReceivingShipmentsItemsProperties
+  { rsipHeight :: Maybe Double
+  , rsipLength :: Maybe Double
+  , rsipType   :: Text
+  , rsipWeight :: Maybe Double
+  , rsipWidth  :: Maybe Double
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingLabels = ReceivingLabels
+  { rlItems :: ReceivingLabelsItems
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingLabelsItems = ReceivingLabelsItems
+  { rliProperties :: ReceivingLabelsItemsProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingLabelsItemsProperties = ReceivingLabelsItemsProperties
+  { rlipLabelId         :: Maybe Integer
+  , rlipOrderId         :: Maybe Integer
+  , rlipOrderExternalId :: Maybe Text
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingTrackings = ReceivingTrackings
+  { rtItems :: ReceivingTrackingsItems
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingTrackingsItems = ReceivingTrackingsItems
+  { rtiProperties :: ReceivingTrackingsItemsProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingTrackingsItemsProperties = ReceivingTrackingsItemsProperties
+  { rtipCarrier  :: Maybe Text
+  , rtipContact  :: Maybe Text
+  , rtipPhone    :: Maybe Text
+  , rtipTracking :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingItems = ReceivingItems
+  { riItems :: ReceivingItemsItems
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingItemsItems = ReceivingItemsItems
+  { riiProperties :: ReceivingItemsItemsProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingItemsItemsProperties = ReceivingItemsItemsProperties
+  { riipQuantity :: Integer
+  , riipSku      :: SKU
+  } deriving (Eq, Generic, Show)
+
+newtype ReceivingShipFrom = ReceivingShipFrom
+  { rsfProperties :: ReceivingShipFromProperties
+  } deriving (Eq, Generic, Show)
+
+data ReceivingShipFromProperties = ReceivingShipFromProperties
+  { rsfpEmail      :: Maybe Text
+  , rsfpName       :: Text
+  , rsfpAddress1   :: Text
+  , rsfpAddress2   :: Maybe Text
+  , rsfpCity       :: Text
+  , rsfpCountry    :: Text
+  , rsfpPhone      :: Text
+  , rsfpPostalCode :: PostalCode
+  , rsfpState      :: Text
+  } deriving (Eq, Generic, Show)
+
