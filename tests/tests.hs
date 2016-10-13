@@ -11,7 +11,7 @@ mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "Ballasttest"), 1)]
+exampleItems = [ItemInfo ((SKU "Ballasttest"), Quantity 1)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -31,7 +31,7 @@ main = hspec $ do
   describe "get rates" $ do
     it "gets the correct rates" $ do
       config <- sandboxEnvConfig
-      let getRt = mkGetRate (RateOptions USD GroupByAll 1 WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
+      let getRt = mkGetRate (RateOptions USD GroupByAll (CanSplit 1) WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
       result <- shipwire config $ createRateRequest getRt
       result `shouldSatisfy` isRight
   describe "get stock info" $ do
