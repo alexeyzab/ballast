@@ -69,6 +69,23 @@ module Ballast.Types
   , Previous
   , Next
   , Limit
+  , GetReceivingsRequest
+  , CreateReceivingRequest
+  , CreateReceiving(..)
+  , ExpectedDateText(..)
+  , ReceivingOptions(..)
+  , WarehouseRegion(..)
+  , ReceivingArrangement(..)
+  , ArrangementType(..)
+  , ReceivingShipments(..)
+  , ReceivingShipment(..)
+  , Type(..)
+  , ReceivingItems(..)
+  , ReceivingItem(..)
+  , ReceivingShipFrom(..)
+  , Name(..)
+  , State(..)
+  , Phone(..)
   ) where
 
 import           Control.Applicative
@@ -273,6 +290,15 @@ newtype AddressLine = AddressLine
   { unAddressLine :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON AddressLine where
+  parseJSON al = genericParseJSON options al
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON AddressLine where
   toJSON address = genericToJSON options address
     where
@@ -285,6 +311,15 @@ newtype City = City
   { unCity :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON City where
+  parseJSON c = genericParseJSON options c
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON City where
   toJSON city = genericToJSON options city
     where
@@ -296,6 +331,15 @@ instance ToJSON City where
 newtype PostalCode = PostalCode
   { unPostalCode :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON PostalCode where
+  parseJSON pc = genericParseJSON options pc
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 instance ToJSON PostalCode where
   toJSON code = genericToJSON options code
@@ -320,6 +364,15 @@ instance ToJSON Region where
 newtype Country = Country
   { unCountry :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Country where
+  parseJSON c = genericParseJSON options c
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 instance ToJSON Country where
   toJSON country = genericToJSON options country
@@ -414,6 +467,7 @@ instance FromJSON ResponseStatus where
       options =
         defaultOptions
         { unwrapUnaryRecords = True
+        , fieldLabelModifier = downcaseHead . drop 10
         }
 
 newtype ResponseMessage = ResponseMessage
@@ -462,6 +516,7 @@ instance FromJSON ResponseResourceLocation where
       options =
         defaultOptions
         { unwrapUnaryRecords = True
+        , fieldLabelModifier = downcaseHead . drop 10
         }
 
 instance FromJSON RateResponse where
@@ -600,9 +655,13 @@ instance FromJSON Rates where
 
 data ServiceOptions = ServiceOptions
   { sOptsServiceOptions  :: [ServiceOption]
-  , sOptsGroupId         :: Maybe Id
-  , sOptsGroupExternalId :: Maybe ExternalId
+  , sOptsGroupId         :: Maybe GroupId
+  , sOptsGroupExternalId :: Maybe GroupExternalId
   } deriving (Eq, Generic, Show)
+
+type GroupId = Id
+
+type GroupExternalId = ExternalId
 
 newtype Id = Id
   { unId :: Integer
@@ -736,29 +795,9 @@ instance FromJSON ExpectedShipDate where
         { unwrapUnaryRecords = True
         }
 
-newtype ExpectedDeliveryDateMin = ExpectedDeliveryDateMin
-  { unExpectedDeliveryDateMin :: UTCTime
-  } deriving (Eq, Generic, Show)
+type ExpectedDeliveryDateMin = ExpectedShipDate
 
-instance FromJSON ExpectedDeliveryDateMin where
-  parseJSON edm = genericParseJSON options edm
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
-
-newtype ExpectedDeliveryDateMax = ExpectedDeliveryDateMax
-  { unExpectedDeliveryDateMax :: UTCTime
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON ExpectedDeliveryDateMax where
-  parseJSON edx = genericParseJSON options edx
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
+type ExpectedDeliveryDateMax = ExpectedShipDate
 
 instance FromJSON Shipment where
   parseJSON sh = genericParseJSON options sh
@@ -1423,23 +1462,59 @@ newtype IncludeEmptyShipwireAnywhere = IncludeEmptyShipwireAnywhere
   } deriving (Eq, Generic, Show)
 
 newtype Offset = Offset
-  { offset :: Integer
+  { unOffset :: Integer
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Offset where
+  parseJSON o = genericParseJSON options o
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 newtype Total = Total
-  { total :: Integer
+  { unTotal :: Integer
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Total where
+  parseJSON t = genericParseJSON options t
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 newtype Previous = Previous
-  { previous :: Text
+  { unPrevious :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Previous where
+  parseJSON p = genericParseJSON options p
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 newtype Next = Next
-  { next :: Text
+  { unNext :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON Next where
+  parseJSON n = genericParseJSON options n
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 newtype Limit = Limit
-  { limit :: Integer
+  { unLimit :: Integer
   } deriving (Eq, Generic, Show)
 
 instance FromJSON StockResponse where
@@ -1517,21 +1592,9 @@ instance FromJSON StockResource where
         }
 
 data StockItem = StockItem
-  { stockItemResourceLocation :: Maybe ItemResourceLocation
+  { stockItemResourceLocation :: Maybe ResponseResourceLocation
   , stockItemResource         :: StockItemResource
   } deriving (Eq, Generic, Show)
-
-newtype ItemResourceLocation = ItemResourceLocation
-  { unItemResourceLocation :: Text
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON ItemResourceLocation where
-  parseJSON irl = genericParseJSON options irl
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
 
 instance FromJSON StockItem where
   parseJSON si = genericParseJSON options si
@@ -1543,14 +1606,14 @@ instance FromJSON StockItem where
         }
 
 data StockItemResource = StockItemResource
-  { sirProductId           :: Id
-  , sirProductExternalId   :: Maybe Id
+  { sirProductId           :: ProductId
+  , sirProductExternalId   :: Maybe ProductExternalId
   , sirSku                 :: SKU
   , sirIsBundle            :: IsBundle
   , sirIsAlias             :: IsAlias
   , sirWarehouseRegion     :: WarehouseRegion
-  , sirWarehouseId         :: Id
-  , sirWarehouseExternalId :: Maybe ExternalId
+  , sirWarehouseId         :: WarehouseId
+  , sirWarehouseExternalId :: Maybe WarehouseExternalId
   , sirPending             :: StockItemResourcePending
   , sirGood                :: StockItemResourceGood
   , sirReserved            :: StockItemResourceReserved
@@ -1563,7 +1626,7 @@ data StockItemResource = StockItemResource
   , sirCreated             :: StockItemResourceCreated
   , sirDamaged             :: StockItemResourceDamaged
   , sirReturned            :: StockItemResourceReturned
-  , sirInreview            :: StockItemResourceInterview
+  , sirInreview            :: StockItemResourceInReview
   , sirAvailableDate       :: Maybe StockItemResourceAvailableDate
   , sirShippedLastDay      :: StockItemResourceShippedLastDay
   , sirShippedLastWeek     :: StockItemResourceShippedLastWeek
@@ -1572,6 +1635,10 @@ data StockItemResource = StockItemResource
   , sirOrderedLastWeek     :: StockItemResourceOrderedLastWeek
   , sirOrderedLast4Weeks   :: StockItemResourceOrderedLast4Weeks
   } deriving (Eq, Generic, Show)
+
+type ProductId = Id
+
+type ProductExternalId = ExternalId
 
 newtype WarehouseRegion = WarehouseRegion
   { unWarehouseRegion :: Text
@@ -1737,11 +1804,11 @@ instance FromJSON StockItemResourceReturned where
         { unwrapUnaryRecords = True
         }
 
-newtype StockItemResourceInterview = StockItemResourceInterview
-  { unStockItemResourceInterview :: Integer
+newtype StockItemResourceInReview = StockItemResourceInReview
+  { unStockItemResourceInReview :: Integer
   } deriving (Eq, Generic, Show)
 
-instance FromJSON StockItemResourceInterview where
+instance FromJSON StockItemResourceInReview where
   parseJSON i = genericParseJSON options i
     where
       options =
@@ -1749,17 +1816,7 @@ instance FromJSON StockItemResourceInterview where
         { unwrapUnaryRecords = True
         }
 
-newtype StockItemResourceAvailableDate = StockItemResourceAvailableDate
-  { unStockItemREsourceAvailableDate :: UTCTime
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON StockItemResourceAvailableDate where
-  parseJSON ad = genericParseJSON options ad
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
+type StockItemResourceAvailableDate = ExpectedShipDate
 
 newtype StockItemResourceShippedLastDay = StockItemResourceShippedLastDay
   { unStockItemResourceShippedLastDay :: Integer
@@ -2018,7 +2075,7 @@ filterBody xs = case [c | Body c <- xs] of
                [c] -> c
                _ -> error "Bad input"
 
--- | Find the query parameters froom the list of
+-- | Find the query parameters from the list of
 -- [Params TupleBS8 BSL.ByteString]
 filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, BS8.ByteString)]
 filterQuery [] = []
@@ -2028,10 +2085,891 @@ filterQuery xs = [b | Query b <- xs]
 -- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving
 -------------------------------------------------------------------------
 
+data CreateReceivingRequest
+data GetReceivingsRequest
+type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
+type instance ShipwireReturn GetReceivingsRequest = GetReceivingsResponse
+
+type CreateReceivingResponse = ReceivingsResponse
+type GetReceivingsResponse = ReceivingsResponse
+
+data ReceivingsResponse = ReceivingsResponse
+  { receivingsResponseResourceLocation :: ResponseResourceLocation
+  , receivingsResponseStatus           :: ResponseStatus
+  , receivingsResponseMessage          :: ResponseMessage
+  , receivingsResponseResource         :: ReceivingsResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ReceivingsResponse where
+  parseJSON rr = genericParseJSON options rr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 18
+        }
+
+data ReceivingsResource = ReceivingsResource
+  { receivingsResponseNext     :: Maybe ResponseNext
+  , receivingsResponseOffset   :: ResponseOffset
+  , receivingsResponsePrevious :: Maybe ResponsePrevious
+  , receivingsResponseTotal    :: ResponseTotal
+  , receivingsResponseItems    :: ReceivingsItems
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ReceivingsResource where
+  parseJSON rr = genericParseJSON options rr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 18
+        }
+
+newtype ReceivingsItems = ReceivingsItems
+  { unReceivingsItems :: [ReceivingsItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ReceivingsItems where
+  parseJSON ri = genericParseJSON options ri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 12
+        , unwrapUnaryRecords = True
+        }
+
+data ReceivingsItem = ReceivingsItem
+  { receivingsItemResourceLocation :: Maybe ResponseResourceLocation
+  , receivingsItemResource         :: ReceivingsItemResource
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ReceivingsItem where
+  parseJSON ri = genericParseJSON options ri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 14
+        }
+
+data ReceivingsItemResource = ReceivingsItemResource
+  { rirId                     :: Id
+  , rirExternalId             :: Maybe ExternalId
+  , rirOrderNo                :: Maybe OrderNo
+  , rirTransactionId          :: TransactionId
+  , rirExpectedDate           :: Maybe ExpectedDateUTCTime
+  , rirCommerceName           :: CommerceName
+  , rirLastUpdatedDate        :: LastUpdatedDate
+  , rirStatus                 :: ItemResourceStatus
+  , rirHolds                  :: ItemResourceHolds
+  , rirItems                  :: ItemResourceItems
+  , rirTrackings              :: ItemResourceTrackings
+  , rirShipments              :: ItemResourceShipments
+  , rirLabels                 :: ItemResourceLabels
+  , rirOptions                :: ItemResourceOptions
+  , rirArrangement            :: ItemResourceArrangement
+  , rirShipFrom               :: ItemResourceShipFrom
+  , rirEvents                 :: ItemResourceEvents
+  , rirRouting                :: ItemResourceRouting
+  , rirInstructionsRecipients :: ItemResourceInstructionsRecipients
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ReceivingsItemResource where
+  parseJSON rir = genericParseJSON options rir
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceInstructionsRecipients = ItemResourceInstructionsRecipients
+  { irirResource         :: Maybe ItemResourceInstructionsRecipientsResource
+  , irirResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceInstructionsRecipients where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+data ItemResourceInstructionsRecipientsResource = ItemResourceInstructionsRecipientsResource
+  { irirrItems    :: ItemResourceInstructionsRecipientsResourceItems
+  , irirrNext     :: Maybe Next
+  , irirrOffset   :: Offset
+  , irirrPrevious :: Maybe Previous
+  , irirrTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceInstructionsRecipientsResource where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+newtype ItemResourceInstructionsRecipientsResourceItems = ItemResourceInstructionsRecipientsResourceItems
+  { iririItems :: [ItemResourceInstructionsRecipientsItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceInstructionsRecipientsResourceItems where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceInstructionsRecipientsItem = ItemResourceInstructionsRecipientsItem
+  { iririResource         :: ItemResourceInstructionsRecipientsItemResource
+  , iririResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceInstructionsRecipientsItem where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceInstructionsRecipientsItemResource = ItemResourceInstructionsRecipientsItemResource
+  { iririrEmail :: Email
+  , iririrName  :: Name
+  , iririrNote  :: Note
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceInstructionsRecipientsItemResource where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+data ItemResourceRouting = ItemResourceRouting
+  { irrResource         :: ItemResourceRoutingResource
+  , irrResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceRouting where
+  parseJSON irr = genericParseJSON options irr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceRoutingResource = ItemResourceRoutingResource
+  { irrrOriginLatitude      :: Latitude
+  , irrrOriginLongitude     :: Longitude
+  , irrrWarehouseExternalId :: Maybe WarehouseExternalId
+  , irrrWarehouseId         :: WarehouseId
+  , irrrWarehouseName       :: WarehouseName
+  , irrrWarehouseRegion     :: WarehouseRegion
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceRoutingResource where
+  parseJSON irr = genericParseJSON options irr
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+newtype Latitude = Latitude
+  { unLatitude :: Double
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Latitude where
+  parseJSON l = genericParseJSON options l
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+type Longitude = Latitude
+
+type ExpectedDateUTCTime = ExpectedShipDate
+
+type LastUpdatedDate = ExpectedShipDate
+
+data ItemResourceEvents = ItemResourceEvents
+  { ireResource         :: ItemResourceEventsResource
+  , ireResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceEvents where
+  parseJSON ire = genericParseJSON options ire
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceEventsResource = ItemResourceEventsResource
+  { irerCreatedDate          :: CreatedDate
+  , irerPickedUpDate         :: Maybe PickedUpDate
+  , irerSubmittedDate        :: Maybe SubmittedDate
+  , irerProcessedDate        :: ProcessedDate
+  , irerCompletedDate        :: Maybe CompletedDate
+  , irerExpectedDate         :: Maybe ExpectedDateText
+  , irerDeliveredDate        :: Maybe DeliveredDate
+  , irerCancelledDate        :: Maybe CancelledDate
+  , irerReturnedDate         :: Maybe ReturnedDate
+  , irerLastManualUpdateDate :: Maybe LastManualUpdateDate
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceEventsResource where
+  parseJSON ire = genericParseJSON options ire
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+type CreatedDate          = ExpectedShipDate
+
+type PickedUpDate         = ExpectedShipDate
+
+type SubmittedDate        = ExpectedShipDate
+
+type ProcessedDate        = ExpectedShipDate
+
+type CompletedDate        = ExpectedShipDate
+
+type CancelledDate        = ExpectedShipDate
+
+type ReturnedDate         = ExpectedShipDate
+
+type LastManualUpdateDate = ExpectedShipDate
+
+data ItemResourceShipFrom = ItemResourceShipFrom
+  { irsfResource         :: ItemResourceShipFromResource
+  , irsfResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipFrom where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+data ItemResourceShipFromResource = ItemResourceShipFromResource
+  { irsfrEmail      :: Maybe Email
+  , irsfrName       :: Maybe Name
+  , irsfrAddress1   :: Maybe AddressLine
+  , irsfrAddress2   :: Maybe AddressLine
+  , irsfrAddress3   :: Maybe AddressLine
+  , irsfrCity       :: Maybe City
+  , irsfrState      :: Maybe State
+  , irsfrPostalCode :: Maybe PostalCode
+  , irsfrCountry    :: Maybe Country
+  , irsfrPhone      :: Maybe Phone
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipFromResource where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceArrangement = ItemResourceArrangement
+  { iraResource         :: ItemResourceArrangementResource
+  , iraResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceArrangement where
+  parseJSON ira = genericParseJSON options ira
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceArrangementResource = ItemResourceArrangementResource
+  { irarContact :: Contact
+  , irarPhone   :: Phone
+  , irarType    :: ArrangementType
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceArrangementResource where
+  parseJSON ira = genericParseJSON options ira
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+data ItemResourceOptions = ItemResourceOptions
+  { iroResource         :: ItemResourceOptionsResource
+  , iroResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceOptions where
+  parseJSON iro = genericParseJSON options iro
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceOptionsResource = ItemResourceOptionsResource
+  { irorWarehouseExternalid :: Maybe WarehouseExternalId
+  , irorWarehouseId         :: WarehouseId
+  , irorWarehouseRegion     :: WarehouseRegion
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceOptionsResource where
+  parseJSON iro = genericParseJSON options iro
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+data ItemResourceLabels = ItemResourceLabels
+  { irlResource         :: Maybe ItemResourceLabelsResource
+  , irlResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceLabels where
+  parseJSON irl = genericParseJSON options irl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceLabelsResource = ItemResourceLabelsResource
+  { irlrItems    :: ItemResourceLabelsResourceItems
+  , irlrNext     :: Maybe Next
+  , irlrOffset   :: Offset
+  , irlrPrevious :: Maybe Previous
+  , irlrTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceLabelsResource where
+  parseJSON irl = genericParseJSON options irl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+newtype ItemResourceLabelsResourceItems = ItemResourceLabelsResourceItems
+  { irlriItems :: [ItemResourceLabelsResourceItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceLabelsResourceItems where
+  parseJSON irl = genericParseJSON options irl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceLabelsResourceItem = ItemResourceLabelsResourceItem
+  { irlriResource         :: ItemResourceLabelsResourceItemResource
+  , irlriResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceLabelsResourceItem where
+  parseJSON irl = genericParseJSON options irl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceLabelsResourceItemResource = ItemResourceLabelsResourceItemResource
+  { irlrirLabelId         :: LabelId
+  , irlrirOrderId         :: OrderId
+  , irlrirOrderExternalId :: OrderExternalId
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceLabelsResourceItemResource where
+  parseJSON irl = genericParseJSON options irl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+type LabelId = Id
+
+type OrderId = Id
+
+type OrderExternalId = ExternalId
+
+newtype ItemResourceStatus = ItemResourceStatus
+  { unItemResourceStatus :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceStatus where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceShipments = ItemResourceShipments
+  { irsResource         :: Maybe ItemResourceShipmentsResource
+  , irsResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipments where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceShipmentsResource = ItemResourceShipmentsResource
+  { irsrItems    :: ItemResourceShipmentsResourceItems
+  , irsrNext     :: Maybe Next
+  , irsrOffset   :: Offset
+  , irsrPrevious :: Maybe Previous
+  , irsrTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipmentsResource where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+newtype ItemResourceShipmentsResourceItems = ItemResourceShipmentsResourceItems
+  { irsriItems :: [ItemResourceShipmentsResourceItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipmentsResourceItems where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceShipmentsResourceItem = ItemResourceShipmentsResourceItem
+  { irsriResource         :: ItemResourceShipmentsResourceItemResource
+  , irsriResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipmentsResourceItem where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceShipmentsResourceItemResource = ItemResourceShipmentsResourceItemResource
+  { irsrirShipmentId :: ShipmentId
+  , irsrirType       :: Type
+  , irsrirHeight     :: Maybe TextHeight
+  , irsrirLength     :: Maybe TextLength
+  , irsrirWeight     :: Maybe TextWeight
+  , irsrirWidth      :: Maybe TextWidth
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceShipmentsResourceItemResource where
+  parseJSON irs = genericParseJSON options irs
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+type ShipmentId = Id
+
+newtype TextHeight = TextHeight
+  { unTextHeight :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON TextHeight where
+  parseJSON th = genericParseJSON options th
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        , unwrapUnaryRecords = True
+        }
+
+newtype TextLength = TextLength
+  { unTextLength :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON TextLength where
+  parseJSON tl = genericParseJSON options tl
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        , unwrapUnaryRecords = True
+        }
+
+newtype TextWeight = TextWeight
+  { unTextWeight :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON TextWeight where
+  parseJSON tw = genericParseJSON options tw
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        , unwrapUnaryRecords = True
+        }
+
+newtype TextWidth = TextWidth
+  { unTextWidth :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON TextWidth where
+  parseJSON tw = genericParseJSON options tw
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceTrackings = ItemResourceTrackings
+  { irtResource         :: Maybe ItemResourceTrackingsResource
+  , irtResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceTrackings where
+  parseJSON irt = genericParseJSON options irt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+        
+data ItemResourceTrackingsResource = ItemResourceTrackingsResource
+  { irtrItems    :: ItemResourceTrackingsResourceItems
+  , irtrNext     :: Maybe Next
+  , irtrOffset   :: Offset
+  , irtrPrevious :: Maybe Previous
+  , irtrTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceTrackingsResource where
+  parseJSON irt = genericParseJSON options irt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+newtype ItemResourceTrackingsResourceItems = ItemResourceTrackingsResourceItems
+  { irtriItems :: [ItemResourceTrackingsResourceItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceTrackingsResourceItems where
+  parseJSON irt = genericParseJSON options irt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceTrackingsResourceItem = ItemResourceTrackingsResourceItem
+  { irtriResource         :: ItemResourceTrackingsResourceItemResource
+  , irtriResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceTrackingsResourceItem where
+  parseJSON irt = genericParseJSON options irt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceTrackingsResourceItemResource = ItemResourceTrackingsResourceItemResource
+  { irtrirId              :: Id
+  , irtrirOrderExternalId :: Maybe OrderExternalId
+  , irtrirOrderId         :: OrderId
+  , irtrirTracking        :: Tracking
+  , irtrirCarrier         :: Carrier
+  , irtrirContact         :: Maybe Contact
+  , irtrirPhone           :: Maybe Phone
+  , irtrirUrl             :: Maybe URL
+  , irtrirSummary         :: Maybe Summary
+  , irtrirSummaryDate     :: Maybe SummaryDate
+  , irtrirTrackedDate     :: Maybe TrackedDate
+  , irtrirDeliveredDate   :: Maybe DeliveredDate
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceTrackingsResourceItemResource where
+  parseJSON irt = genericParseJSON options irt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+type TrackedDate = ExpectedShipDate
+
+type DeliveredDate = ExpectedShipDate
+
+newtype Summary = Summary
+  { unSummary :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Summary where
+  parseJSON s = genericParseJSON options s
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+type SummaryDate = ExpectedShipDate
+
+newtype URL = URL
+  { unURL :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON URL where
+  parseJSON u = genericParseJSON options u
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+data ItemResourceItems = ItemResourceItems
+  { iriResource         :: Maybe ItemResourceItemsResource
+  , iriResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceItems where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceItemsResource = ItemResourceItemsResource
+  { irirItems    :: ItemResourceItemsResourceItems
+  , irirNext     :: Maybe Next
+  , irirOffset   :: Offset
+  , irirPrevious :: Maybe Previous
+  , irirTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceItemsResource where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+data ItemResourceItemsResourceItems = ItemResourceItemsResourceItems
+  { iririsItems :: [ItemResourceItemsResourceItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceItemsResourceItems where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+data ItemResourceItemsResourceItem = ItemResourceItemsResourceItem
+  { iririsResource         :: ItemResourceItemsResourceItemResource
+  , iririsResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceItemsResourceItem where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+data ItemResourceItemsResourceItemResource = ItemResourceItemsResourceItemResource
+  { iririrOrderExternalId   :: Maybe OrderExternalId
+  , iririrOrderId           :: OrderId
+  , iririrProductExternalId :: Maybe ProductExternalId
+  , iririrProductId         :: ProductId
+  , iririrQuantity          :: Quantity
+  , iririrSku               :: SKU
+  , iririrExpected          :: Expected
+  , iririrPending           :: Pending
+  , iririrGood              :: Good
+  , iririrInReview          :: InReview
+  , iririrDamaged           :: Damaged
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceItemsResourceItemResource where
+  parseJSON iri = genericParseJSON options iri
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+newtype Expected = Expected
+  { unExpected :: Integer
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Expected where
+  parseJSON e = genericParseJSON options e
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+type Pending = StockItemResourcePending
+
+type Good = StockItemResourceGood
+
+type InReview = StockItemResourceInReview
+
+type Damaged = StockItemResourceDamaged
+
+data ItemResourceHolds = ItemResourceHolds
+  { irhResource         :: Maybe ItemResourceHoldsResource
+  , irhResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceHolds where
+  parseJSON irh = genericParseJSON options irh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 3
+        }
+
+data ItemResourceHoldsResource = ItemResourceHoldsResource
+  { irhrItems    :: ItemResourceHoldsResourceItems
+  , irhrNext     :: Maybe Next
+  , irhrOffset   :: Offset
+  , irhrPrevious :: Maybe Previous
+  , irhrTotal    :: Total
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceHoldsResource where
+  parseJSON irh = genericParseJSON options irh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 4
+        }
+
+newtype ItemResourceHoldsResourceItems = ItemResourceHoldsResourceItems
+  { irhriItems :: [ItemResourceHoldsResourceItem]
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceHoldsResourceItems where
+  parseJSON irh = genericParseJSON options irh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceHoldsResourceItem = ItemResourceHoldsResourceItem
+  { irhriResource         :: ItemResourceHoldsResourceItemResource
+  , irhriResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceHoldsResourceItem where
+  parseJSON irh = genericParseJSON options irh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 5
+        }
+
+data ItemResourceHoldsResourceItemResource = ItemResourceHoldsResourceItemResource
+  { irhrirAppliedDate     :: AppliedDate
+  , irhrirClearedDate     :: Maybe ClearedDate
+  , irhrirDescription     :: Description
+  , irhrirExternalOrderId :: Maybe ExternalOrderId
+  , irhrirId              :: Id
+  , irhrirOrderId         :: OrderId
+  , irhrirType            :: Type
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON ItemResourceHoldsResourceItemResource where
+  parseJSON irh = genericParseJSON options irh
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 6
+        }
+
+type ExternalOrderId = ExternalId
+
+newtype Description = Description
+  { unDescription :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON Description where
+  parseJSON d = genericParseJSON options d
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+type ClearedDate = ExpectedShipDate
+
+type AppliedDate = ExpectedShipDate
+
+newtype ItemStatus = ItemStatus
+  { unItemStatus :: Text
+  } deriving (Eq, Generic, Show)
+
+newtype CommerceName = CommerceName
+  { unCommerceName :: Text
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON CommerceName where
+  parseJSON cn = genericParseJSON options cn
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+type TransactionId = ExternalId
+
 data CreateReceiving = CreateReceiving
   { createReceivingExternalId            :: Maybe ExternalId
   , createReceivingOrderNo               :: Maybe OrderNo
-  , createReceivingExpectedDate          :: Maybe ExpectedDate
+  , createReceivingExpectedDate          :: Maybe ExpectedDateText
   , createReceivingOptions               :: ReceivingOptions
   , createReceivingArrangement           :: ReceivingArrangement
   , createReceivingShipments             :: ReceivingShipments
@@ -2051,13 +2989,22 @@ instance ToJSON CreateReceiving where
         , omitNothingFields  = True
         }
 
--- | The expected format is YYYY-MM-DDThh:mm:ssTZD
+-- | The expected format is YYYY-MM-DDThh:mm:ssTZD (ISO8601)
 -- "2014-05-27T00:00:00-07:00"
-newtype ExpectedDate = ExpectedDate
+newtype ExpectedDateText = ExpectedDateText
   { unExpectedDate :: Text
   } deriving (Eq, Generic, Show)
 
-instance ToJSON ExpectedDate where
+instance FromJSON ExpectedDateText where
+  parseJSON edt = genericParseJSON options edt
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
+instance ToJSON ExpectedDateText where
   toJSON ed = genericToJSON options ed
     where
       options =
@@ -2069,6 +3016,15 @@ newtype OrderNo = OrderNo
   { unOrderNo :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON OrderNo where
+  parseJSON o = genericParseJSON options o
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON OrderNo where
   toJSON o = genericToJSON options o
     where
@@ -2078,10 +3034,14 @@ instance ToJSON OrderNo where
         }
 
 data ReceivingOptions = ReceivingOptions
-  { ropWarehouseId         :: Maybe Id
-  , ropWarehouseExternalId :: Maybe ExternalId
+  { ropWarehouseId         :: Maybe WarehouseId
+  , ropWarehouseExternalId :: Maybe WarehouseExternalId
   , ropWarehouseRegion     :: Maybe WarehouseRegion
   } deriving (Eq, Generic, Show)
+
+type WarehouseId = Id
+
+type WarehouseExternalId = ExternalId
 
 instance ToJSON ReceivingOptions where
   toJSON r = genericToJSON options r
@@ -2111,6 +3071,15 @@ newtype Contact = Contact
   { unContact :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON Contact where
+  parseJSON c = genericParseJSON options c
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON Contact where
   toJSON c = genericToJSON options c
     where
@@ -2123,6 +3092,15 @@ newtype Phone = Phone
   { unPhone :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON Phone where
+  parseJSON p = genericParseJSON options p
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON Phone where
   toJSON p = genericToJSON options p
     where
@@ -2134,6 +3112,15 @@ instance ToJSON Phone where
 newtype Type = Type
   { unType :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Type where
+  parseJSON t = genericParseJSON options t
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 instance ToJSON Type where
   toJSON t = genericToJSON options t
@@ -2148,6 +3135,15 @@ data ArrangementType = ArrangementTypeNone
   | ArrangementTypeLabel
   | ArrangementTypePickup
   deriving (Eq, Generic, Show)
+
+instance FromJSON ArrangementType where
+  parseJSON = withText "arrangementType" parse
+    where
+      parse "none"     = pure ArrangementTypeNone
+      parse "overseas" = pure ArrangementTypeOverseas
+      parse "label"    = pure ArrangementTypeLabel
+      parse "pickup"   = pure ArrangementTypePickup
+      parse o          = fail ("Unexpected arrangementType value: " <> show o)
 
 instance ToJSON ArrangementType where
   toJSON ArrangementTypeNone = String "none"
@@ -2197,9 +3193,9 @@ instance ToJSON ReceivingLabels where
         }
 
 data ReceivingLabel = ReceivingLabel
-  { rlLabelId         :: Maybe Id
-  , rlOrderId         :: Maybe Id
-  , rlOrderExternalId :: Maybe ExternalId
+  { rlLabelId         :: Maybe LabelId
+  , rlOrderId         :: Maybe OrderId
+  , rlOrderExternalId :: Maybe OrderExternalId
   } deriving (Eq, Generic, Show)
 
 instance ToJSON ReceivingLabel where
@@ -2242,6 +3238,15 @@ instance ToJSON ReceivingTracking where
 newtype Tracking = Tracking
   { unTracking :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Tracking where
+  parseJSON t = genericParseJSON options t
+    where
+      options =
+        defaultOptions
+        { unwrapUnaryRecords = True
+        , fieldLabelModifier = downcaseHead . drop 2
+        }
 
 instance ToJSON Tracking where
   toJSON t = genericToJSON options t
@@ -2301,6 +3306,15 @@ newtype Email = Email
   { unEmail :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON Email where
+  parseJSON e = genericParseJSON options e
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON Email where
   toJSON e = genericToJSON options e
     where
@@ -2312,6 +3326,15 @@ instance ToJSON Email where
 newtype Name = Name
   { unName :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Name where
+  parseJSON n = genericParseJSON options n
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 instance ToJSON Name where
   toJSON n = genericToJSON options n
@@ -2325,6 +3348,15 @@ newtype State = State
   { unState :: Text
   } deriving (Eq, Generic, Show)
 
+instance FromJSON State where
+  parseJSON s = genericParseJSON options s
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
+
 instance ToJSON State where
   toJSON s = genericToJSON options s
     where
@@ -2334,7 +3366,7 @@ instance ToJSON State where
         }
 
 newtype ReceivingInstructionsRecipients = ReceivingInstructionsRecipients
-  { rirInstructionsRecipients :: [ReceivingInstructionsRecipient]
+  { rirsInstructionsRecipients :: [ReceivingInstructionsRecipient]
   } deriving (Eq, Generic, Show)
 
 instance ToJSON ReceivingInstructionsRecipients where
@@ -2348,6 +3380,15 @@ instance ToJSON ReceivingInstructionsRecipients where
 newtype Note = Note
   { unNote :: Text
   } deriving (Eq, Generic, Show)
+
+instance FromJSON Note where
+  parseJSON n = genericParseJSON options n
+    where
+      options =
+        defaultOptions
+        { fieldLabelModifier = downcaseHead . drop 2
+        , unwrapUnaryRecords = True
+        }
 
 instance ToJSON Note where
   toJSON n = genericToJSON options n
