@@ -36,11 +36,27 @@ createRateRequest getRate = mkShipwireRequest NHTM.methodPost url params
 
 -- | Get stock information for your products.
 -- https://www.shipwire.com/w/developers/stock/
-getStockInfo :: ShipwireRequest StockRequest TupleBS8 c
+getStockInfo :: ShipwireRequest StockRequest TupleBS8 BSL.ByteString
 getStockInfo = mkShipwireRequest NHTM.methodGet url params
   where
     url = "/stock"
     params = []
+
+-- | Get an itemized list of receivings.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire0
+getReceivings :: ShipwireRequest GetReceivingsRequest TupleBS8 BSL.ByteString
+getReceivings = mkShipwireRequest NHTM.methodGet url params
+  where
+    url = "/receivings"
+    params = []
+
+-- | Create a new receiving
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire1
+createReceiving :: CreateReceiving -> ShipwireRequest CreateReceivingRequest TupleBS8 BSL.ByteString
+createReceiving createReceiving = mkShipwireRequest NHTM.methodPost url params
+  where
+    url = "/receivings"
+    params = [Body (encode createReceiving)]
 
 -- | Create a request to `Shipwire`'s API
 shipwire
