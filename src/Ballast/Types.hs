@@ -2238,7 +2238,7 @@ instance FromJSON ItemResourceInstructionsRecipientsItem where
 data ItemResourceInstructionsRecipientsItemResource = ItemResourceInstructionsRecipientsItemResource
   { iririrEmail :: Email
   , iririrName  :: Name
-  , iririrNote  :: Note
+  , iririrNote  :: Maybe Note
   } deriving (Eq, Generic, Show)
 
 instance FromJSON ItemResourceInstructionsRecipientsItemResource where
@@ -2550,7 +2550,7 @@ instance FromJSON ItemResourceShipmentsResource where
     where
       options =
         defaultOptions
-        { fieldLabelModifier = downcaseHead . drop 5
+        { fieldLabelModifier = downcaseHead . drop 4
         }
 
 newtype ItemResourceShipmentsResourceItems = ItemResourceShipmentsResourceItems
@@ -2676,7 +2676,7 @@ instance FromJSON ItemResourceTrackingsResource where
     where
       options =
         defaultOptions
-        { fieldLabelModifier = downcaseHead . drop 3
+        { fieldLabelModifier = downcaseHead . drop 4
         }
 
 newtype ItemResourceTrackingsResourceItems = ItemResourceTrackingsResourceItems
@@ -2689,6 +2689,7 @@ instance FromJSON ItemResourceTrackingsResourceItems where
       options =
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 5
+        , unwrapUnaryRecords = True
         }
 
 data ItemResourceTrackingsResourceItem = ItemResourceTrackingsResourceItem
@@ -2709,7 +2710,7 @@ data ItemResourceTrackingsResourceItemResource = ItemResourceTrackingsResourceIt
   , irtrirOrderExternalId :: Maybe OrderExternalId
   , irtrirOrderId         :: OrderId
   , irtrirTracking        :: Tracking
-  , irtrirCarrier         :: Carrier
+  , irtrirCarrier         :: CarrierName
   , irtrirContact         :: Maybe Contact
   , irtrirPhone           :: Maybe Phone
   , irtrirUrl             :: Maybe URL
@@ -2788,7 +2789,7 @@ instance FromJSON ItemResourceItemsResource where
         { fieldLabelModifier = downcaseHead . drop 4
         }
 
-data ItemResourceItemsResourceItems = ItemResourceItemsResourceItems
+newtype ItemResourceItemsResourceItems = ItemResourceItemsResourceItems
   { iririsItems :: [ItemResourceItemsResourceItem]
   } deriving (Eq, Generic, Show)
 
@@ -2798,11 +2799,12 @@ instance FromJSON ItemResourceItemsResourceItems where
       options =
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 6
+        , unwrapUnaryRecords = True
         }
 
 data ItemResourceItemsResourceItem = ItemResourceItemsResourceItem
   { iririsResource         :: ItemResourceItemsResourceItemResource
-  , iririsResourceLocation :: ResponseResourceLocation
+  , iririsResourceLocation :: Maybe ResponseResourceLocation
   } deriving (Eq, Generic, Show)
 
 instance FromJSON ItemResourceItemsResourceItem where
@@ -2895,6 +2897,7 @@ instance FromJSON ItemResourceHoldsResourceItems where
       options =
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 5
+        , unwrapUnaryRecords = True
         }
 
 data ItemResourceHoldsResourceItem = ItemResourceHoldsResourceItem
