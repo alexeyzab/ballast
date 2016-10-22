@@ -50,25 +50,25 @@ module Ballast.Types
   , credentialsEnv
   , prodEnvConfig
   , sandboxEnvConfig
-  , ParentId
-  , ProductIdParam
-  , ProductExternalIdParam
-  , WarehouseIdParam
-  , WarehouseExternalIdParam
-  , WarehouseRegionParam
-  , WarehouseAreaParam
-  , ChannelName
-  , IncludeEmpty
-  , VendorIdParam
-  , VendorExternalIdParam
-  , DisableAutoBreakLots
+  , ParentId(..)
+  , ProductIdParam(..)
+  , ProductExternalIdParam(..)
+  , WarehouseIdParam(..)
+  , WarehouseExternalIdParam(..)
+  , WarehouseRegionParam(..)
+  , WarehouseAreaParam(..)
+  , ChannelName(..)
+  , IncludeEmpty(..)
+  , VendorIdParam(..)
+  , VendorExternalIdParam(..)
+  , DisableAutoBreakLots(..)
   , Mode(..)
-  , IncludeEmptyShipwireAnywhere
-  , Offset
-  , Total
-  , Previous
-  , Next
-  , Limit
+  , IncludeEmptyShipwireAnywhere(..)
+  , Offset(..)
+  , Total(..)
+  , Previous(..)
+  , Next(..)
+  , Limit(..)
   , GetReceivingsRequest
   , CreateReceivingRequest
   , CreateReceiving(..)
@@ -86,6 +86,15 @@ module Ballast.Types
   , Name(..)
   , State(..)
   , Phone(..)
+  , ExpandReceivings(..)
+  , ExpandParamReceivings(..)
+  , CommerceNameParam(..)
+  , TransactionIdParam(..)
+  , OrderIdParam(..)
+  , OrderNoParam(..)
+  , StatusParams(..)
+  , StatusParam(..)
+  , UpdatedAfter(..)
   ) where
 
 import           Control.Applicative
@@ -2089,6 +2098,121 @@ data CreateReceivingRequest
 data GetReceivingsRequest
 type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
 type instance ShipwireReturn GetReceivingsRequest = GetReceivingsResponse
+instance ShipwireHasParam GetReceivingsRequest ExpandParamReceivings
+instance ShipwireHasParam GetReceivingsRequest CommerceNameParam
+instance ShipwireHasParam GetReceivingsRequest TransactionIdParam
+instance ShipwireHasParam GetReceivingsRequest ExternalIdParam
+instance ShipwireHasParam GetReceivingsRequest OrderIdParam
+instance ShipwireHasParam GetReceivingsRequest OrderNoParam
+instance ShipwireHasParam GetReceivingsRequest StatusParams
+instance ShipwireHasParam GetReceivingsRequest UpdatedAfter
+instance ShipwireHasParam GetReceivingsRequest WarehouseIdParam
+instance ShipwireHasParam GetReceivingsRequest WarehouseExternalIdParam
+
+-- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
+newtype UpdatedAfter = UpdatedAfter
+  { updatedAfter :: Text
+  } deriving (Eq, Show)
+
+instance ToShipwireParam UpdatedAfter where
+  toShipwireParam (UpdatedAfter x) =
+    (Query ("updatedAfter", TE.encodeUtf8 x) :)
+
+newtype StatusParams = StatusParams
+  { statusParam :: [StatusParam]
+  } deriving (Eq, Show)
+
+data StatusParam = StatusProcessed
+  | StatusCanceled
+  | StatusCompleted
+  | StatusDelivered
+  | StatusReturned
+  | StatusSubmitted
+  | StatusHeld
+  | StatusTracked
+  deriving (Eq, Show)
+
+statusParamToTx :: StatusParam -> Text
+statusParamToTx StatusProcessed = "processed"
+statusParamToTx StatusCanceled  = "canceled"
+statusParamToTx StatusCompleted = "completed"
+statusParamToTx StatusDelivered = "delivered"
+statusParamToTx StatusReturned  = "returned"
+statusParamToTx StatusSubmitted = "submitted"
+statusParamToTx StatusHeld      = "held"
+statusParamToTx StatusTracked   = "tracked"
+statusParamToTx _               = error "Bad input"
+
+instance ToShipwireParam StatusParams where
+  toShipwireParam (StatusParams xs) =
+    (Query ("status", TE.encodeUtf8 (T.intercalate "," (map statusParamToTx xs))) :)
+
+newtype OrderNoParam = OrderNoParam
+  { orderNoParam :: [Text]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam OrderNoParam where
+  toShipwireParam (OrderNoParam xs) =
+    (Query ("orderNo", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+newtype OrderIdParam = OrderIdParam
+  { orderIdParam :: [Text]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam OrderIdParam where
+  toShipwireParam (OrderIdParam xs) =
+    (Query ("orderId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+newtype ExternalIdParam = ExternalIdParam
+  { externalIdParam :: [Text]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam ExternalIdParam where
+  toShipwireParam (ExternalIdParam xs) =
+    (Query ("externalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+
+newtype TransactionIdParam = TransactionIdParam
+  { transactionIdParam :: [Text]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam TransactionIdParam where
+  toShipwireParam (TransactionIdParam xs) =
+    (Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    
+newtype ExpandParamReceivings = ExpandParamReceivings
+  { expandParamReceivings :: [ExpandReceivings]
+  } deriving (Eq, Show)
+
+data ExpandReceivings = ExpandHolds
+  | ExpandInstructionsRecipients
+  | ExpandItems
+  | ExpandShipments
+  | ExpandLabels
+  | ExpandTrackings
+  | ExpandAll
+  deriving (Eq, Show)
+
+expandReceivingsToTx :: ExpandReceivings -> Text
+expandReceivingsToTx ExpandHolds                  = "holds"
+expandReceivingsToTx ExpandInstructionsRecipients = "instructionsRecipients"
+expandReceivingsToTx ExpandItems                  = "items"
+expandReceivingsToTx ExpandShipments              = "shipments"
+expandReceivingsToTx ExpandLabels                 = "labels"
+expandReceivingsToTx ExpandTrackings              = "trackings"
+expandReceivingsToTx ExpandAll                    = "all"
+expandReceivingsToTx _                            = error "Bad input"
+
+instance ToShipwireParam ExpandParamReceivings where
+  toShipwireParam (ExpandParamReceivings xs) =
+    (Query ("expand", TE.encodeUtf8 (T.intercalate "," (map expandReceivingsToTx xs))) :)
+
+newtype CommerceNameParam = CommerceNameParam
+  { commerceNameParam :: [Text]
+  } deriving (Eq, Generic, Show)
+
+instance ToShipwireParam CommerceNameParam where
+  toShipwireParam (CommerceNameParam ns) =
+    (Query ("commerceName", TE.encodeUtf8 (T.intercalate "," ns)) :)
 
 type CreateReceivingResponse = ReceivingsResponse
 type GetReceivingsResponse = ReceivingsResponse
