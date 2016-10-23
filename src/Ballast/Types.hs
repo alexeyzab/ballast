@@ -833,7 +833,7 @@ instance FromJSON CarrierCode where
       options =
         defaultOptions
         { unwrapUnaryRecords = True
-        }        
+        }
 
 newtype CarrierName = CarrierName
   { unCarrierName :: Text
@@ -854,7 +854,7 @@ instance ToJSON CarrierName where
         defaultOptions
         { unwrapUnaryRecords = True
         }
-        
+
 newtype CarrierProperties = CarrierProperties
   { unCarrierProperties :: [Text]
   } deriving (Eq, Generic, Show)
@@ -2064,9 +2064,9 @@ instance ToShipwireParam Next where
 instance ToShipwireParam Limit where
   toShipwireParam (Limit l) =
     (Query ("limit", TE.encodeUtf8 $ (T.pack . show) l) :)
-    
+
 class (ToShipwireParam param) => ShipwireHasParam request param where
-  
+
 -- | Add an optional query parameter
 (-&-)
   :: ShipwireHasParam request param
@@ -2108,6 +2108,7 @@ instance ShipwireHasParam GetReceivingsRequest StatusParams
 instance ShipwireHasParam GetReceivingsRequest UpdatedAfter
 instance ShipwireHasParam GetReceivingsRequest WarehouseIdParam
 instance ShipwireHasParam GetReceivingsRequest WarehouseExternalIdParam
+instance ShipwireHasParam CreateReceivingRequest ExpandParamReceivings
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
@@ -2178,7 +2179,7 @@ newtype TransactionIdParam = TransactionIdParam
 instance ToShipwireParam TransactionIdParam where
   toShipwireParam (TransactionIdParam xs) =
     (Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs)) :)
-    
+
 newtype ExpandParamReceivings = ExpandParamReceivings
   { expandParamReceivings :: [ExpandReceivings]
   } deriving (Eq, Show)
@@ -2786,7 +2787,7 @@ instance FromJSON ItemResourceTrackings where
         defaultOptions
         { fieldLabelModifier = downcaseHead . drop 3
         }
-        
+
 data ItemResourceTrackingsResource = ItemResourceTrackingsResource
   { irtrItems    :: ItemResourceTrackingsResourceItems
   , irtrNext     :: Maybe Next
