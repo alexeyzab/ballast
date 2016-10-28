@@ -2222,6 +2222,8 @@ data ReceivingsResponse = ReceivingsResponse
   { receivingsResponseResourceLocation :: ResponseResourceLocation
   , receivingsResponseStatus           :: ResponseStatus
   , receivingsResponseMessage          :: ResponseMessage
+  , receivingsResponseWarnings         :: Maybe ResponseWarnings
+  , receivingsResponseErrors           :: Maybe ResponseErrors
   , receivingsResponseResource         :: ReceivingsResource
   } deriving (Eq, Generic, Show)
 
