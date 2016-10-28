@@ -33,6 +33,13 @@ module Ballast.Types
   , ShipwireRequest(..)
   , RateRequest
   , StockRequest
+  , StockResponse(..)
+  , ResponseErrors(..)
+  , Error(..)
+  , ErrorCode(..)
+  , ErrorMessage(..)
+  , ErrorType(..)
+  , ResponseStatus(..)
   , mkShipwireRequest
   , ShipwireReturn
   , defaultGetRate
@@ -72,6 +79,8 @@ module Ballast.Types
   , GetReceivingsRequest
   , CreateReceivingRequest
   , CreateReceiving(..)
+  , ReceivingsResource(..)
+  , ReceivingsResponse(..)
   , ExpectedDateText(..)
   , ReceivingOptions(..)
   , WarehouseRegion(..)
@@ -95,6 +104,9 @@ module Ballast.Types
   , StatusParams(..)
   , StatusParam(..)
   , UpdatedAfter(..)
+  , ResponseOffset(..)
+  , ResponseTotal(..)
+  , ReceivingsItems(..)
   ) where
 
 import           Control.Applicative
