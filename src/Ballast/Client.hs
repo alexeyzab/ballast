@@ -53,10 +53,10 @@ getReceivings = mkShipwireRequest NHTM.methodGet url params
 -- | Create a new receiving
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire1
 createReceiving :: CreateReceiving -> ShipwireRequest CreateReceivingRequest TupleBS8 BSL.ByteString
-createReceiving createReceiving = mkShipwireRequest NHTM.methodPost url params
+createReceiving crReceiving = mkShipwireRequest NHTM.methodPost url params
   where
     url = "/receivings"
-    params = [Body (encode createReceiving)]
+    params = [Body (encode crReceiving)]
 
 -- | Create a request to `Shipwire`'s API
 shipwire
