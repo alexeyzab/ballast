@@ -6,7 +6,8 @@ module Main where
 import           Ballast.Client
 import           Ballast.Types
 import           Test.Hspec
-import           Test.Hspec.Expectations.Contrib (isLeft, isRight)
+import           Test.Hspec.Expectations.Contrib (isRight)
+-- isLeft,
 
 mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord

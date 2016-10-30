@@ -7,7 +7,6 @@ module Ballast.Client where
 import           Ballast.Types
 import           Data.Aeson                 (eitherDecode, encode)
 import           Data.Aeson.Types
-import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Monoid                ((<>))
 import           Data.String                (IsString)
@@ -58,52 +57,42 @@ createReceiving crReceiving = mkShipwireRequest NHTM.methodPost url params
     url = "/receivings"
     params = [Body (encode crReceiving)]
 
+-- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
+
+shipwire' :: (FromJSON (ShipwireReturn a))
+          => ShipwireConfig
+          -> ShipwireRequest a TupleBS8 BSL.ByteString
+          -> IO (Response BSL.ByteString)
+shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
+  manager <- newManager tlsManagerSettings
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
+  let reqBody | rMethod == NHTM.methodGet = mempty
+              | otherwise = filterBody params
+      reqURL  = paramsToByteString $ filterQuery params
+      req = initReq { method = rMethod
+                    , requestBody = RequestBodyLBS reqBody
+                    , queryString = reqURL
+                    }
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
+      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
+  httpLbs authorizedRequest manager
+
+data ShipwireError =
+  ShipwireError {
+    parseError :: String
+  , shipwireResponse :: Response BSL.ByteString
+  } deriving (Eq, Show)
+
 -- | Create a request to `Shipwire`'s API
 shipwire
   :: (FromJSON (ShipwireReturn a))
   => ShipwireConfig
   -> ShipwireRequest a TupleBS8 BSL.ByteString
-  -> IO (Either String (ShipwireReturn a))
-shipwire ShipwireConfig {..} ShipwireRequest {..} = do
-  manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
-  let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
-      req = initReq { method = rMethod
-                    , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
-                    }
-      shipwireUser = unUsername email
-      shipwirePass = unPassword pass
-      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
-  response <- httpLbs authorizedRequest manager
+  -> IO (Either ShipwireError (ShipwireReturn a))
+shipwire config request = do
+  response <- shipwire' config request
   let result = eitherDecode $ responseBody response
-  return result
-
--- | Print the JSON body
-debug
-  :: (FromJSON (ShipwireReturn a))
-  => ShipwireConfig
-  -> ShipwireRequest a TupleBS8 BSL.ByteString
-  -> IO BSL.ByteString
-debug ShipwireConfig {..} ShipwireRequest {..} = do
-  manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
-  let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
-      req = initReq { method = rMethod
-                    , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
-                    }
-      shipwireUser = unUsername email
-      shipwirePass = unPassword pass
-      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
-  response <- httpLbs authorizedRequest manager
-  let result = responseBody response
-  return result
-  
--- shipwire usage:
--- let config = ShipwireConfig sandboxUrl (BS8.pack *email*) (BS8.pack *pass*)
--- shipwire config $ getStockInfo -&- (SKU $ T.pack "sku")
+  case result of
+    Left s -> return (Left (ShipwireError s response))
+    (Right r) -> return (Right r)
