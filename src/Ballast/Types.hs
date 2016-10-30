@@ -1,8 +1,9 @@
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE RecordWildCards       #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 module Ballast.Types
   ( Username(..)
@@ -143,29 +144,13 @@ newtype Password = Password
 
 newtype SKU = SKU
   { unSku :: Text
-  } deriving (Eq, Generic, Show)
+  } deriving (Eq, FromJSON, Show, ToJSON)
 
 mkSku :: Text -> Maybe SKU
 mkSku sku
   | T.length sku > 16 = Nothing
   | T.length sku < 1 = Nothing
   | otherwise = Just (SKU sku)
-
-instance ToJSON SKU where
-  toJSON sku = genericToJSON options sku
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
-
-instance FromJSON SKU where
-  parseJSON s = genericParseJSON options s
-    where
-      options =
-        defaultOptions
-        { unwrapUnaryRecords = True
-        }
 
 -- max 16 characters
 -- haskellbookskuty
