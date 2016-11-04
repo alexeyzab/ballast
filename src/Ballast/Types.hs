@@ -124,6 +124,7 @@ import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
 import           Data.Time.Clock            (UTCTime)
 import           GHC.Generics
+import qualified Data.Vector                        as V
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method  as NHTM
 import           System.Environment         (getEnv)
@@ -420,7 +421,7 @@ omitNulls :: [(Text, Value)] -> Value
 omitNulls = object . filter notNull
   where
     notNull (_, Null) = False
-    -- notNull (_, Array a) = (not . V.null) a
+    notNull (_, Array a) = (not . V.null) a
     notNull _ = True
 
 data GroupBy

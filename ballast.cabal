@@ -29,6 +29,7 @@ library
                      , transformers
                      , hspec
                      , hspec-expectations
+                     , vector
   default-language:    Haskell2010
   ghc-options: -Wall
 
