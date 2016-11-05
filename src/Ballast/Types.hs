@@ -7,7 +7,8 @@
 module Ballast.Types
   ( Username(..)
   , Password(..)
-  , SKU(..)  
+  , SKU(..)
+  , mkSku
   , GetRate(..)
   , RateOptions(..)
   , CanSplit(..)
@@ -196,7 +197,7 @@ module Ballast.Types
   , Longitude
   , ExpectedDateUTCTime
   , LastUpdatedDate
-  , ItemResourceEvents
+  , ItemResourceEvents(..)
   , ItemResourceEventsResource(..)
   , CreatedDate
   , PickedUpDate
@@ -215,6 +216,7 @@ module Ballast.Types
   , ItemResourceLabels(..)
   , ItemResourceLabelsResource(..)
   , ItemResourceLabelsResourceItems(..)
+  , ItemResourceLabelsResourceItem(..)
   , ItemResourceLabelsResourceItemResource(..)
   , LabelId
   , OrderId
@@ -290,13 +292,9 @@ module Ballast.Types
   , ReceivingInstructionsRecipient(..)
   ) where
 
-import           Control.Applicative
 import           Data.Aeson
-import           Data.Aeson.Types
-import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
-import qualified Data.Char                  as DC
 import           Data.Fixed
 import           Data.Monoid                ((<>))
 import           Data.Text                  (Text)
@@ -426,27 +424,27 @@ newtype Quantity = Quantity
   { unQuantity :: Integer
   } deriving (Eq, Show, ToJSON, FromJSON)
 
-defaultGetRate :: GetRate
-defaultGetRate = GetRate defaultRateOptions defaultRateOrder
+-- defaultGetRate :: GetRate
+-- defaultGetRate = GetRate defaultRateOptions defaultRateOrder
 
-defaultRateOrder :: RateOrder
-defaultRateOrder = RateOrder defaultShipTo defaultItems
+-- defaultRateOrder :: RateOrder
+-- defaultRateOrder = RateOrder defaultShipTo defaultItems
 
-defaultItems :: Items
-defaultItems = [ItemInfo ((SKU "Ballasttest"), Quantity 1)]
+-- defaultItems :: Items
+-- defaultItems = [ItemInfo ((SKU "Ballasttest"), Quantity 1)]
 
-defaultShipTo :: ShipTo
-defaultShipTo =
-  ShipTo
-    (AddressLine "6501 Railroad Avenue SE")
-    (AddressLine "Room 315")
-    (AddressLine "")
-    (City "Snoqualmie")
-    (PostalCode "85283")
-    (Region "WA")
-    (Country "US")
-    Commercial
-    NotPoBox
+-- defaultShipTo :: ShipTo
+-- defaultShipTo =
+--   ShipTo
+--     (AddressLine "6501 Railroad Avenue SE")
+--     (AddressLine "Room 315")
+--     (AddressLine "")
+--     (City "Snoqualmie")
+--     (PostalCode "85283")
+--     (Region "WA")
+--     (Country "US")
+--     Commercial
+--     NotPoBox
 
 newtype AddressLine = AddressLine
   { unAddressLine :: Text
@@ -468,12 +466,12 @@ newtype Country = Country
   { unCountry :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
 
-downcaseHead :: [Char] -> [Char]
-downcaseHead [] = []
-downcaseHead (x:xs) = (DC.toLower x) : xs
+-- downcaseHead :: [Char] -> [Char]
+-- downcaseHead [] = []
+-- downcaseHead (x:xs) = (DC.toLower x) : xs
 
-defaultRateOptions :: RateOptions
-defaultRateOptions = RateOptions USD GroupByAll (CanSplit 1) WarehouseAreaUS Nothing
+-- defaultRateOptions :: RateOptions
+-- defaultRateOptions = RateOptions USD GroupByAll (CanSplit 1) WarehouseAreaUS Nothing
 
 data Currency =
   USD
@@ -481,11 +479,6 @@ data Currency =
 
 instance ToJSON Currency where
   toJSON USD = String "USD"
-
-tshow
-  :: Show a
-  => a -> Text
-tshow = T.pack . show
 
 omitNulls :: [(Text, Value)] -> Value
 omitNulls = object . filter notNull
@@ -517,13 +510,13 @@ data WarehouseArea =
 instance ToJSON WarehouseArea where
   toJSON WarehouseAreaUS = String "US"
 
-defaultRateResponse :: IO RateResponse
-defaultRateResponse = do
-  file <- BSL.readFile "rateresponse.json"
-  let decoded = eitherDecode file
-  case decoded of
-    Right info -> return info
-    Left err -> error err
+-- defaultRateResponse :: IO RateResponse
+-- defaultRateResponse = do
+--   file <- BSL.readFile "rateresponse.json"
+--   let decoded = eitherDecode file
+--   case decoded of
+--     Right info -> return info
+--     Left err -> error err
 
 data RateResponse = RateResponse
   { rateResponseStatus           :: ResponseStatus
@@ -1143,7 +1136,6 @@ modeToBS8 IncludingHigherLevelQuantitiesWithLots       = "IncludingHigherLevelQu
 modeToBS8 IncludingHigherLevelQuantitiesWithoutLots    = "IncludingHigherLevelQuantitiesWithoutLots"
 modeToBS8 NotIncludingHigherLevelQuantitiesWithLots    = "NotIncludingHigherLevelQuantitiesWithLots"
 modeToBS8 NotIncludingHigherLevelQuantitiesWithoutLots = "NotIncludingHigherLevelQuantitiesWithoutLots"
-modeToBS8 _                                            = error "Bad input"
 
 newtype IncludeEmptyShipwireAnywhere = IncludeEmptyShipwireAnywhere
   { inclEmptyShipwireAnywhere :: Text
@@ -1599,7 +1591,6 @@ statusParamToTx StatusReturned  = "returned"
 statusParamToTx StatusSubmitted = "submitted"
 statusParamToTx StatusHeld      = "held"
 statusParamToTx StatusTracked   = "tracked"
-statusParamToTx _               = error "Bad input"
 
 instance ToShipwireParam StatusParams where
   toShipwireParam (StatusParams xs) =
@@ -1658,7 +1649,6 @@ expandReceivingsToTx ExpandShipments              = "shipments"
 expandReceivingsToTx ExpandLabels                 = "labels"
 expandReceivingsToTx ExpandTrackings              = "trackings"
 expandReceivingsToTx ExpandAll                    = "all"
-expandReceivingsToTx _                            = error "Bad input"
 
 instance ToShipwireParam ExpandParamReceivings where
   toShipwireParam (ExpandParamReceivings xs) =
