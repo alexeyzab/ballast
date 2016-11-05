@@ -7,56 +7,100 @@
 module Ballast.Types
   ( Username(..)
   , Password(..)
+  , SKU(..)  
   , GetRate(..)
-  , RateResponse(..)
   , RateOptions(..)
-  , Currency(..)
-  , GroupBy(..)
-  , WarehouseArea(..)
+  , CanSplit(..)
   , RateOrder(..)
+  , ShipTo(..)
+  , IsCommercial(..)
+  , IsPoBox(..)
   , Items
   , ItemInfo(..)
-  , ShipTo(..)
-  , SKU(..)
   , Quantity(..)
   , AddressLine(..)
   , City(..)
   , PostalCode(..)
   , Region(..)
   , Country(..)
-  , CanSplit(..)
-  , IsCommercial(..)
-  , IsPoBox(..)
-  , Rates(..)
-  , ServiceOptions(..)
-  , RateResource(..)
-  , ShipwireRequest(..)
-  , RateRequest
-  , StockRequest
-  , StockResponse(..)
+  , Currency(..)
+  , GroupBy(..)  
+  , WarehouseArea(..)
+  , RateResponse(..)
+  , ResponseStatus(..)
+  , ResponseMessage(..)
+  , ResponseWarnings(..)
   , ResponseErrors(..)
+  , ResponseResourceLocation(..)
+  , Warning(..)
+  , WarningCode(..)
+  , WarningMessage(..)
+  , WarningType(..)
   , Error(..)
   , ErrorCode(..)
   , ErrorMessage(..)
   , ErrorType(..)
-  , ResponseStatus(..)
-  , mkShipwireRequest
-  , ShipwireReturn
-  , defaultGetRate
+  , RateResource(..)
+  , Rates(..)
+  , ServiceOptions(..)
+  , GroupId
+  , GroupExternalId
+  , Id(..)
+  , ExternalId(..)
+  , ServiceOption(..)
+  , ServiceOptionServiceLevelName(..)
+  , ServiceLevelCode(..)
+  , Shipment(..)
+  , WarehouseName(..)
+  , ExpectedShipDate(..)
+  , ExpectedDeliveryDateMin
+  , ExpectedDeliveryDateMax
+  , Carrier(..)
+  , CarrierCode(..)
+  , CarrierName(..)
+  , CarrierProperties(..)
+  , Cost(..)
+  , CostCurrency(..)
+  , CostType(..)
+  , CostName(..)
+  , CostAmount(..)
+  , CostConverted(..)
+  , CostOriginalCost(..)
+  , CostOriginalCurrency(..)
+  , Subtotal(..)
+  , SubtotalCurrency(..)
+  , SubtotalType(..)
+  , SubtotalName(..)
+  , SubtotalAmount(..)
+  , SubtotalConverted(..)
+  , SubtotalOriginalCost(..)
+  , SubtotalOriginalCurrency(..)
+  , Piece(..)
+  , PieceLength(..)
+  , Length(..)
+  , PieceLengthUnits(..)
+  , PieceWidth(..)
+  , Width(..)
+  , PieceWidthUnits(..)
+  , PieceHeight(..)
+  , Height(..)
+  , PieceHeightUnits(..)
+  , PieceWeight(..)
+  , Weight(..)
+  , PieceWeightUnits(..)
+  , PieceWeightType(..)
+  , PieceSubWeight(..)
+  , PieceSubWeightUnits(..)
+  , PieceSubWeightType(..)
+  , PieceContent(..)
   , Reply
   , Method
-  , Host
-  , ShipwireConfig(..)
-  , Params(..)
-  , TupleBS8
-  , filterQuery
-  , filterBody
-  , (-&-)
-  , ShipwireHost(..)
-  , hostUri
-  , credentialsEnv
-  , prodEnvConfig
-  , sandboxEnvConfig
+  , ShipwireRequest(..)
+  , mkShipwireRequest
+  , ShipwireReturn
+  , RateRequest
+  , StockRequest
+  , StockResponse(..)
   , ParentId(..)
   , ProductIdParam(..)
   , ProductExternalIdParam(..)
@@ -70,43 +114,180 @@ module Ballast.Types
   , VendorExternalIdParam(..)
   , DisableAutoBreakLots(..)
   , Mode(..)
+  , modeToBS8
   , IncludeEmptyShipwireAnywhere(..)
   , Offset(..)
   , Total(..)
   , Previous(..)
   , Next(..)
   , Limit(..)
-  , GetReceivingsRequest
-  , CreateReceivingRequest
-  , CreateReceiving(..)
-  , ReceivingsResource(..)
-  , ReceivingsResponse(..)
-  , ExpectedDateText(..)
-  , ReceivingOptions(..)
+  , StockResource(..)
+  , ResponseOffset(..)
+  , ResponseTotal(..)
+  , ResponsePrevious(..)
+  , ResponseNext(..)
+  , StockItem(..)
+  , StockItemResource(..)
+  , ProductId
+  , ProductExternalId
   , WarehouseRegion(..)
+  , StockItemResourcePending(..)
+  , StockItemResourceGood(..)
+  , StockItemResourceReserved(..)
+  , StockItemResourceBackordered(..)
+  , StockItemResourceShipping(..)
+  , StockItemResourceShipped(..)
+  , StockItemResourceCreating(..)
+  , StockItemResourceConsuming(..)
+  , StockItemResourceConsumed(..)
+  , StockItemResourceCreated(..)
+  , StockItemResourceDamaged(..)
+  , StockItemResourceReturned(..)
+  , StockItemResourceInReview(..)
+  , StockItemResourceAvailableDate
+  , StockItemResourceShippedLastDay(..)
+  , StockItemResourceShippedLastWeek(..)
+  , StockItemResourceShippedLast4Weeks(..)
+  , StockItemResourceOrderedLastDay(..)
+  , StockItemResourceOrderedLastWeek(..)
+  , StockItemResourceOrderedLast4Weeks(..)
+  , IsBundle(..)
+  , IsAlias(..)
+  , Host
+  , ShipwireHost(..)
+  , hostUri
+  , ShipwireConfig(..)
+  , prodEnvConfig
+  , sandboxEnvConfig
+  , Params(..)
+  , TupleBS8
+  , (-&-)
+  , filterBody
+  , filterQuery
+  , CreateReceivingRequest
+  , GetReceivingsRequest
+  , UpdatedAfter(..)
+  , StatusParams(..)
+  , StatusParam(..)
+  , statusParamToTx
+  , OrderNoParam(..)
+  , OrderIdParam(..)
+  , ExternalIdParam(..)
+  , TransactionIdParam(..)
+  , ExpandParamReceivings(..)
+  , ExpandReceivings(..)
+  , expandReceivingsToTx
+  , CommerceNameParam(..)
+  , CreateReceivingResponse
+  , GetReceivingsResponse
+  , ReceivingsResponse(..)
+  , ReceivingsResource(..)
+  , ReceivingsItems(..)
+  , ReceivingsItem(..)
+  , ReceivingsItemResource(..)
+  , ItemResourceInstructionsRecipients(..)
+  , ItemResourceInstructionsRecipientsResource(..)
+  , ItemResourceInstructionsRecipientsResourceItems(..)
+  , ItemResourceInstructionsRecipientsItem(..)
+  , ItemResourceInstructionsRecipientsItemResource(..)
+  , ItemResourceRouting(..)
+  , ItemResourceRoutingResource(..)
+  , Latitude(..)
+  , Longitude
+  , ExpectedDateUTCTime
+  , LastUpdatedDate
+  , ItemResourceEvents
+  , ItemResourceEventsResource(..)
+  , CreatedDate
+  , PickedUpDate
+  , SubmittedDate
+  , ProcessedDate
+  , CompletedDate
+  , CancelledDate
+  , ReturnedDate
+  , LastManualUpdateDate
+  , ItemResourceShipFrom(..)
+  , ItemResourceShipFromResource(..)
+  , ItemResourceArrangement(..)
+  , ItemResourceArrangementResource(..)
+  , ItemResourceOptions(..)
+  , ItemResourceOptionsResource(..)
+  , ItemResourceLabels(..)
+  , ItemResourceLabelsResource(..)
+  , ItemResourceLabelsResourceItems(..)
+  , ItemResourceLabelsResourceItemResource(..)
+  , LabelId
+  , OrderId
+  , OrderExternalId
+  , ItemResourceStatus(..)
+  , ItemResourceShipments(..)
+  , ItemResourceShipmentsResource(..)
+  , ItemResourceShipmentsResourceItems(..)
+  , ItemResourceShipmentsResourceItem(..)
+  , ItemResourceShipmentsResourceItemResource(..)
+  , ShipmentId
+  , TextHeight(..)
+  , TextLength(..)
+  , TextWeight(..)
+  , TextWidth(..)
+  , ItemResourceTrackings(..)
+  , ItemResourceTrackingsResource(..)
+  , ItemResourceTrackingsResourceItems(..)
+  , ItemResourceTrackingsResourceItem(..)
+  , ItemResourceTrackingsResourceItemResource(..)
+  , TrackedDate
+  , DeliveredDate
+  , Summary(..)
+  , SummaryDate
+  , URL(..)
+  , ItemResourceItems(..)
+  , ItemResourceItemsResource(..)
+  , ItemResourceItemsResourceItems(..)
+  , ItemResourceItemsResourceItem(..)
+  , ItemResourceItemsResourceItemResource(..)
+  , Expected(..)
+  , Pending
+  , Good
+  , InReview
+  , ItemResourceHolds(..)
+  , ItemResourceHoldsResource(..)
+  , ItemResourceHoldsResourceItems(..)
+  , ItemResourceHoldsResourceItem(..)
+  , ItemResourceHoldsResourceItemResource(..)
+  , ExternalOrderId
+  , Description(..)
+  , ClearedDate
+  , AppliedDate
+  , ItemStatus(..)
+  , CommerceName(..)
+  , TransactionId
+  , CreateReceiving(..)
+  , ExpectedDateText(..)
+  , OrderNo(..)
+  , ReceivingOptions(..)
+  , WarehouseId
+  , WarehouseExternalId
   , ReceivingArrangement(..)
+  , Contact(..)
+  , Phone(..)
+  , Type(..)
   , ArrangementType(..)
   , ReceivingShipments(..)
   , ReceivingShipment(..)
-  , Type(..)
+  , ReceivingLabels(..)
+  , ReceivingLabel(..)
+  , ReceivingTrackings(..)
+  , ReceivingTracking(..)
+  , Tracking(..)
   , ReceivingItems(..)
   , ReceivingItem(..)
   , ReceivingShipFrom(..)
+  , Email(..)
   , Name(..)
   , State(..)
-  , Phone(..)
-  , ExpandReceivings(..)
-  , ExpandParamReceivings(..)
-  , CommerceNameParam(..)
-  , TransactionIdParam(..)
-  , OrderIdParam(..)
-  , OrderNoParam(..)
-  , StatusParams(..)
-  , StatusParam(..)
-  , UpdatedAfter(..)
-  , ResponseOffset(..)
-  , ResponseTotal(..)
-  , ReceivingsItems(..)
+  , ReceivingInstructionsRecipients(..)
+  , Note(..)
+  , ReceivingInstructionsRecipient(..)
   ) where
 
 import           Control.Applicative
