@@ -316,9 +316,26 @@ newtype Password = Password
   { unPassword :: BS8.ByteString
   } deriving (Read, Show, Eq)
 
+data ShipwireRequest a b c = ShipwireRequest
+  { rMethod  :: Method -- ^ Method of ShipwireRequest
+  , endpoint :: Text -- ^ Endpoint of ShipwireRequest
+  , params   :: [Params TupleBS8 BSL.ByteString] -- ^ Request params of ShipwireRequest
+  }
+
+mkShipwireRequest :: Method
+                  -> Text
+                  -> [Params TupleBS8 BSL.ByteString]
+                  -> ShipwireRequest a b c
+mkShipwireRequest m e p = ShipwireRequest m e p
+
+type family ShipwireReturn a :: *
+
 ---------------------------------------------------------------------
 -- Rate Endpoint -- https://www.shipwire.com/w/developers/rate/
 ---------------------------------------------------------------------
+
+data RateRequest
+type instance ShipwireReturn RateRequest = RateResponse
 
 newtype SKU = SKU
   { unSku :: Text
@@ -1012,29 +1029,13 @@ instance FromJSON PieceContent where
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
-data ShipwireRequest a b c = ShipwireRequest
-  { rMethod  :: Method -- ^ Method of ShipwireRequest
-  , endpoint :: Text -- ^ Endpoint of ShipwireRequest
-  , params   :: [Params TupleBS8 BSL.ByteString] -- ^ Request params of ShipwireRequest
-  }
-
-mkShipwireRequest :: Method
-                  -> Text
-                  -> [Params TupleBS8 BSL.ByteString]
-                  -> ShipwireRequest a b c
-mkShipwireRequest m e p = ShipwireRequest m e p
-
-type family ShipwireReturn a :: *
-
-data RateRequest
-type instance ShipwireReturn RateRequest = RateResponse
-
 ---------------------------------------------------------------------
 -- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
 ---------------------------------------------------------------------
 
 data StockRequest
 type instance ShipwireReturn StockRequest = StockResponse
+
 instance ShipwireHasParam StockRequest SKU
 instance ShipwireHasParam StockRequest ParentId
 instance ShipwireHasParam StockRequest ProductIdParam
@@ -1543,10 +1544,12 @@ filterQuery xs = [b | Query b <- xs]
 -- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving
 -------------------------------------------------------------------------
 
-data CreateReceivingRequest
+-- | GET /api/v3/receivings
 data GetReceivingsRequest
-type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
 type instance ShipwireReturn GetReceivingsRequest = GetReceivingsResponse
+
+type CreateReceivingResponse = ReceivingsResponse
+
 instance ShipwireHasParam GetReceivingsRequest ExpandParamReceivings
 instance ShipwireHasParam GetReceivingsRequest CommerceNameParam
 instance ShipwireHasParam GetReceivingsRequest TransactionIdParam
@@ -1557,6 +1560,13 @@ instance ShipwireHasParam GetReceivingsRequest StatusParams
 instance ShipwireHasParam GetReceivingsRequest UpdatedAfter
 instance ShipwireHasParam GetReceivingsRequest WarehouseIdParam
 instance ShipwireHasParam GetReceivingsRequest WarehouseExternalIdParam
+
+-- | POST /api/v3/receivings
+data CreateReceivingRequest
+type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
+
+type GetReceivingsResponse = ReceivingsResponse
+
 instance ShipwireHasParam CreateReceivingRequest ExpandParamReceivings
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
@@ -1661,9 +1671,6 @@ newtype CommerceNameParam = CommerceNameParam
 instance ToShipwireParam CommerceNameParam where
   toShipwireParam (CommerceNameParam ns) =
     (Query ("commerceName", TE.encodeUtf8 (T.intercalate "," ns)) :)
-
-type CreateReceivingResponse = ReceivingsResponse
-type GetReceivingsResponse = ReceivingsResponse
 
 data ReceivingsResponse = ReceivingsResponse
   { receivingsResponseResourceLocation :: ResponseResourceLocation
