@@ -144,4 +144,11 @@ main = do
                       "Item quantity too low, please insert a quantity greater than 2.")
                    ErrorError
                ])
-
+            
+    describe "get infromation about a receiving" $ do
+      it "gets info about a receiving" $ do
+        result <- shipwire config $ getReceiving (ReceivingId "92157678") -&- (ExpandParamReceivings [ExpandHolds, ExpandItems])
+        result `shouldSatisfy` isRight
+        let Right ReceivingResponse {..} = result
+        receivingResponseErrors `shouldBe` Nothing
+        receivingResponseWarnings `shouldBe` Nothing

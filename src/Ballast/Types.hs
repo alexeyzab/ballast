@@ -290,6 +290,10 @@ module Ballast.Types
   , ReceivingInstructionsRecipients(..)
   , Note(..)
   , ReceivingInstructionsRecipient(..)
+  , GetReceivingRequest
+  , ReceivingResponse(..)
+  , ReceivingId(..)
+  , getReceivingId
   ) where
 
 import           Data.Aeson
@@ -1569,6 +1573,13 @@ type GetReceivingsResponse = ReceivingsResponse
 
 instance ShipwireHasParam CreateReceivingRequest ExpandParamReceivings
 
+-- | GET /api/v3/receivings/{id}
+
+data GetReceivingRequest
+type instance ShipwireReturn GetReceivingRequest = ReceivingResponse
+
+instance ShipwireHasParam GetReceivingRequest ExpandParamReceivings
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2661,3 +2672,32 @@ instance ToJSON ReceivingInstructionsRecipient where
   toJSON ReceivingInstructionsRecipient {..} = omitNulls ["email" .= rirEmail
                                                          ,"name"  .= rirName
                                                          ,"note"  .= rirNote]
+
+data ReceivingResponse = ReceivingResponse
+  { receivingResponseStatus           :: ResponseStatus
+  , receivingResponseMessage          :: ResponseMessage
+  , receivingResponseWarnings         :: Maybe ResponseWarnings
+  , receivingResponseErrors           :: Maybe ResponseErrors
+  , receivingResponseResourceLocation :: Maybe ResponseResourceLocation
+  , receivingResponseResource         :: ReceivingResource
+  } deriving (Eq, Show)
+
+type ReceivingResource = ReceivingsItemResource
+
+instance FromJSON ReceivingResponse where
+  parseJSON = withObject "GetReceivingResponse" parse
+    where
+      parse o = ReceivingResponse
+                <$> o .:  "status"
+                <*> o .:  "message"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+                <*> o .:? "resourceLocation"
+                <*> o .:  "resource"
+
+newtype ReceivingId = ReceivingId
+  { unReceivingId :: Text
+  } deriving (Eq, Show, FromJSON)
+
+getReceivingId :: ReceivingId -> Text
+getReceivingId (ReceivingId x) = x

@@ -57,6 +57,15 @@ createReceiving crReceiving = mkShipwireRequest NHTM.methodPost url params
     url = "/receivings"
     params = [Body (encode crReceiving)]
 
+-- | Get information about this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire2
+getReceiving :: ReceivingId -> ShipwireRequest GetReceivingRequest TupleBS8 BSL.ByteString
+getReceiving receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.append "/receivings/" $ getReceivingId receivingId
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
