@@ -175,7 +175,7 @@ module Ballast.Types
   , OrderIdParam(..)
   , ExternalIdParam(..)
   , TransactionIdParam(..)
-  , ExpandParamReceivings(..)
+  , ExpandReceivingsParam(..)
   , ExpandReceivings(..)
   , expandReceivingsToTx
   , CommerceNameParam(..)
@@ -1554,7 +1554,7 @@ type instance ShipwireReturn GetReceivingsRequest = GetReceivingsResponse
 
 type CreateReceivingResponse = ReceivingsResponse
 
-instance ShipwireHasParam GetReceivingsRequest ExpandParamReceivings
+instance ShipwireHasParam GetReceivingsRequest ExpandReceivingsParam
 instance ShipwireHasParam GetReceivingsRequest CommerceNameParam
 instance ShipwireHasParam GetReceivingsRequest TransactionIdParam
 instance ShipwireHasParam GetReceivingsRequest ExternalIdParam
@@ -1571,14 +1571,14 @@ type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
 
 type GetReceivingsResponse = ReceivingsResponse
 
-instance ShipwireHasParam CreateReceivingRequest ExpandParamReceivings
+instance ShipwireHasParam CreateReceivingRequest ExpandReceivingsParam
 
 -- | GET /api/v3/receivings/{id}
 
 data GetReceivingRequest
 type instance ShipwireReturn GetReceivingRequest = ReceivingResponse
 
-instance ShipwireHasParam GetReceivingRequest ExpandParamReceivings
+instance ShipwireHasParam GetReceivingRequest ExpandReceivingsParam
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
@@ -1649,7 +1649,7 @@ instance ToShipwireParam TransactionIdParam where
   toShipwireParam (TransactionIdParam xs) =
     (Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
-newtype ExpandParamReceivings = ExpandParamReceivings
+newtype ExpandReceivingsParam = ExpandReceivingsParam
   { expandParamReceivings :: [ExpandReceivings]
   } deriving (Eq, Show)
 
@@ -1671,8 +1671,8 @@ expandReceivingsToTx ExpandLabels                 = "labels"
 expandReceivingsToTx ExpandTrackings              = "trackings"
 expandReceivingsToTx ExpandAll                    = "all"
 
-instance ToShipwireParam ExpandParamReceivings where
-  toShipwireParam (ExpandParamReceivings xs) =
+instance ToShipwireParam ExpandReceivingsParam where
+  toShipwireParam (ExpandReceivingsParam xs) =
     (Query ("expand", TE.encodeUtf8 (T.intercalate "," (map expandReceivingsToTx xs))) :)
 
 newtype CommerceNameParam = CommerceNameParam

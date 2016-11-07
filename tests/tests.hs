@@ -112,7 +112,7 @@ main = do
         result `shouldSatisfy` isRight
 
       it "gets an itemized list of receivings with optional args" $ do
-        result <- shipwire config $ getReceivings -&- (ExpandParamReceivings [ExpandAll])
+        result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (StatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
         result `shouldSatisfy` isRight
@@ -126,7 +126,7 @@ main = do
         receivingsResponseWarnings `shouldBe` Nothing
 
       it "creates a new receiving with optional args" $ do
-        result <- shipwire config $ createReceiving exampleCreateReceiving -&- (ExpandParamReceivings [ExpandHolds, ExpandItems])
+        result <- shipwire config $ createReceiving exampleCreateReceiving -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
         let Right ReceivingsResponse{..} = result
         receivingsResponseErrors `shouldBe` Nothing
@@ -147,7 +147,7 @@ main = do
             
     describe "get infromation about a receiving" $ do
       it "gets info about a receiving" $ do
-        result <- shipwire config $ getReceiving (ReceivingId "92157678") -&- (ExpandParamReceivings [ExpandHolds, ExpandItems])
+        result <- shipwire config $ getReceiving (ReceivingId "92157678") -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
         let Right ReceivingResponse {..} = result
         receivingResponseErrors `shouldBe` Nothing
