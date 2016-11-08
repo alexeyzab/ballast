@@ -66,6 +66,15 @@ getReceiving receivingId = request
     url = T.append "/receivings/" $ getReceivingId receivingId
     params = []
 
+-- | Modify information about this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire3
+modifyReceiving :: ReceivingId -> ModifyReceiving -> ShipwireRequest ModifyReceivingRequest TupleBS8 BSL.ByteString
+modifyReceiving receivingId modReceiving = request
+  where
+    request = mkShipwireRequest NHTM.methodPut url params
+    url = T.append "/receivings/" $ getReceivingId receivingId
+    params = [Body (encode modReceiving)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))

@@ -294,6 +294,8 @@ module Ballast.Types
   , ReceivingResponse(..)
   , ReceivingId(..)
   , getReceivingId
+  , ModifyReceivingRequest
+  , ModifyReceiving
   ) where
 
 import           Data.Aeson
@@ -1580,6 +1582,13 @@ type instance ShipwireReturn GetReceivingRequest = ReceivingResponse
 
 instance ShipwireHasParam GetReceivingRequest ExpandReceivingsParam
 
+-- | PUT /api/v3/receivings/{id}
+
+data ModifyReceivingRequest
+type instance ShipwireReturn ModifyReceivingRequest = ReceivingsResponse
+
+instance ShipwireHasParam ModifyReceivingRequest ExpandReceivingsParam
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2701,3 +2710,5 @@ newtype ReceivingId = ReceivingId
 
 getReceivingId :: ReceivingId -> Text
 getReceivingId (ReceivingId x) = x
+
+type ModifyReceiving = CreateReceiving

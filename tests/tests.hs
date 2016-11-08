@@ -84,6 +84,34 @@ exampleBadCreateReceiving =
        (Phone "12346"))
     Nothing
 
+exampleModifiedReceiving :: ModifyReceiving
+exampleModifiedReceiving =
+  CreateReceiving
+    Nothing
+    Nothing
+    (Just $ ExpectedDateText "2016-05-27T00:00:00-07:00")
+    (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
+    (ReceivingArrangement
+       ArrangementTypeNone
+       Nothing
+       Nothing)
+    (ReceivingShipments
+       [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
+    Nothing
+    Nothing
+    (ReceivingItems [ReceivingItem (SKU "Ballasttest") (Quantity 3)])
+    (ReceivingShipFrom
+       Nothing
+       (Name "Stephen Alexander")
+       (AddressLine "11 Prsilla St")
+       Nothing
+       (City "New York")
+       (State "NY")
+       (PostalCode "12345")
+       (Country "Modified Country")
+       (Phone "12346"))
+    Nothing
+
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
@@ -137,3 +165,17 @@ main = do
         let Right ReceivingResponse {..} = result
         receivingResponseErrors `shouldBe` Nothing
         receivingResponseWarnings `shouldBe` Nothing
+
+    describe "modify information about a receiving" $ do
+      it "modifies info about a receiving" $ do
+        result <- shipwire config $ modifyReceiving (ReceivingId "92157678") exampleModifiedReceiving
+        result `shouldSatisfy` isRight
+        let Right ReceivingsResponse {..} = result
+        receivingsResponseErrors `shouldBe` Nothing
+        receivingsResponseWarnings `shouldBe` Nothing
+        modifiedReceiving <- shipwire config $ getReceiving (ReceivingId "92157678")
+        let Right ReceivingResponse {..} = modifiedReceiving
+        let ReceivingsItemResource {..} = receivingResponseResource
+        let ItemResourceShipFrom {..} = rirShipFrom
+        let ItemResourceShipFromResource {..} = irsfResource
+        irsfrCountry `shouldBe` Just (Country "Modified Country")
