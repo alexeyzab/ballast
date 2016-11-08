@@ -98,19 +98,11 @@ main = do
         rateResponseErrors `shouldBe` Nothing
 
     describe "get stock info" $ do
-      it "gets stock info without optional args" $ do
-        result <- shipwire config $ getStockInfo
-        result `shouldSatisfy` isRight
-
       it "gets stock info with optional args" $ do
         result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
         result `shouldSatisfy` isRight
 
     describe "get receivings" $ do
-      it "gets an itemized list of receivings without optional args" $ do
-        result <- shipwire config $ getReceivings
-        result `shouldSatisfy` isRight
-
       it "gets an itemized list of receivings with optional args" $ do
         result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (StatusParams [StatusCanceled])
@@ -118,13 +110,6 @@ main = do
         result `shouldSatisfy` isRight
 
     describe "create a new receiving" $ do
-      it "creates a new receiving without optional args" $ do
-        result <- shipwire config $ createReceiving exampleCreateReceiving
-        result `shouldSatisfy` isRight
-        let Right ReceivingsResponse{..} = result
-        receivingsResponseErrors `shouldBe` Nothing
-        receivingsResponseWarnings `shouldBe` Nothing
-
       it "creates a new receiving with optional args" $ do
         result <- shipwire config $ createReceiving exampleCreateReceiving -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
