@@ -7,6 +7,7 @@ import           Ballast.Client
 import           Ballast.Types
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
+import qualified Data.Text as T
 -- isLeft,
 
 mkGetRate :: RateOptions -> RateOrder -> GetRate
@@ -179,3 +180,18 @@ main = do
         let ItemResourceShipFrom {..} = rirShipFrom
         let ItemResourceShipFromResource {..} = irsfResource
         irsfrCountry `shouldBe` Just (Country "Modified Country")
+
+    describe "cancel a receiving" $ do
+      it "cancels a receiving" $ do
+        receiving <- shipwire config $ createReceiving exampleCreateReceiving
+        let Right ReceivingsResponse {..} = receiving
+        let ReceivingsResource {..} = receivingsResponseResource
+        let ReceivingsItems {..} = receivingsResponseItems
+        let items = unReceivingsItems
+        let ReceivingsItem {..} = last items
+        let ReceivingsItemResource {..} = receivingsItemResource
+        let receivingId = T.pack $ show $ unId rirId
+        result <- shipwire config $ cancelReceiving (ReceivingId receivingId)
+        result `shouldSatisfy` isRight
+        let Right CancelReceivingResponse {..} = result
+        message `shouldBe` (ResponseMessage "Receiving was cancelled")

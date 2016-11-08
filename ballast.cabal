@@ -42,7 +42,8 @@ test-suite tests
                        ballast,
                        bytestring,
                        hspec                >= 1.8 && <2.3,
-                       hspec-expectations
+                       hspec-expectations,
+                       text
                        
   default-language:    Haskell2010
 

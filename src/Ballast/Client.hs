@@ -75,6 +75,15 @@ modifyReceiving receivingId modReceiving = request
     url = T.append "/receivings/" $ getReceivingId receivingId
     params = [Body (encode modReceiving)]
 
+-- | Cancel this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire4
+cancelReceiving :: ReceivingId -> ShipwireRequest CancelReceivingRequest TupleBS8 BSL.ByteString
+cancelReceiving receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = T.append (T.append "/receivings/" $ getReceivingId receivingId) "/cancel"
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
