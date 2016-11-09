@@ -202,5 +202,14 @@ main = do
         
         result <- shipwire config $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
-        let Right CancelReceivingResponse {..} = result
+        let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Receiving was cancelled")
+
+    describe "cancel shipping labels" $ do
+      it "cancels shipping labels on a receiving" $ do
+        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
+
+        result <- shipwire config $ cancelReceivingLabels receivingId
+        result `shouldSatisfy` isRight
+        let Right SimpleResponse {..} = result
+        message `shouldBe` (ResponseMessage "Labels cancelled")

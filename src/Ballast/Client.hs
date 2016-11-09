@@ -84,6 +84,15 @@ cancelReceiving receivingId = request
     url = T.append (T.append "/receivings/" $ getReceivingId receivingId) "/cancel"
     params = []
 
+-- | Cancel shipping labels on this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire5
+cancelReceivingLabels :: ReceivingId -> ShipwireRequest CancelReceivingLabelsRequest TupleBS8 BSL.ByteString
+cancelReceivingLabels receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = T.concat ["/receivings/", (getReceivingId receivingId), "/labels/cancel"]
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))

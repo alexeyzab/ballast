@@ -296,8 +296,11 @@ module Ballast.Types
   , getReceivingId
   , ModifyReceivingRequest
   , ModifyReceiving
+  , SimpleResponse(..)
   , CancelReceivingRequest
-  , CancelReceivingResponse(..)
+  , CancelReceivingResponse
+  , CancelReceivingLabelsRequest
+  , CancelReceivingLabelsResponse
   ) where
 
 import           Data.Aeson
@@ -1596,6 +1599,11 @@ instance ShipwireHasParam ModifyReceivingRequest ExpandReceivingsParam
 data CancelReceivingRequest
 type instance ShipwireReturn CancelReceivingRequest = CancelReceivingResponse
 
+-- | POST /api/v3/receivings/{id}/labels/cancel
+
+data CancelReceivingLabelsRequest
+type instance ShipwireReturn CancelReceivingLabelsRequest = CancelReceivingLabelsResponse
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2720,7 +2728,7 @@ getReceivingId (ReceivingId x) = x
 
 type ModifyReceiving = CreateReceiving
 
-data CancelReceivingResponse = CancelReceivingResponse
+data SimpleResponse = SimpleResponse
   { status           :: ResponseStatus
   , resourceLocation :: Maybe ResponseResourceLocation
   , message          :: ResponseMessage
@@ -2728,12 +2736,16 @@ data CancelReceivingResponse = CancelReceivingResponse
   , errors           :: Maybe ResponseErrors
   } deriving (Eq, Show)
 
-instance FromJSON CancelReceivingResponse where
+instance FromJSON SimpleResponse where
   parseJSON = withObject "CancelReceivingResponse" parse
     where
-      parse o = CancelReceivingResponse
+      parse o = SimpleResponse
                 <$> o .:  "status"
                 <*> o .:? "resourceLocation"
                 <*> o .:  "message"
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
+
+type CancelReceivingResponse = SimpleResponse                
+
+type CancelReceivingLabelsResponse = CancelReceivingResponse
