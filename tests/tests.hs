@@ -127,6 +127,7 @@ createReceivingHelper conf cr = do
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
+  (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving  
   hspec $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
@@ -151,7 +152,6 @@ main = do
 
     describe "create a new receiving" $ do
       it "creates a new receiving with optional args" $ do
-        (receiving, _) <- createReceivingHelper config exampleCreateReceiving
         receiving `shouldSatisfy` isRight
         let Right ReceivingsResponse {..} = receiving
         receivingsResponseErrors `shouldBe` Nothing
@@ -172,8 +172,6 @@ main = do
             
     describe "get infromation about a receiving" $ do
       it "gets info about a receiving" $ do
-        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
-        
         result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
         let Right ReceivingResponse {..} = result
@@ -182,8 +180,6 @@ main = do
 
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
-        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
-         
         result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
         let Right ReceivingsResponse {..} = result
@@ -198,8 +194,6 @@ main = do
 
     describe "cancel a receiving" $ do
       it "cancels a receiving" $ do
-        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
-        
         result <- shipwire config $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
         let Right SimpleResponse {..} = result
@@ -207,8 +201,6 @@ main = do
 
     describe "cancel shipping labels" $ do
       it "cancels shipping labels on a receiving" $ do
-        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
-
         result <- shipwire config $ cancelReceivingLabels receivingId
         result `shouldSatisfy` isRight
         let Right SimpleResponse {..} = result
