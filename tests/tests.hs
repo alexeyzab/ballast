@@ -34,7 +34,7 @@ exampleCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-05-27T00:00:00-07:00")
+    (Just $ ExpectedDateText "2016-11-08T00:00:00-07:00")
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -53,7 +53,7 @@ exampleCreateReceiving =
        (City "New York")
        (State "NY")
        (PostalCode "12345")
-       (Country "TestCountry")
+       (Country "USA")
        (Phone "12346"))
     Nothing
 
@@ -62,7 +62,7 @@ exampleBadCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-05-27T00:00:00-07:00")
+    (Just $ ExpectedDateText "2016-11-27T00:00:00-07:00")
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -90,7 +90,7 @@ exampleModifiedReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-05-27T00:00:00-07:00")
+    (Just $ ExpectedDateText "2016-11-27T00:00:00-07:00")
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -112,6 +112,17 @@ exampleModifiedReceiving =
        (Country "Modified Country")
        (Phone "12346"))
     Nothing
+
+createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
+createReceivingHelper conf cr = do
+  receiving <- shipwire conf $ createReceiving cr
+  let Right ReceivingsResponse {..} = receiving
+  let ReceivingsResource {..} = receivingsResponseResource
+  let ReceivingsItems {..} = receivingsResponseItems
+  let ReceivingsItem {..} = last unReceivingsItems
+  let ReceivingsItemResource {..} = receivingsItemResource
+  let receivingId = T.pack $ show $ unId rirId
+  return (receiving, ReceivingId receivingId)
 
 main :: IO ()
 main = do
@@ -140,12 +151,12 @@ main = do
 
     describe "create a new receiving" $ do
       it "creates a new receiving with optional args" $ do
-        result <- shipwire config $ createReceiving exampleCreateReceiving -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
-        result `shouldSatisfy` isRight
-        let Right ReceivingsResponse{..} = result
+        (receiving, _) <- createReceivingHelper config exampleCreateReceiving
+        receiving `shouldSatisfy` isRight
+        let Right ReceivingsResponse {..} = receiving
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
-
+   
       it "doesn't create a receiving with bad JSON" $ do
         result <- shipwire config $ createReceiving exampleBadCreateReceiving
         let Right ReceivingsResponse {..} = result
@@ -161,7 +172,9 @@ main = do
             
     describe "get infromation about a receiving" $ do
       it "gets info about a receiving" $ do
-        result <- shipwire config $ getReceiving (ReceivingId "92157678") -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
+        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        
+        result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
         let Right ReceivingResponse {..} = result
         receivingResponseErrors `shouldBe` Nothing
@@ -169,12 +182,14 @@ main = do
 
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
-        result <- shipwire config $ modifyReceiving (ReceivingId "92157678") exampleModifiedReceiving
+        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
+         
+        result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
         let Right ReceivingsResponse {..} = result
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
-        modifiedReceiving <- shipwire config $ getReceiving (ReceivingId "92157678")
+        modifiedReceiving <- shipwire config $ getReceiving receivingId
         let Right ReceivingResponse {..} = modifiedReceiving
         let ReceivingsItemResource {..} = receivingResponseResource
         let ItemResourceShipFrom {..} = rirShipFrom
@@ -183,15 +198,9 @@ main = do
 
     describe "cancel a receiving" $ do
       it "cancels a receiving" $ do
-        receiving <- shipwire config $ createReceiving exampleCreateReceiving
-        let Right ReceivingsResponse {..} = receiving
-        let ReceivingsResource {..} = receivingsResponseResource
-        let ReceivingsItems {..} = receivingsResponseItems
-        let items = unReceivingsItems
-        let ReceivingsItem {..} = last items
-        let ReceivingsItemResource {..} = receivingsItemResource
-        let receivingId = T.pack $ show $ unId rirId
-        result <- shipwire config $ cancelReceiving (ReceivingId receivingId)
+        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        
+        result <- shipwire config $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
         let Right CancelReceivingResponse {..} = result
         message `shouldBe` (ResponseMessage "Receiving was cancelled")
