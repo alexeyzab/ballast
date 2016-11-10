@@ -7,7 +7,6 @@ module Ballast.Client where
 import           Ballast.Types
 import           Data.Aeson                 (eitherDecode, encode)
 import           Data.Aeson.Types
-import qualified Data.ByteString.Char8      as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Monoid                ((<>))
 import           Data.String                (IsString)
@@ -58,52 +57,132 @@ createReceiving crReceiving = mkShipwireRequest NHTM.methodPost url params
     url = "/receivings"
     params = [Body (encode crReceiving)]
 
+-- | Get information about this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire2
+getReceiving :: ReceivingId -> ShipwireRequest GetReceivingRequest TupleBS8 BSL.ByteString
+getReceiving receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.append "/receivings/" $ getReceivingId receivingId
+    params = []
+
+-- | Modify information about this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire3
+modifyReceiving :: ReceivingId -> ModifyReceiving -> ShipwireRequest ModifyReceivingRequest TupleBS8 BSL.ByteString
+modifyReceiving receivingId modReceiving = request
+  where
+    request = mkShipwireRequest NHTM.methodPut url params
+    url = T.append "/receivings/" $ getReceivingId receivingId
+    params = [Body (encode modReceiving)]
+
+-- | Cancel this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire4
+cancelReceiving :: ReceivingId -> ShipwireRequest CancelReceivingRequest TupleBS8 BSL.ByteString
+cancelReceiving receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/cancel"]
+    params = []
+
+-- | Cancel shipping labels on this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire5
+cancelReceivingLabels :: ReceivingId -> ShipwireRequest CancelReceivingLabelsRequest TupleBS8 BSL.ByteString
+cancelReceivingLabels receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/labels/cancel"]
+    params = []
+
+-- | Get the list of holds, if any, on this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire6
+getReceivingHolds :: ReceivingId -> ShipwireRequest GetReceivingHoldsRequest TupleBS8 BSL.ByteString
+getReceivingHolds receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/holds"]
+    params = []
+
+-- | Get email recipients and instructions for this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire7
+getReceivingInstructionsRecipients :: ReceivingId -> ShipwireRequest GetReceivingInstructionsRecipientsRequest TupleBS8 BSL.ByteString
+getReceivingInstructionsRecipients receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/instructionsRecipients"]
+    params = []
+
+-- | Get the contents of this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire8
+getReceivingItems :: ReceivingId -> ShipwireRequest GetReceivingItemsRequest TupleBS8 BSL.ByteString
+getReceivingItems receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/items"]
+    params = []
+
+-- | Get shipping dimension and container information.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire9
+getReceivingShipments :: ReceivingId -> ShipwireRequest GetReceivingShipmentsRequest TupleBS8 BSL.ByteString
+getReceivingShipments receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/shipments"]
+    params = []
+
+-- | Get tracking information for this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire10
+getReceivingTrackings :: ReceivingId -> ShipwireRequest GetReceivingTrackingsRequest TupleBS8 BSL.ByteString
+getReceivingTrackings receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/trackings"]
+    params = []
+
+-- | Get labels information for this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire11
+getReceivingLabels :: ReceivingId -> ShipwireRequest GetReceivingLabelsRequest TupleBS8 BSL.ByteString
+getReceivingLabels receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/labels"]
+    params = []
+
+-- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
+
+shipwire' :: (FromJSON (ShipwireReturn a))
+          => ShipwireConfig
+          -> ShipwireRequest a TupleBS8 BSL.ByteString
+          -> IO (Response BSL.ByteString)
+shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
+  manager <- newManager tlsManagerSettings
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
+  let reqBody | rMethod == NHTM.methodGet = mempty
+              | otherwise = filterBody params
+      reqURL  = paramsToByteString $ filterQuery params
+      req = initReq { method = rMethod
+                    , requestBody = RequestBodyLBS reqBody
+                    , queryString = reqURL
+                    }
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
+      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
+  httpLbs authorizedRequest manager
+
+data ShipwireError =
+  ShipwireError {
+    parseError       :: String
+  , shipwireResponse :: Response BSL.ByteString
+  } deriving (Eq, Show)
+
 -- | Create a request to `Shipwire`'s API
 shipwire
   :: (FromJSON (ShipwireReturn a))
   => ShipwireConfig
   -> ShipwireRequest a TupleBS8 BSL.ByteString
-  -> IO (Either String (ShipwireReturn a))
-shipwire ShipwireConfig {..} ShipwireRequest {..} = do
-  manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
-  let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
-      req = initReq { method = rMethod
-                    , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
-                    }
-      shipwireUser = unUsername email
-      shipwirePass = unPassword pass
-      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
-  response <- httpLbs authorizedRequest manager
+  -> IO (Either ShipwireError (ShipwireReturn a))
+shipwire config request = do
+  response <- shipwire' config request
   let result = eitherDecode $ responseBody response
-  return result
-
--- | Print the JSON body
-debug
-  :: (FromJSON (ShipwireReturn a))
-  => ShipwireConfig
-  -> ShipwireRequest a TupleBS8 BSL.ByteString
-  -> IO BSL.ByteString
-debug ShipwireConfig {..} ShipwireRequest {..} = do
-  manager <- newManager tlsManagerSettings
-  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
-  let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
-      req = initReq { method = rMethod
-                    , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
-                    }
-      shipwireUser = unUsername email
-      shipwirePass = unPassword pass
-      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
-  response <- httpLbs authorizedRequest manager
-  let result = responseBody response
-  return result
-  
--- shipwire usage:
--- let config = ShipwireConfig sandboxUrl (BS8.pack *email*) (BS8.pack *pass*)
--- shipwire config $ getStockInfo -&- (SKU $ T.pack "sku")
+  case result of
+    Left s -> return (Left (ShipwireError s response))
+    (Right r) -> return (Right r)
