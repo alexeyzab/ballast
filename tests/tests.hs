@@ -5,9 +5,9 @@ module Main where
 
 import           Ballast.Client
 import           Ballast.Types
+import qualified Data.Text                       as T
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
-import qualified Data.Text as T
 -- isLeft,
 
 mkGetRate :: RateOptions -> RateOrder -> GetRate
@@ -127,7 +127,7 @@ createReceivingHelper conf cr = do
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
-  (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving  
+  (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
   hspec $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
@@ -156,7 +156,7 @@ main = do
         let Right ReceivingsResponse {..} = receiving
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
-   
+
       it "doesn't create a receiving with bad JSON" $ do
         result <- shipwire config $ createReceiving exampleBadCreateReceiving
         let Right ReceivingsResponse {..} = result
@@ -169,7 +169,7 @@ main = do
                       "Item quantity too low, please insert a quantity greater than 2.")
                    ErrorError
                ])
-            
+
     describe "get infromation about a receiving" $ do
       it "gets info about a receiving" $ do
         result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])

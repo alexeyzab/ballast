@@ -25,7 +25,7 @@ module Ballast.Types
   , Region(..)
   , Country(..)
   , Currency(..)
-  , GroupBy(..)  
+  , GroupBy(..)
   , WarehouseArea(..)
   , RateResponse(..)
   , ResponseStatus(..)
@@ -321,7 +321,7 @@ import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
 import           Data.Time.Clock            (UTCTime)
-import qualified Data.Vector                        as V
+import qualified Data.Vector                as V
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method  as NHTM
 import           System.Environment         (getEnv)
@@ -392,7 +392,7 @@ instance ToJSON RateOptions where
                                       ,"canSplit"      .= rateOptionCanSplit
                                       ,"warehouseArea" .= rateOptionWarehouseArea
                                       ,"channelName"   .= rateOptionChannelName]
-                                                                            
+
 newtype CanSplit = CanSplit
   { unCanSplit :: Integer
   } deriving (Eq, Show, ToJSON)
@@ -662,7 +662,7 @@ instance FromJSON ErrorType where
       parse "warning" = pure ErrorWarning
       parse "error"   = pure ErrorError
       parse o         = fail ("Unexpected errorType value: " <> show o)
-        
+
 data RateResource = RateResource
   { resourceGroupBy :: GroupBy
   , resourceRates   :: Rates
@@ -2099,7 +2099,7 @@ instance FromJSON ItemResourceLabels where
       parse o = ItemResourceLabels
                 <$> o .:? "resource"
                 <*> o .:  "resourceLocation"
-   
+
 data ItemResourceLabelsResource = ItemResourceLabelsResource
   { irlrItems    :: ItemResourceLabelsResourceItems
   , irlrNext     :: Maybe Next
@@ -2561,7 +2561,7 @@ instance ToJSON ReceivingOptions where
   toJSON ReceivingOptions {..} = omitNulls ["warehouseId"         .= ropWarehouseId
                                            ,"warehouseExternalId" .= ropWarehouseExternalId
                                            ,"warehouseRegion"     .= ropWarehouseRegion]
-                                           
+
 data ReceivingArrangement = ReceivingArrangement
   { rapType    :: ArrangementType
   , rapContact :: Maybe Contact
@@ -2777,7 +2777,7 @@ instance FromJSON SimpleResponse where
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
 
-type CancelReceivingResponse = SimpleResponse                
+type CancelReceivingResponse = SimpleResponse
 
 type CancelReceivingLabelsResponse = CancelReceivingResponse
 
@@ -2789,7 +2789,7 @@ data GetReceivingHoldsResponse = GetReceivingHoldsResponse
   , grhrWarnings         :: Maybe ResponseWarnings
   , grhrErrors           :: Maybe ResponseErrors
   } deriving (Eq, Show)
-  
+
 instance FromJSON GetReceivingHoldsResponse where
   parseJSON = withObject "GetReceivingHoldsResponse" parse
     where
@@ -2831,7 +2831,7 @@ instance FromJSON GetReceivingInstructionsRecipientsResponse where
                 <*> o .:  "message"
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
-                
+
 data GetReceivingItemsResponse = GetReceivingItemsResponse
   { grirStatus           :: ResponseStatus
   , grirResourceLocation :: ResponseResourceLocation
@@ -2871,3 +2871,4 @@ instance FromJSON GetReceivingShipmentsResponse where
                 <*> o .:  "message"
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
+

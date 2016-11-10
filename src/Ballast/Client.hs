@@ -81,7 +81,7 @@ cancelReceiving :: ReceivingId -> ShipwireRequest CancelReceivingRequest TupleBS
 cancelReceiving receivingId = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
-    url = T.append (T.append "/receivings/" $ getReceivingId receivingId) "/cancel"
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/cancel"]
     params = []
 
 -- | Cancel shipping labels on this receiving.
@@ -90,7 +90,7 @@ cancelReceivingLabels :: ReceivingId -> ShipwireRequest CancelReceivingLabelsReq
 cancelReceivingLabels receivingId = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
-    url = T.concat ["/receivings/", (getReceivingId receivingId), "/labels/cancel"]
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/labels/cancel"]
     params = []
 
 -- | Get the list of holds, if any, on this receiving.
@@ -99,16 +99,16 @@ getReceivingHolds :: ReceivingId -> ShipwireRequest GetReceivingHoldsRequest Tup
 getReceivingHolds receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
-    url = T.concat ["/receivings/", (getReceivingId receivingId), "/holds"]
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/holds"]
     params = []
-    
+
 -- | Get email recipients and instructions for this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire7
 getReceivingInstructionsRecipients :: ReceivingId -> ShipwireRequest GetReceivingInstructionsRecipientsRequest TupleBS8 BSL.ByteString
 getReceivingInstructionsRecipients receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
-    url = T.concat ["/receivings/", (getReceivingId receivingId), "/instructionsRecipients"]
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/instructionsRecipients"]
     params = []
 
 -- | Get the contents of this receiving.
@@ -117,7 +117,7 @@ getReceivingItems :: ReceivingId -> ShipwireRequest GetReceivingItemsRequest Tup
 getReceivingItems receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
-    url = T.concat ["/receivings/", (getReceivingId receivingId), "/items"]
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/items"]
     params = []
 
 -- | Get shipping dimension and container information.
@@ -126,7 +126,7 @@ getReceivingShipments :: ReceivingId -> ShipwireRequest GetReceivingShipmentsReq
 getReceivingShipments receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
-    url = T.concat ["/receivings/", (getReceivingId receivingId), "/shipments"]
+    url = T.concat ["/receivings/", getReceivingId receivingId, "/shipments"]
     params = []
 
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
@@ -152,7 +152,7 @@ shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
 
 data ShipwireError =
   ShipwireError {
-    parseError :: String
+    parseError       :: String
   , shipwireResponse :: Response BSL.ByteString
   } deriving (Eq, Show)
 
