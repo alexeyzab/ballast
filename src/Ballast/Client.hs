@@ -101,6 +101,15 @@ getReceivingHolds receivingId = request
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", (getReceivingId receivingId), "/holds"]
     params = []
+    
+-- | Get email recipients and instructions for this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire7
+getReceivingInstructionsRecipients :: ReceivingId -> ShipwireRequest GetReceivingInstructionsRecipientsRequest TupleBS8 BSL.ByteString
+getReceivingInstructionsRecipients receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", (getReceivingId receivingId), "/instructionsRecipients"]
+    params = []
 
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 

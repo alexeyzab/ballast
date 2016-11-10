@@ -304,6 +304,8 @@ module Ballast.Types
   , GetReceivingHoldsRequest
   , GetReceivingHoldsResponse(..)
   , IncludeClearedParam(..)
+  , GetReceivingInstructionsRecipientsRequest
+  , GetReceivingInstructionsRecipientsResponse(..)
   ) where
 
 import           Data.Aeson
@@ -1614,6 +1616,11 @@ type instance ShipwireReturn GetReceivingHoldsRequest = GetReceivingHoldsRespons
 
 instance ShipwireHasParam GetReceivingHoldsRequest IncludeClearedParam
 
+-- | GET /api/v3/receivings/{id}/instructionsRecipients
+
+data GetReceivingInstructionsRecipientsRequest
+type instance ShipwireReturn GetReceivingInstructionsRecipientsRequest = GetReceivingInstructionsRecipientsResponse
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2790,3 +2797,24 @@ instance ToShipwireParam IncludeClearedParam where
     (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (1 :: Int)) :)
   toShipwireParam DontIncludeCleared =
     (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (0 :: Int)) :)
+
+data GetReceivingInstructionsRecipientsResponse = GetReceivingInstructionsRecipientsResponse
+  { grirrStatus           :: ResponseStatus
+  , grirrResourceLocation :: ResponseResourceLocation
+  , grirrResource         :: ItemResourceInstructionsRecipientsResource
+  , grirrMessage          :: ResponseMessage
+  , grirrWarnings         :: Maybe ResponseWarnings
+  , grirrErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetReceivingInstructionsRecipientsResponse where
+  parseJSON = withObject "GetReceivingInstructionsRecipientsResponse" parse
+    where
+      parse o = GetReceivingInstructionsRecipientsResponse
+                <$> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "resource"
+                <*> o .:  "message"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+                

@@ -213,3 +213,11 @@ main = do
         let Right GetReceivingHoldsResponse {..} = result
         grhrWarnings `shouldBe` Nothing
         grhrErrors `shouldBe` Nothing
+
+    describe "get email recipients and instructions for a receiving" $ do
+      it "gets email recipients and instructions for a receiving" $ do
+        result <- shipwire config $ getReceivingInstructionsRecipients receivingId
+        result `shouldSatisfy` isRight
+        let Right GetReceivingInstructionsRecipientsResponse {..} = result
+        grirrWarnings `shouldBe` Nothing
+        grirrErrors `shouldBe` Nothing
