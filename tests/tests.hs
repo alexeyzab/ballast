@@ -245,3 +245,11 @@ main = do
         let Right GetReceivingTrackingsResponse {..} = result
         grtrWarnings `shouldBe` Nothing
         grtrErrors `shouldBe` Nothing
+
+    describe "get labels information for a receiving" $ do
+      it "gets labels information for a receiving" $ do
+        result <- shipwire config $ getReceivingLabels receivingId
+        result `shouldSatisfy` isRight
+        let Right GetReceivingLabelsResponse {..} = result
+        grlrWarnings `shouldBe` Nothing
+        grlrErrors `shouldBe` Nothing

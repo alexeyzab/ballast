@@ -312,6 +312,8 @@ module Ballast.Types
   , GetReceivingShipmentsResponse(..)
   , GetReceivingTrackingsRequest
   , GetReceivingTrackingsResponse(..)
+  , GetReceivingLabelsRequest
+  , GetReceivingLabelsResponse(..)
   ) where
 
 import           Data.Aeson
@@ -1642,6 +1644,11 @@ type instance ShipwireReturn GetReceivingShipmentsRequest = GetReceivingShipment
 data GetReceivingTrackingsRequest
 type instance ShipwireReturn GetReceivingTrackingsRequest = GetReceivingTrackingsResponse
 
+-- | GET /api/v3/receivings/{id}/labels
+
+data GetReceivingLabelsRequest
+type instance ShipwireReturn GetReceivingLabelsRequest = GetReceivingLabelsResponse
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2892,6 +2899,26 @@ instance FromJSON GetReceivingTrackingsResponse where
   parseJSON = withObject "GetReceivingTrackingsResponse" parse
     where
       parse o = GetReceivingTrackingsResponse
+                <$> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "resource"
+                <*> o .:  "message"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+data GetReceivingLabelsResponse = GetReceivingLabelsResponse
+  { grlrStatus           :: ResponseStatus
+  , grlrResourceLocation :: ResponseResourceLocation
+  , grlrResource         :: ItemResourceLabelsResource
+  , grlrMessage          :: ResponseMessage
+  , grlrWarnings         :: Maybe ResponseWarnings
+  , grlrErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetReceivingLabelsResponse where
+  parseJSON = withObject "GetReceivingLabelsResponse" parse
+    where
+      parse o = GetReceivingLabelsResponse
                 <$> o .:  "status"
                 <*> o .:  "resourceLocation"
                 <*> o .:  "resource"
