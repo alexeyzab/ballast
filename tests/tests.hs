@@ -229,3 +229,11 @@ main = do
         let Right GetReceivingItemsResponse {..} = result
         grirWarnings `shouldBe` Nothing
         grirErrors `shouldBe` Nothing
+
+    describe "get shipping dimension and container information" $ do
+      it "gets shipping dimension and container infromation" $ do
+        result <- shipwire config $ getReceivingShipments receivingId
+        result `shouldSatisfy` isRight
+        let Right GetReceivingShipmentsResponse {..} = result
+        grsrWarnings `shouldBe` Nothing
+        grsrErrors `shouldBe` Nothing
