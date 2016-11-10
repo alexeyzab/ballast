@@ -237,3 +237,11 @@ main = do
         let Right GetReceivingShipmentsResponse {..} = result
         grsrWarnings `shouldBe` Nothing
         grsrErrors `shouldBe` Nothing
+
+    describe "get tracking information for a receiving" $ do
+      it "gets tracking information for a receiving" $ do
+        result <- shipwire config $ getReceivingTrackings receivingId
+        result `shouldSatisfy` isRight
+        let Right GetReceivingTrackingsResponse {..} = result
+        grtrWarnings `shouldBe` Nothing
+        grtrErrors `shouldBe` Nothing
