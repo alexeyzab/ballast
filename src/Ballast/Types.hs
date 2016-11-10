@@ -301,6 +301,9 @@ module Ballast.Types
   , CancelReceivingResponse
   , CancelReceivingLabelsRequest
   , CancelReceivingLabelsResponse
+  , GetReceivingHoldsRequest
+  , GetReceivingHoldsResponse(..)
+  , IncludeClearedParam(..)
   ) where
 
 import           Data.Aeson
@@ -1604,6 +1607,13 @@ type instance ShipwireReturn CancelReceivingRequest = CancelReceivingResponse
 data CancelReceivingLabelsRequest
 type instance ShipwireReturn CancelReceivingLabelsRequest = CancelReceivingLabelsResponse
 
+-- | GET /api/v3/receivings/{id}/holds
+
+data GetReceivingHoldsRequest
+type instance ShipwireReturn GetReceivingHoldsRequest = GetReceivingHoldsResponse
+
+instance ShipwireHasParam GetReceivingHoldsRequest IncludeClearedParam
+
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
   { updatedAfter :: Text
@@ -2749,3 +2759,34 @@ instance FromJSON SimpleResponse where
 type CancelReceivingResponse = SimpleResponse                
 
 type CancelReceivingLabelsResponse = CancelReceivingResponse
+
+data GetReceivingHoldsResponse = GetReceivingHoldsResponse
+  { grhrStatus           :: ResponseStatus
+  , grhrResourceLocation :: ResponseResourceLocation
+  , grhrResource         :: ItemResourceHoldsResource
+  , grhrMessage          :: ResponseMessage
+  , grhrWarnings         :: Maybe ResponseWarnings
+  , grhrErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+  
+instance FromJSON GetReceivingHoldsResponse where
+  parseJSON = withObject "GetReceivingHoldsResponse" parse
+    where
+      parse o = GetReceivingHoldsResponse
+                <$> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "resource"
+                <*> o .:  "message"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+data IncludeClearedParam
+  = IncludeCleared
+  | DontIncludeCleared
+  deriving (Eq, Show)
+
+instance ToShipwireParam IncludeClearedParam where
+  toShipwireParam IncludeCleared =
+    (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (1 :: Int)) :)
+  toShipwireParam DontIncludeCleared =
+    (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (0 :: Int)) :)

@@ -205,3 +205,11 @@ main = do
         result `shouldSatisfy` isRight
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Labels cancelled")
+
+    describe "get list of holds for a receiving" $ do
+      it "gets a list of holds for a receiving" $ do
+        result <- shipwire config $ getReceivingHolds receivingId -&- IncludeCleared
+        result `shouldSatisfy` isRight
+        let Right GetReceivingHoldsResponse {..} = result
+        grhrWarnings `shouldBe` Nothing
+        grhrErrors `shouldBe` Nothing

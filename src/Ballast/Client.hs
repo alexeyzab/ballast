@@ -93,6 +93,15 @@ cancelReceivingLabels receivingId = request
     url = T.concat ["/receivings/", (getReceivingId receivingId), "/labels/cancel"]
     params = []
 
+-- | Get the list of holds, if any, on this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire6
+getReceivingHolds :: ReceivingId -> ShipwireRequest GetReceivingHoldsRequest TupleBS8 BSL.ByteString
+getReceivingHolds receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", (getReceivingId receivingId), "/holds"]
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
