@@ -221,3 +221,11 @@ main = do
         let Right GetReceivingInstructionsRecipientsResponse {..} = result
         grirrWarnings `shouldBe` Nothing
         grirrErrors `shouldBe` Nothing
+
+    describe "get contents of a receiving" $ do
+      it "gets contents of a receiving" $ do
+        result <- shipwire config $ getReceivingItems receivingId
+        result `shouldSatisfy` isRight
+        let Right GetReceivingItemsResponse {..} = result
+        grirWarnings `shouldBe` Nothing
+        grirErrors `shouldBe` Nothing

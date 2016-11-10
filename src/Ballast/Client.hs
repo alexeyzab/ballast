@@ -111,6 +111,15 @@ getReceivingInstructionsRecipients receivingId = request
     url = T.concat ["/receivings/", (getReceivingId receivingId), "/instructionsRecipients"]
     params = []
 
+-- | Get the contents of this receiving.
+-- https://www.shipwire.com/w/developers/receiving/#panel-shipwire8
+getReceivingItems :: ReceivingId -> ShipwireRequest GetReceivingItemsRequest TupleBS8 BSL.ByteString
+getReceivingItems receivingId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.concat ["/receivings/", (getReceivingId receivingId), "/items"]
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
