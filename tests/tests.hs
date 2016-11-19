@@ -146,7 +146,7 @@ main = do
     describe "get receivings" $ do
       it "gets an itemized list of receivings with optional args" $ do
         result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
-                                                  -&- (StatusParams [StatusCanceled])
+                                                  -&- (ReceivingStatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
         result `shouldSatisfy` isRight
 
@@ -253,3 +253,11 @@ main = do
         let Right GetReceivingLabelsResponse {..} = result
         grlrWarnings `shouldBe` Nothing
         grlrErrors `shouldBe` Nothing
+
+    describe "get an itemized list of products" $ do
+      it "gets an itemized list of products" $ do
+        result <- shipwire config $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
+        result `shouldSatisfy` isRight
+        let Right GetProductsResponse {..} = result
+        gprWarnings `shouldBe` Nothing
+        gprErrors `shouldBe` Nothing

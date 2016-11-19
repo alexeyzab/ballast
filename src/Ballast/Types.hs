@@ -168,8 +168,8 @@ module Ballast.Types
   , CreateReceivingRequest
   , GetReceivingsRequest
   , UpdatedAfter(..)
-  , StatusParams(..)
-  , StatusParam(..)
+  , ReceivingStatusParams(..)
+  , ReceivingStatusParam(..)
   , statusParamToTx
   , OrderNoParam(..)
   , OrderIdParam(..)
@@ -314,21 +314,141 @@ module Ballast.Types
   , GetReceivingTrackingsResponse(..)
   , GetReceivingLabelsRequest
   , GetReceivingLabelsResponse(..)
+  , GetProductsRequest
+  , GetProductsResponse(..)
+  , GetProductsResponseResource(..)
+  , GetProductsResponseResourceItems(..)
+  , GetProductsResponseResourceItem(..)
+  , ProductsWrapper(..)
+  , BaseProductResource(..)
+  , TechnicalData(..)
+  , TechnicalDataResource(..)
+  , NumberOfBatteries(..)
+  , BatteryType(..)
+  , NumberOfCells(..)
+  , BatteryWeight(..)
+  , Capacity(..)
+  , CapacityUnit(..)
+  , StorageConfiguration(..)
+  , CountryOfOrigin
+  , HsCode(..)
+  , CreationDate
+  , Flags(..)
+  , FlagsResource(..)
+  , IsAdult(..)
+  , HasInnerPack(..)
+  , HasEditRestrictions(..)
+  , IsPerishable(..)
+  , IsDangerous(..)
+  , IsLiquid(..)
+  , IsArchivable(..)
+  , IsFragile(..)
+  , HasMasterCase(..)
+  , HasPallet(..)
+  , IsDeletable(..)
+  , IsMedia(..)
+  , Category(..)
+  , Status(..)
+  , AlternateNames(..)
+  , AlternateNamesResource(..)
+  , AlternateNamesResourceItems(..)
+  , AlternateNamesResourceItem(..)
+  , AlternateNamesResourceItemResource(..)
+  , Pallet(..)
+  , PalletResource
+  , InnerPack(..)
+  , InnerPackResource
+  , EnqueuedDimensions(..)
+  , EnqueuedDimensionsResource(..)
+  , ItemCount(..)
+  , ArchivedDate
+  , Classification(..)
+  , BatteryConfiguration(..)
+  , BaseProductMasterCase(..)
+  , BaseProductMasterCaseResource(..)
+  , Dimensions(..)
+  , DimensionsResource(..)
+  , DimensionsWeight(..)
+  , WeightUnit
+  , DimensionsHeight(..)
+  , HeightUnit
+  , DimensionsWidth(..)
+  , WidthUnit
+  , DimensionsLength(..)
+  , LengthUnit
+  , Values(..)
+  , ValuesResource(..)
+  , CostValueCurrency
+  , WholesaleValueCurrency
+  , RetailValueCurrency
+  , CostValue(..)
+  , WholesaleValue
+  , RetailValue
+  , IndividualItemsPerCase(..)
+  , MasterCaseFlags(..)
+  , MasterCaseFlagsResource(..)
+  , IsPackagedReadyToShip(..)
+  , MarketingInsertResource(..)
+  , MarketingInsertMasterCase(..)
+  , MarketingInsertMasterCaseResource(..)
+  , InclusionRuleType(..)
+  , InclusionRules(..)
+  , InclusionRulesResource(..)
+  , InsertAfterDate
+  , InsertBeforeDate
+  , InsertWhenWorthValue(..)
+  , InsertWhenWorthValueCurrency
+  , InsertWhenQuantity
+  , InclusionRulesResourceFlags(..)
+  , MarketingInsertFlags(..)
+  , MarketingInsertFlagsResource(..)
+  , VirtualKitResource(..)
+  , VirtualKitContent(..)
+  , VirtualKitContentResource(..)
+  , VirtualKitContentResourceItems(..)
+  , VirtualKitContentResourceItem(..)
+  , VirtualKitContentResourceItemResource(..)
+  , VirtualKitFlags(..)
+  , KitResource(..)
+  , KitMasterCase
+  , KitTechnicalData(..)
+  , KitTechnicalDataResource(..)
+  , KitTechnicalDataResourceBattery(..)
+  , KitTechnicalDataResourceBatteryResource
+  , KitContent
+  , ExpandProductsParam(..)
+  , ExpandProducts(..)
+  , expandProductsToTx
+  , ClassificationParam(..)
+  , classificationToBS
+  , DescriptionParam(..)
+  , IncludeArchived(..)
+  , includeArchivedToBS
+  , ProductStatusParams(..)
+  , ProductStatusParam(..)
+  , productStatusParamToBS
+  , FlowParams(..)
+  , FlowParam(..)
+  , flowParamToBS
+  , IdsParam(..)
+  , SkusParam(..)
   ) where
 
 import           Data.Aeson
-import qualified Data.ByteString.Char8      as BS8
+import           Data.Aeson.Types (Parser)
+import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Fixed
-import           Data.Monoid                ((<>))
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import qualified Data.Text.Encoding         as TE
-import           Data.Time.Clock            (UTCTime)
-import qualified Data.Vector                as V
+import qualified Data.HashMap.Lazy as HM
+import           Data.Monoid ((<>))
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+import           Data.Time.Clock (UTCTime)
+import qualified Data.Vector as V
 import           Network.HTTP.Client
-import qualified Network.HTTP.Types.Method  as NHTM
-import           System.Environment         (getEnv)
+import qualified Network.HTTP.Types.Method as NHTM
+import           System.Environment (getEnv)
 
 -- | Username type used for HTTP Basic authentication.
 newtype Username = Username
@@ -520,6 +640,12 @@ data Currency =
 
 instance ToJSON Currency where
   toJSON USD = String "USD"
+
+instance FromJSON Currency where
+  parseJSON = withText "currency" parse
+    where
+      parse "USD" = pure USD
+      parse _     = error "Bad input"
 
 omitNulls :: [(Text, Value)] -> Value
 omitNulls = object . filter notNull
@@ -1233,7 +1359,7 @@ instance FromJSON StockItem where
                 <*> o .:  "resource"
 
 data StockItemResource = StockItemResource
-  { sirProductId           :: ProductId
+  { sirProductId           :: Maybe ProductId
   , sirProductExternalId   :: Maybe ProductExternalId
   , sirSku                 :: SKU
   , sirIsBundle            :: IsBundle
@@ -1580,7 +1706,7 @@ instance ShipwireHasParam GetReceivingsRequest TransactionIdParam
 instance ShipwireHasParam GetReceivingsRequest ExternalIdParam
 instance ShipwireHasParam GetReceivingsRequest OrderIdParam
 instance ShipwireHasParam GetReceivingsRequest OrderNoParam
-instance ShipwireHasParam GetReceivingsRequest StatusParams
+instance ShipwireHasParam GetReceivingsRequest ReceivingStatusParams
 instance ShipwireHasParam GetReceivingsRequest UpdatedAfter
 instance ShipwireHasParam GetReceivingsRequest WarehouseIdParam
 instance ShipwireHasParam GetReceivingsRequest WarehouseExternalIdParam
@@ -1658,11 +1784,11 @@ instance ToShipwireParam UpdatedAfter where
   toShipwireParam (UpdatedAfter x) =
     (Query ("updatedAfter", TE.encodeUtf8 x) :)
 
-newtype StatusParams = StatusParams
-  { statusParam :: [StatusParam]
+newtype ReceivingStatusParams = ReceivingStatusParams
+  { statusParam :: [ReceivingStatusParam]
   } deriving (Eq, Show)
 
-data StatusParam = StatusProcessed
+data ReceivingStatusParam = StatusProcessed
   | StatusCanceled
   | StatusCompleted
   | StatusDelivered
@@ -1672,7 +1798,7 @@ data StatusParam = StatusProcessed
   | StatusTracked
   deriving (Eq, Show)
 
-statusParamToTx :: StatusParam -> Text
+statusParamToTx :: ReceivingStatusParam -> Text
 statusParamToTx StatusProcessed = "processed"
 statusParamToTx StatusCanceled  = "canceled"
 statusParamToTx StatusCompleted = "completed"
@@ -1682,8 +1808,8 @@ statusParamToTx StatusSubmitted = "submitted"
 statusParamToTx StatusHeld      = "held"
 statusParamToTx StatusTracked   = "tracked"
 
-instance ToShipwireParam StatusParams where
-  toShipwireParam (StatusParams xs) =
+instance ToShipwireParam ReceivingStatusParams where
+  toShipwireParam (ReceivingStatusParams xs) =
     (Query ("status", TE.encodeUtf8 (T.intercalate "," (map statusParamToTx xs))) :)
 
 newtype OrderNoParam = OrderNoParam
@@ -1719,7 +1845,7 @@ instance ToShipwireParam TransactionIdParam where
     (Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs)) :)
 
 newtype ExpandReceivingsParam = ExpandReceivingsParam
-  { expandParamReceivings :: [ExpandReceivings]
+  { expandReceivingsParam :: [ExpandReceivings]
   } deriving (Eq, Show)
 
 data ExpandReceivings = ExpandHolds
@@ -2925,3 +3051,1238 @@ instance FromJSON GetReceivingLabelsResponse where
                 <*> o .:  "message"
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
+
+-------------------------------------------------------------------------
+-- Product Endpoint -- https://www.shipwire.com/w/developers/product
+-------------------------------------------------------------------------
+
+-- | GET /api/v3/products
+data GetProductsRequest
+type instance ShipwireReturn GetProductsRequest = GetProductsResponse
+
+instance ShipwireHasParam GetProductsRequest ExpandProductsParam
+instance ShipwireHasParam GetProductsRequest DescriptionParam
+instance ShipwireHasParam GetProductsRequest SKU
+instance ShipwireHasParam GetProductsRequest StorageConfiguration
+instance ShipwireHasParam GetProductsRequest ClassificationParam
+instance ShipwireHasParam GetProductsRequest IncludeArchived
+instance ShipwireHasParam GetProductsRequest ProductStatusParams
+instance ShipwireHasParam GetProductsRequest FlowParams
+instance ShipwireHasParam GetProductsRequest IdsParam
+instance ShipwireHasParam GetProductsRequest SkusParam
+
+newtype SkusParam = SkusParam
+  { unSkusParam :: [BS8.ByteString]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam SkusParam where
+  toShipwireParam (SkusParam xs) =
+    (Query ("skus", BS8.intercalate "," xs) :)
+
+newtype IdsParam = IdsParam
+  { unIdsParam :: [BS8.ByteString]
+  } deriving (Eq, Show)
+
+instance ToShipwireParam IdsParam where
+  toShipwireParam (IdsParam xs) =
+    (Query ("ids", BS8.intercalate "," xs) :)
+
+newtype FlowParams = FlowParams
+  { unFlowParams :: [FlowParam]
+  } deriving (Eq, Show)
+
+data FlowParam = ManageStep
+  | KitStep
+  | VirtualKitStep
+  | OrderStep
+  | ReceivingStep
+  | QuoteStep
+  deriving (Eq, Show)
+
+flowParamToBS :: FlowParam -> BS8.ByteString
+flowParamToBS ManageStep     = "manage"
+flowParamToBS KitStep        = "kit"
+flowParamToBS VirtualKitStep = "virtualKit"
+flowParamToBS OrderStep      = "order"
+flowParamToBS ReceivingStep  = "receiving"
+flowParamToBS QuoteStep      = "quote"
+
+instance ToShipwireParam FlowParams where
+  toShipwireParam (FlowParams xs) =
+    (Query ("flow", BS8.intercalate "," (map flowParamToBS xs)) :)
+
+newtype ProductStatusParams = ProductStatusParams
+  { unProductStatusParams :: [ProductStatusParam]
+  } deriving (Eq, Show)
+
+data ProductStatusParam = NotInUse
+  | InStock
+  | OutOfStock
+  deriving (Eq, Show)
+
+productStatusParamToBS :: ProductStatusParam -> BS8.ByteString
+productStatusParamToBS NotInUse   = "notinuse"
+productStatusParamToBS InStock    = "instock"
+productStatusParamToBS OutOfStock = "outofstock"
+
+instance ToShipwireParam ProductStatusParams where
+  toShipwireParam (ProductStatusParams xs) =
+    (Query ("status", BS8.intercalate "," (map productStatusParamToBS xs)) :)
+
+data IncludeArchived = AnyArchived
+  | IncludeArchived
+  | ExcludeArchived
+  deriving (Eq, Show)
+
+includeArchivedToBS :: IncludeArchived -> BS8.ByteString
+includeArchivedToBS AnyArchived     = "anyArchived"
+includeArchivedToBS IncludeArchived = "includeArchived"
+includeArchivedToBS ExcludeArchived = "excludeArchived"
+
+instance ToShipwireParam IncludeArchived where
+  toShipwireParam x =
+    (Query ("includeArchived", includeArchivedToBS x) :)
+
+storageConfigurationToBS :: StorageConfiguration -> BS8.ByteString
+storageConfigurationToBS IndividualItemConfiguration = "INDIVIDUAL_ITEM"
+storageConfigurationToBS InnerPackConfiguration      = "INNER_PACK"
+storageConfigurationToBS MasterCaseConfiguration     = "MASTER_CASE"
+storageConfigurationToBS PalletConfiguration         = "PALLET"
+storageConfigurationToBS KitConfiguration            = "KIT"
+
+instance ToShipwireParam StorageConfiguration where
+  toShipwireParam x =
+    (Query ("storageConfiguration", storageConfigurationToBS x) :)
+
+newtype DescriptionParam = DescriptionParam
+  { unDescriptionParam :: Text
+  } deriving (Eq, Show)
+
+replaceSpaces :: Text -> Text
+replaceSpaces = T.intercalate "+" . T.words
+
+instance ToShipwireParam DescriptionParam where
+  toShipwireParam (DescriptionParam x) =
+    (Query ("description", TE.encodeUtf8 $ replaceSpaces x) :)
+
+data ClassificationParam = ClassificationParamBaseProduct
+  | ClassificationParamKit
+  | ClassificationParamVirtualKit
+  | ClassificationParamMarketingInsert
+  deriving (Eq, Show)
+
+classificationToBS :: ClassificationParam -> BS8.ByteString
+classificationToBS ClassificationParamBaseProduct     = "baseProduct"
+classificationToBS ClassificationParamKit             = "kit"
+classificationToBS ClassificationParamVirtualKit      = "virtualKit"
+classificationToBS ClassificationParamMarketingInsert = "marketingInsert"
+
+instance ToShipwireParam ClassificationParam where
+  toShipwireParam x =
+    (Query ("classification", classificationToBS x) :)
+
+newtype ExpandProductsParam = ExpandProductsParam
+  { expandProductsParam :: [ExpandProducts]
+  } deriving (Eq, Show)
+
+data ExpandProducts = ProductsExpandAll
+  | ExpandAlternateNames
+  | ExpandMasterCase
+  | ExpandEnqueuedDimensions
+  | ExpandFlags
+  | ExpandDimensions
+  | ExpandTechnicalData
+  | ExpandInnerPack
+  | ExpandPallet
+  | ExpandValues
+  | ExpandKitContent
+  | ExpandInclusionRules
+  | ExpandVirtualKitContent
+  deriving (Eq, Show)
+
+expandProductsToTx :: ExpandProducts -> Text
+expandProductsToTx ProductsExpandAll        = "all"
+expandProductsToTx ExpandAlternateNames     = "alternateNames"
+expandProductsToTx ExpandMasterCase         = "masterCase"
+expandProductsToTx ExpandEnqueuedDimensions = "enqueuedDimensions"
+expandProductsToTx ExpandFlags              = "flags"
+expandProductsToTx ExpandDimensions         = "dimensions"
+expandProductsToTx ExpandTechnicalData      = "technicalData"
+expandProductsToTx ExpandInnerPack          = "innerPack"
+expandProductsToTx ExpandPallet             = "pallet"
+expandProductsToTx ExpandValues             = "values"
+expandProductsToTx ExpandKitContent         = "kitContent"
+expandProductsToTx ExpandInclusionRules     = "inclusionRules"
+expandProductsToTx ExpandVirtualKitContent  = "virtualKitContent"
+
+instance ToShipwireParam ExpandProductsParam where
+  toShipwireParam (ExpandProductsParam xs) =
+    (Query ("expand", TE.encodeUtf8 (T.intercalate "," (map expandProductsToTx xs))) :)
+
+data GetProductsResponse = GetProductsResponse
+  { gprStatus           :: ResponseStatus
+  , gprResourceLocation :: ResponseResourceLocation
+  , gprMessage          :: ResponseMessage
+  , gprResource         :: GetProductsResponseResource
+  , gprWarnings         :: Maybe ResponseWarnings
+  , gprErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetProductsResponse where
+  parseJSON = withObject "GetProductsResponse" parse
+    where
+      parse o = GetProductsResponse
+                <$> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+data GetProductsResponseResource = GetProductsResponseResource
+  { gprrPrevious :: Maybe Previous
+  , gprrNext     :: Maybe Next
+  , gprrTotal    :: Total
+  , gprrOffset   :: Offset
+  , gprrItems    :: GetProductsResponseResourceItems
+  } deriving (Eq, Show)
+
+instance FromJSON GetProductsResponseResource where
+  parseJSON = withObject "GetProductsResponseResource" parse
+    where
+      parse o = GetProductsResponseResource
+                <$> o .:? "previous"
+                <*> o .:? "next"
+                <*> o .:  "total"
+                <*> o .:  "offset"
+                <*> o .:  "items"
+
+newtype GetProductsResponseResourceItems = GetProductsResponseResourceItems
+  { gprriItems :: [GetProductsResponseResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data GetProductsResponseResourceItem = GetProductsResponseResourceItem
+  { gprriResourceLocation :: ResponseResourceLocation
+  , gprriResource         :: ProductsWrapper
+  } deriving (Eq, Show)
+
+instance FromJSON GetProductsResponseResourceItem where
+  parseJSON = withObject "GetProductsResponseResourceItem" parse
+    where
+      parse o = GetProductsResponseResourceItem
+                <$> o .: "resourceLocation"
+                <*> o .: "resource"
+                
+-- | This a wrapper for different classifications of products.
+-- Possible options are: baseProduct, marketingInsert, virtualKit, kit.
+data ProductsWrapper = PwBaseProduct BaseProductResource
+  | PwMarketingInsert MarketingInsertResource
+  | PwVirtualKit VirtualKitResource
+  | PwKit KitResource
+  deriving (Eq, Show)
+
+instance FromJSON ProductsWrapper where
+  parseJSON (Object v) = piwValue
+    where
+      isBaseProduct     = HM.lookup "classification" v == Just "baseProduct"
+      isMarketingInsert = HM.lookup "classification" v == Just "marketingInsert"
+      isVirtualKit      = HM.lookup "classification" v == Just "virtualKit"
+      isKit             = HM.lookup "classification" v == Just "kit"
+      piwValue          = parseProductsWrapper isBaseProduct isMarketingInsert isVirtualKit isKit v
+  parseJSON _ = mempty
+
+parseProductsWrapper :: Bool -> Bool -> Bool -> Bool -> Object -> Parser ProductsWrapper
+parseProductsWrapper isBaseProduct isMarketingInsert isVirtualKit isKit value
+  | isBaseProduct     = PwBaseProduct     <$> parseBaseProduct value
+  | isMarketingInsert = PwMarketingInsert <$> parseMarketingInsert value
+  | isVirtualKit      = PwVirtualKit      <$> parseVirtualKit value
+  | isKit             = PwKit             <$> parseKit value
+  | otherwise         = PwBaseProduct     <$> parseBaseProduct value
+
+data KitResource = KitResource
+  { krId                   :: Id
+  , krExternalId           :: Maybe ExternalId
+  , krSku                  :: SKU
+  , krDescription          :: Description
+  , krHsCode               :: Maybe HsCode
+  , krCountryOfOrigin      :: Maybe CountryOfOrigin
+  , krCreationDate         :: CreationDate
+  , krArchivedDate         :: Maybe ArchivedDate
+  , krStatus               :: Status
+  , krStorageConfiguration :: StorageConfiguration
+  , krBatteryConfiguration :: Maybe BatteryConfiguration
+  , krClassification       :: Classification
+  , krCategory             :: Maybe Category
+  , krItemCount            :: ItemCount
+  , krDimensions           :: Dimensions
+  , krValues               :: Values
+  , krAlternateNames       :: AlternateNames
+  , krKitContent           :: Maybe KitContent
+  , krTechnicalData        :: Maybe KitTechnicalData
+  , krFlags                :: Flags
+  , krEnqueuedDimensions   :: EnqueuedDimensions
+  , krInnerPack            :: Maybe InnerPack
+  , krMasterCase           :: Maybe KitMasterCase
+  , krPallet               :: Maybe Pallet
+  } deriving (Eq, Show)
+
+instance FromJSON KitResource where
+  parseJSON (Object o) = parseKit o
+  parseJSON _          = mempty
+
+parseKit :: Object -> Parser KitResource
+parseKit o = KitResource
+             <$> o .:  "id"
+             <*> o .:? "externalId"
+             <*> o .:  "sku"
+             <*> o .:  "description"
+             <*> o .:? "hsCode"
+             <*> o .:? "countryOfOrigin"
+             <*> o .:  "creationDate"
+             <*> o .:? "archivedDate"
+             <*> o .:  "status"
+             <*> o .:  "storageConfiguration"
+             <*> o .:? "batteryConfiguration"
+             <*> o .:  "classification"
+             <*> o .:? "category"
+             <*> o .:  "itemCount"
+             <*> o .:  "dimensions"
+             <*> o .:  "values"
+             <*> o .:  "alternateNames"
+             <*> o .:? "kitContent"
+             <*> o .:? "technicalData"
+             <*> o .:  "flags"
+             <*> o .:  "enqueuedDimensions"
+             <*> o .:? "innerPack"
+             <*> o .:? "masterCase"
+             <*> o .:? "pallet"
+
+type KitMasterCase = BaseProductMasterCase
+
+data KitTechnicalData = KitTechnicalData
+  { ktdResourceLocation :: Maybe ResponseResourceLocation
+  , ktdResource         :: Maybe KitTechnicalDataResource
+  } deriving (Eq, Show)
+
+instance FromJSON KitTechnicalData where
+  parseJSON = withObject "KitTechnicalData" parse
+    where
+      parse o = KitTechnicalData
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+newtype KitTechnicalDataResource = KitTechnicalDataResource
+  { ktdrBattery :: KitTechnicalDataResourceBattery
+  } deriving (Eq, Show, FromJSON)
+
+data KitTechnicalDataResourceBattery = KitTechnicalDataResourceBattery
+  { ktdrbResourceLocation :: Maybe ResponseResourceLocation
+  , ktdrbResource         :: KitTechnicalDataResourceBatteryResource
+  } deriving (Eq, Show)
+
+instance FromJSON KitTechnicalDataResourceBattery where
+  parseJSON = withObject "KitTechnicalDataResourceBattery" parse
+    where
+      parse o = KitTechnicalDataResourceBattery
+                <$> o .:? "resourceLocation"
+                <*> o .:  "resource"
+
+type KitTechnicalDataResourceBatteryResource = TechnicalDataResource
+
+type KitContent = VirtualKitContent
+
+data VirtualKitResource = VirtualKitResource
+  { vkrId                :: Id
+  , vkrExternalId        :: Maybe ExternalId
+  , vkrClassification    :: Classification
+  , vkrSku               :: SKU
+  , vkrCreationDate      :: CreationDate
+  , vkrDescription       :: Description
+  , vkrStatus            :: Status
+  , vkrVirtualKitContent :: VirtualKitContent
+  , vkrFlags             :: VirtualKitFlags
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitResource where
+  parseJSON (Object o) = parseVirtualKit o
+  parseJSON _          = mempty
+
+parseVirtualKit :: Object -> Parser VirtualKitResource
+parseVirtualKit o = VirtualKitResource
+                    <$> o .:  "id"
+                    <*> o .:? "externalId"
+                    <*> o .:  "classification"
+                    <*> o .:  "sku"
+                    <*> o .:  "creationDate"
+                    <*> o .:  "description"
+                    <*> o .:  "status"
+                    <*> o .:  "virtualKitContent"
+                    <*> o .:  "flags"
+
+data VirtualKitContent = VirtualKitContent
+  { vkcResourceLocation :: ResponseResourceLocation
+  , vkcResource         :: Maybe VirtualKitContentResource
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitContent where
+  parseJSON = withObject "VirtualKitContent" parse
+    where
+      parse o = VirtualKitContent
+                <$> o .:  "resourceLocation"
+                <*> o .:? "resource"
+
+data VirtualKitContentResource = VirtualKitContentResource
+  { vkcrOffset   :: Offset
+  , vkcrTotal    :: Total
+  , vkcrPrevious :: Maybe Previous
+  , vkcrNext     :: Maybe Next
+  , vkcrItems    :: VirtualKitContentResourceItems
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitContentResource where
+  parseJSON = withObject "VirtualKitContentResource" parse
+    where
+      parse o = VirtualKitContentResource
+                <$> o .:  "offset"
+                <*> o .:  "total"
+                <*> o .:? "previous"
+                <*> o .:? "next"
+                <*> o .:  "items"
+
+newtype VirtualKitContentResourceItems = VirtualKitContentResourceItems
+  { vkcriItems :: [VirtualKitContentResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data VirtualKitContentResourceItem = VirtualKitContentResourceItem
+  { vkcriResourceLocation :: Maybe ResponseResourceLocation
+  , vkcriResource         :: VirtualKitContentResourceItemResource
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitContentResourceItem where
+  parseJSON = withObject "VirtualKitContentResourceItem" parse
+    where
+      parse o = VirtualKitContentResourceItem
+                <$> o .:? "resourceLocation"
+                <*> o .:  "resource"
+
+data VirtualKitContentResourceItemResource = VirtualKitContentResourceItemResource
+  { vkcrirProductId  :: ProductId
+  , vkcrirExternalId :: ExternalId
+  , vkcrirQuantity   :: Quantity
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitContentResourceItemResource where
+  parseJSON = withObject "VirtualKitContentResourceItemResource" parse
+    where
+      parse o = VirtualKitContentResourceItemResource
+                <$> o .: "productId"
+                <*> o .: "externalId"
+                <*> o .: "quantity"
+
+newtype VirtualKitFlags = VirtualKitFlags
+  { vkfResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON VirtualKitFlags where
+  parseJSON = withObject "VirtualKitFlags" parse
+    where
+      parse o = VirtualKitFlags
+                <$> o .:? "resourceLocation"
+
+data MarketingInsertResource = MarketingInsertResource
+  { mirId                   :: Id
+  , mirExternalId           :: Maybe ExternalId
+  , mirSku                  :: SKU
+  , mirDescription          :: Description
+  , mirInclusionRuleType    :: Maybe InclusionRuleType
+  , mirCreationDate         :: CreationDate
+  , mirArchivedDate         :: Maybe ArchivedDate
+  , mirStatus               :: Status
+  , mirStorageConfiguration :: StorageConfiguration
+  , mirClassificaion        :: Classification
+  , mirItemCount            :: ItemCount
+  , mirDimensions           :: Dimensions
+  , mirAlternateNames       :: AlternateNames
+  , mirFlags                :: Maybe MarketingInsertFlags
+  , mirInclusionRules       :: Maybe InclusionRules
+  , mirMasterCase           :: Maybe MarketingInsertMasterCase
+  } deriving (Eq, Show)
+
+instance FromJSON MarketingInsertResource where
+  parseJSON (Object o) = parseMarketingInsert o
+  parseJSON _          = mempty
+
+parseMarketingInsert :: Object -> Parser MarketingInsertResource
+parseMarketingInsert o = MarketingInsertResource
+                         <$> o .:  "id"
+                         <*> o .:? "externalId"
+                         <*> o .:  "sku"
+                         <*> o .:  "description"
+                         <*> o .:? "inclusionRuleType"
+                         <*> o .:  "creationDate"
+                         <*> o .:? "archivedDate"
+                         <*> o .:  "status"
+                         <*> o .:  "storageConfiguration"
+                         <*> o .:  "classification"
+                         <*> o .:  "itemCount"
+                         <*> o .:  "dimensions"
+                         <*> o .:  "alternateNames"
+                         <*> o .:? "flags"
+                         <*> o .:? "inclusionRules"
+                         <*> o .:? "masterCase"
+
+data MarketingInsertMasterCase = MarketingInsertMasterCase
+  { mimcResourceLocation :: Maybe ResponseResourceLocation
+  , mimcResource         :: Maybe MarketingInsertMasterCaseResource
+  } deriving (Eq, Show)
+
+instance FromJSON MarketingInsertMasterCase where
+  parseJSON = withObject "MarketingInsertMasterCase" parse
+    where
+      parse o = MarketingInsertMasterCase
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data MarketingInsertMasterCaseResource = MarketingInsertMasterCaseResource
+  { mimcrProductId              :: ProductId
+  , mimcrExternalId             :: Maybe ExternalId
+  , mimcrIndividualItemsPerCase :: IndividualItemsPerCase
+  , mimcrSku                    :: SKU
+  , mimcrDescription            :: Description
+  , mimcrDimensions             :: Dimensions
+  } deriving (Eq, Show)
+
+instance FromJSON MarketingInsertMasterCaseResource where
+  parseJSON = withObject "MarketingInsertMasterCaseResource" parse
+    where
+      parse o = MarketingInsertMasterCaseResource
+                <$> o .:  "productId"
+                <*> o .:? "externalId"
+                <*> o .:  "individualItemsPerCase"
+                <*> o .:  "sku"
+                <*> o .:  "description"
+                <*> o .:  "dimensions"
+
+newtype InclusionRuleType = InclusionRuleType
+  { unInclusionRuleType :: Text
+  } deriving (Eq, Show, FromJSON)
+
+data InclusionRules = InclusionRules
+  { irResourceLocation :: Maybe ResponseResourceLocation
+  , irResource         :: Maybe InclusionRulesResource
+  } deriving (Eq, Show)
+
+instance FromJSON InclusionRules where
+  parseJSON = withObject "InclusionRules" parse
+    where
+      parse o = InclusionRules
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data InclusionRulesResource = InclusionRulesResource
+  { irrProductId                    :: ProductId
+  , irrInsertAfterDate              :: InsertAfterDate
+  , irrInsertBeforeDate             :: InsertBeforeDate
+  , irrInsertWhenWorthValue         :: InsertWhenWorthValue
+  , irrInsertWhenWorthValueCurrency :: InsertWhenWorthValueCurrency
+  , irrInsertWhenQuantity           :: InsertWhenQuantity
+  , irrFlags                        :: Maybe InclusionRulesResourceFlags
+  } deriving (Eq, Show)
+
+instance FromJSON InclusionRulesResource where
+  parseJSON = withObject "InclusionRulesResource" parse
+    where
+      parse o = InclusionRulesResource
+                <$> o .:  "productId"
+                <*> o .:  "insertAfterDate"
+                <*> o .:  "insertBeforeDate"
+                <*> o .:  "insertWhenWorthValue"
+                <*> o .:  "insertWhenWorthValueCurrency"
+                <*> o .:  "insertWhenQuantity"
+                <*> o .:? "flags"
+
+type InsertAfterDate = ExpectedDateUTCTime
+type InsertBeforeDate = ExpectedDateUTCTime
+
+newtype InsertWhenWorthValue = InsertWhenWorthValue
+  { unInsertWhenWorthValue :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type InsertWhenWorthValueCurrency = CostCurrency
+type InsertWhenQuantity = Quantity
+
+newtype InclusionRulesResourceFlags = InclusionRulesResourceFlags
+  { irrfResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Show, FromJSON)
+
+data MarketingInsertFlags = MarketingInsertFlags
+  { mifResourceLocation :: Maybe ResponseResourceLocation
+  , mifResource         :: Maybe MarketingInsertFlagsResource
+  } deriving (Eq, Show)
+
+instance FromJSON MarketingInsertFlags where
+  parseJSON = withObject "MarketingInsertFlags" parse
+    where
+      parse o = MarketingInsertFlags
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data MarketingInsertFlagsResource = MarketingInsertFlagsResource
+  { mifrIsPackagedReadyToShip :: IsPackagedReadyToShip
+  , mifrHasMasterCase         :: HasMasterCase
+  , mifrIsArchivable          :: IsArchivable
+  , mifrIsDeletable           :: IsDeletable
+  , mifrHasEditRestrictions   :: HasEditRestrictions
+  } deriving (Eq, Show)
+
+instance FromJSON MarketingInsertFlagsResource where
+  parseJSON = withObject "MarketingInsertFlagsResource" parse
+    where
+      parse o = MarketingInsertFlagsResource
+                <$> o .: "isPackagedReadyToShip"
+                <*> o .: "hasMasterCase"
+                <*> o .: "isArchivable"
+                <*> o .: "isDeletable"
+                <*> o .: "hasEditRestrictions"
+
+data BaseProductResource = BaseProductResource
+  { bprClassification       :: Classification
+  , bprBatteryConfiguration :: Maybe BatteryConfiguration
+  , bprMasterCase           :: Maybe BaseProductMasterCase
+  , bprItemCount            :: ItemCount
+  , bprId                   :: Id
+  , bprSku                  :: SKU
+  , bprArchivedDate         :: Maybe ArchivedDate
+  , bprEnqueuedDimensions   :: EnqueuedDimensions
+  , bprDimensions           :: Dimensions
+  , bprInnerPack            :: Maybe InnerPack
+  , bprPallet               :: Maybe Pallet
+  , bprExternalId           :: Maybe ExternalId
+  , bprAlternateNames       :: AlternateNames
+  , bprValues               :: Values
+  , bprStatus               :: Status
+  , bprCategory             :: Maybe Category
+  , bprDescription          :: Description
+  , bprFlags                :: Flags
+  , bprCreationDate         :: CreationDate
+  , bprHsCode               :: Maybe HsCode
+  , bprCountryOfOrigin      :: Maybe CountryOfOrigin
+  , bprStorageConfiguration :: StorageConfiguration
+  , bprTechnicalData        :: Maybe TechnicalData
+  } deriving (Eq, Show)
+
+instance FromJSON BaseProductResource where
+  parseJSON (Object o) = parseBaseProduct o
+  parseJSON _          = mempty
+
+parseBaseProduct :: Object -> Parser BaseProductResource
+parseBaseProduct o = BaseProductResource
+                     <$> o .:  "classification"      
+                     <*> o .:? "batteryConfiguration"
+                     <*> o .:? "masterCase"          
+                     <*> o .:  "itemCount"           
+                     <*> o .:  "id"                  
+                     <*> o .:  "sku"                 
+                     <*> o .:? "archivedDate"        
+                     <*> o .:  "enqueuedDimensions"  
+                     <*> o .:  "dimensions"          
+                     <*> o .:? "innerPack"           
+                     <*> o .:? "pallet"              
+                     <*> o .:? "externalId"          
+                     <*> o .:  "alternateNames"      
+                     <*> o .:  "values"              
+                     <*> o .:  "status"              
+                     <*> o .:? "category"            
+                     <*> o .:  "description"         
+                     <*> o .:  "flags"               
+                     <*> o .:  "creationDate"        
+                     <*> o .:? "hsCode"              
+                     <*> o .:? "countryOfOrigin"     
+                     <*> o .:  "storageConfiguration"
+                     <*> o .:? "technicalData"       
+
+data TechnicalData = TechnicalData
+  { tdResourceLocation :: Maybe ResponseResourceLocation
+  , tdResource         :: Maybe TechnicalDataResource
+  } deriving (Eq, Show)
+
+instance FromJSON TechnicalData where
+  parseJSON = withObject "TechnicalData" parse
+    where
+      parse o = TechnicalData
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data TechnicalDataResource = TechnicalDataResource
+  { tdrCapacityUnit      :: Maybe CapacityUnit
+  , tdrCapacity          :: Capacity
+  , tdrBatteryWeight     :: BatteryWeight
+  , tdrNumberOfCells     :: NumberOfCells
+  , tdrType              :: BatteryType
+  , tdrNumberOfBatteries :: NumberOfBatteries
+  , tdrProductId         :: ProductId
+  } deriving (Eq, Show)
+
+instance FromJSON TechnicalDataResource where
+  parseJSON = withObject "TechnicalDataResource" parse
+    where
+      parse o = TechnicalDataResource
+                <$> o .:? "capacityUnit"
+                <*> o .:  "capacity"
+                <*> o .:  "batteryWeight"
+                <*> o .:  "numberOfCells"
+                <*> o .:  "type"
+                <*> o .:  "numberOfBatteries"
+                <*> o .:  "productId"
+
+newtype NumberOfBatteries = NumberOfBatteries
+  { unNumberOfBatteries :: Integer
+  } deriving (Eq, Show, FromJSON)
+
+newtype BatteryType = BatteryType
+  { unBatteryType :: Text
+  } deriving (Eq, Show, FromJSON)
+
+newtype NumberOfCells = NumberOfCells
+  { unNumberOfCells :: Integer
+  } deriving (Eq, Show, FromJSON)
+
+newtype BatteryWeight = BatteryWeight
+  { unBatteryWeight :: Text
+  } deriving (Eq,  Show, FromJSON)
+
+newtype Capacity = Capacity
+  { unCapacity :: Text
+  } deriving (Eq, Show, FromJSON)
+
+-- It's not specified in the docs what type this should be.
+newtype CapacityUnit = CapacityUnit
+  { unCapacityUnit :: Text
+  } deriving (Eq, Show, FromJSON)
+
+data StorageConfiguration = IndividualItemConfiguration
+  | InnerPackConfiguration
+  | MasterCaseConfiguration
+  | PalletConfiguration
+  | KitConfiguration
+  deriving (Eq, Show)
+
+instance FromJSON StorageConfiguration where
+  parseJSON = withText "storageConfiguration" parse
+    where
+      parse "INDIVIDUAL_ITEM" = pure IndividualItemConfiguration
+      parse "INNER_PACK"      = pure InnerPackConfiguration
+      parse "MASTER_CASE"     = pure MasterCaseConfiguration
+      parse "PALLET"          = pure PalletConfiguration
+      parse "KIT"             = pure KitConfiguration
+      parse _                = error "Bad input"
+
+type CountryOfOrigin = Country
+
+newtype HsCode = HsCode
+  { unHsCode :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type CreationDate = ExpectedDateUTCTime
+
+data Flags = Flags
+  { fResourceLocation :: Maybe ResponseResourceLocation
+  , fResource         :: Maybe FlagsResource
+  } deriving (Eq, Show)
+
+instance FromJSON Flags where
+  parseJSON = withObject "Flags" parse
+    where
+      parse o = Flags
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data FlagsResource = FlagsResource
+  { frIsMedia               :: IsMedia
+  , frIsDeletable           :: IsDeletable
+  , frHasPallet             :: HasPallet
+  , frIsPackagedReadyToShip :: IsPackagedReadyToShip
+  , frHasMasterCase         :: HasMasterCase
+  , frIsFragile             :: IsFragile
+  , frIsArchivable          :: IsArchivable
+  , frIsLiquid              :: IsLiquid
+  , frIsDangerous           :: IsDangerous
+  , frIsPerishable          :: IsPerishable
+  , frHasEditRestrictions   :: HasEditRestrictions
+  , frHasInnerPack          :: HasInnerPack
+  , frIsAdult               :: IsAdult
+  } deriving (Eq, Show)
+
+instance FromJSON FlagsResource where
+  parseJSON = withObject "FlagsResource" parse
+    where
+      parse o = FlagsResource
+                <$> o .: "isMedia"
+                <*> o .: "isDeletable"
+                <*> o .: "hasPallet"
+                <*> o .: "isPackagedReadyToShip"
+                <*> o .: "hasMasterCase"
+                <*> o .: "isFragile"
+                <*> o .: "isArchivable"
+                <*> o .: "isLiquid"
+                <*> o .: "isDangerous"
+                <*> o .: "isPerishable"
+                <*> o .: "hasEditRestrictions"
+                <*> o .: "hasInnerPack"
+                <*> o .: "isAdult"
+
+data IsAdult = Adult
+  | NotAdult
+  deriving (Eq, Show)
+
+instance FromJSON IsAdult where
+  parseJSON = withScientific "isAdult" parse
+    where
+      parse 0 = pure NotAdult
+      parse 1 = pure Adult
+      parse _ = error "Bad value"      
+
+data HasInnerPack = HasInnerPack
+  | NoInnerPack
+  deriving (Eq, Show)
+
+instance FromJSON HasInnerPack where
+  parseJSON = withScientific "hasInnerPack" parse
+    where
+      parse 0 = pure NoInnerPack
+      parse 1 = pure HasInnerPack
+      parse _ = error "Bad value"      
+
+data HasEditRestrictions = EditRestrictions
+  | NoEditRestrictions
+  deriving (Eq, Show)
+
+instance FromJSON HasEditRestrictions where
+  parseJSON = withScientific "hasEditRestrictions" parse
+    where
+      parse 0 = pure NoEditRestrictions
+      parse 1 = pure EditRestrictions
+      parse _ = error "Bad value"      
+
+data IsPerishable = Perishable
+  | NotPerishable
+  deriving (Eq, Show)
+
+instance FromJSON IsPerishable where
+  parseJSON = withScientific "isPerishable" parse
+    where
+      parse 0 = pure NotPerishable
+      parse 1 = pure Perishable
+      parse _ = error "Bad value"      
+ 
+data IsDangerous = Dangerous
+  | NotDangerous
+  deriving (Eq, Show)
+
+instance FromJSON IsDangerous where
+  parseJSON = withScientific "isDangerous" parse
+    where
+      parse 0 = pure NotDangerous
+      parse 1 = pure Dangerous
+      parse _ = error "Bad value"      
+
+data IsLiquid = Liquid
+  | NotLiquid
+  deriving (Eq, Show)
+
+instance FromJSON IsLiquid where
+  parseJSON = withScientific "isLiquid" parse
+    where
+      parse 0 = pure NotLiquid
+      parse 1 = pure Liquid
+      parse _ = error "Bad value"      
+
+data IsArchivable = Archivable
+  | NotArchivable
+  deriving (Eq, Show)
+
+instance FromJSON IsArchivable where
+  parseJSON = withScientific "isArchivable" parse
+    where
+      parse 0 = pure NotArchivable
+      parse 1 = pure Archivable
+      parse _ = error "Bad value"      
+
+data IsFragile = Fragile
+  | NotFragile
+  deriving (Eq, Show)
+
+instance FromJSON IsFragile where
+  parseJSON = withScientific "isFragile" parse
+    where
+      parse 0 = pure NotFragile
+      parse 1 = pure Fragile
+      parse _ = error "Bad value"      
+
+data HasMasterCase = HasMasterCase
+  | NoMasterCase
+  deriving (Eq, Show)
+
+instance FromJSON HasMasterCase where
+  parseJSON = withScientific "hasMasterCase" parse
+    where
+      parse 0 = pure NoMasterCase
+      parse 1 = pure HasMasterCase
+      parse _ = error "Bad value"      
+
+data HasPallet = HasPallet
+  | NoPallet
+  deriving (Eq, Show)
+
+instance FromJSON HasPallet where
+  parseJSON = withScientific "hasPallet" parse
+    where
+      parse 0 = pure NoPallet
+      parse 1 = pure HasPallet
+      parse _ = error "Bad value"      
+
+data IsDeletable = Deletable
+  | NotDeletable
+  deriving (Eq, Show)
+
+instance FromJSON IsDeletable where
+  parseJSON = withScientific "isDeletable" parse
+    where
+      parse 0 = pure NotDeletable
+      parse 1 = pure Deletable
+      parse _ = error "Bad value"      
+
+data IsMedia = Media
+  | NotMedia
+  deriving (Eq, Show)
+
+instance FromJSON IsMedia where
+  parseJSON = withScientific "isMedia" parse
+    where
+      parse 0 = pure NotMedia
+      parse 1 = pure Media
+      parse _ = error "Bad value"
+
+newtype Category = Category
+  { unCategory :: Text
+  } deriving (Eq, Show, FromJSON)
+
+newtype Status = Status
+  { unStatus :: Text
+  } deriving (Eq, Show, FromJSON)
+
+data AlternateNames = AlternateNames
+  { anResourceLocation :: Maybe ResponseResourceLocation
+  , anResource         :: Maybe AlternateNamesResource
+  } deriving (Eq, Show)
+
+instance FromJSON AlternateNames where
+  parseJSON = withObject "AlternateNames" parse
+    where
+      parse o = AlternateNames
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data AlternateNamesResource = AlternateNamesResource
+  { anrPrevious :: Maybe Previous
+  , anrNext     :: Maybe Next
+  , anrTotal    :: Total
+  , anrItems    :: AlternateNamesResourceItems
+  , anrOffset   :: Offset
+  } deriving (Eq, Show)
+
+instance FromJSON AlternateNamesResource where
+  parseJSON = withObject "AlternateNamesResource" parse
+    where
+      parse o = AlternateNamesResource
+                <$> o .:? "previous"
+                <*> o .:? "next"
+                <*> o .:  "total"
+                <*> o .:  "items"
+                <*> o .:  "offset"
+
+newtype AlternateNamesResourceItems = AlternateNamesResourceItems
+  { anriItems :: [AlternateNamesResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data AlternateNamesResourceItem = AlternateNamesResourceItem
+  { anriResourceLocation :: Maybe ResponseResourceLocation
+  , anriResource         :: AlternateNamesResourceItemResource
+  } deriving (Eq, Show)
+
+instance FromJSON AlternateNamesResourceItem where
+  parseJSON = withObject "AlternateNamesResourceItem" parse
+    where
+      parse o = AlternateNamesResourceItem
+                <$> o .:? "resourceLocation"
+                <*> o .:  "resource"
+
+data AlternateNamesResourceItemResource = AlternateNamesResourceItemResource
+  { anrirExternalid :: Maybe ExternalId
+  , anrirName       :: Name
+  , anrirProductId  :: ProductId
+  } deriving (Eq, Show)
+
+instance FromJSON AlternateNamesResourceItemResource where
+  parseJSON = withObject "AlternateNamesResourceItemResource" parse
+    where
+      parse o = AlternateNamesResourceItemResource
+                <$> o .:? "externalId"
+                <*> o .:  "name"
+                <*> o .:  "productId"
+
+data Pallet = Pallet
+  { pResourceLocation :: Maybe ResponseResourceLocation
+  , pResource         :: Maybe PalletResource
+  } deriving (Eq, Show)
+
+instance FromJSON Pallet where
+  parseJSON = withObject "Pallet" parse
+    where
+      parse o = Pallet
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+type PalletResource = BaseProductMasterCaseResource
+
+data InnerPack = InnerPack
+  { ipResourceLocation :: Maybe ResponseResourceLocation
+  , ipResource         :: Maybe InnerPackResource
+  } deriving (Eq, Show)
+
+instance FromJSON InnerPack where
+  parseJSON = withObject "InnerPack" parse
+    where
+      parse o = InnerPack
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+type InnerPackResource = BaseProductMasterCaseResource
+
+data EnqueuedDimensions = EnqueuedDimensions
+  { edResourceLocation :: Maybe ResponseResourceLocation
+  , edResource         :: Maybe EnqueuedDimensionsResource
+  } deriving (Eq, Show)
+
+instance FromJSON EnqueuedDimensions where
+  parseJSON = withObject "EnqueuedDimensions" parse
+    where
+      parse o = EnqueuedDimensions
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data EnqueuedDimensionsResource = EnqueuedDimensionsResource
+  { edrPrevious :: Maybe Previous
+  , edrNext     :: Maybe Next
+  , edrTotal    :: Total
+  -- No idea what edrItems are supposed to be.
+  -- There is nothing in the API docs and no model schema either.
+  , edrItems    :: Maybe Array
+  , edrOffset   :: Offset
+  } deriving (Eq, Show)
+
+instance FromJSON EnqueuedDimensionsResource where
+  parseJSON = withObject "EnqueuedDimensionsResource" parse
+    where
+      parse o = EnqueuedDimensionsResource
+                <$> o .:? "previous"
+                <*> o .:? "next"
+                <*> o .:  "total"
+                <*> o .:  "items"
+                <*> o .:  "offset"
+
+newtype ItemCount = ItemCount
+  { unItemCount :: Integer
+  } deriving (Eq, Show, FromJSON)
+
+type ArchivedDate = ExpectedDateUTCTime
+
+data Classification = BaseProduct
+  | MarketingInsert
+  | VirtualKit
+  | Kit
+  deriving (Eq, Show)
+
+instance FromJSON Classification where
+  parseJSON = withText "classification" parse
+    where
+      parse "baseProduct"     = pure BaseProduct
+      parse "marketingInsert" = pure MarketingInsert
+      parse "virtualKit"      = pure VirtualKit
+      parse "kit"             = pure Kit
+      parse _                 = error "Bad input"
+
+newtype BatteryConfiguration = BatteryConfiguration
+  { unBatteryConfiguration :: Text
+  } deriving (Eq, Show, FromJSON)
+
+data BaseProductMasterCase = BaseProductMasterCase
+  { mcResourceLocation :: Maybe ResponseResourceLocation
+  , mcResource         :: Maybe BaseProductMasterCaseResource
+  } deriving (Eq, Show)
+
+instance FromJSON BaseProductMasterCase where
+  parseJSON = withObject "MasterCase" parse
+    where
+      parse o = BaseProductMasterCase
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data BaseProductMasterCaseResource = BaseProductMasterCaseResource
+  { mcrSku                    :: SKU
+  , mcrDimensions             :: Dimensions
+  , mcrValues                 :: Values
+  , mcrExternalId             :: ExternalId
+  , mcrIndividualItemsPerCase :: IndividualItemsPerCase
+  , mcrFlags                  :: MasterCaseFlags
+  , mcrProductId              :: ProductId
+  , mcrDescription            :: Description
+  } deriving (Eq, Show)
+
+instance FromJSON BaseProductMasterCaseResource where
+  parseJSON = withObject "MasterCaseResource" parse
+    where
+      parse o = BaseProductMasterCaseResource
+                <$> o .: "sku"
+                <*> o .: "dimensions"
+                <*> o .: "values"
+                <*> o .: "externalId"
+                <*> o .: "individualItemsPerCase"
+                <*> o .: "flags"
+                <*> o .: "productId"
+                <*> o .: "description"
+
+data Dimensions = Dimensions
+  { dResourceLocation :: Maybe ResponseResourceLocation
+  , dResource         :: Maybe DimensionsResource
+  } deriving (Eq, Show)
+
+instance FromJSON Dimensions where
+  parseJSON = withObject "Dimensions" parse
+    where
+      parse o = Dimensions
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data DimensionsResource = DimensionsResource
+  { drWeight     :: DimensionsWeight
+  , drWeightUnit :: WeightUnit
+  , drHeight     :: DimensionsHeight  
+  , drHeightUnit :: HeightUnit
+  , drWidth      :: DimensionsWidth
+  , drWidthUnit  :: WidthUnit  
+  , drLength     :: DimensionsLength
+  , drLengthUnit :: LengthUnit
+  } deriving (Eq, Show)
+
+instance FromJSON DimensionsResource where
+  parseJSON = withObject "DimensionsResource" parse
+    where
+      parse o = DimensionsResource
+                <$> o .: "weight"
+                <*> o .: "weightUnit"
+                <*> o .: "height"
+                <*> o .: "heightUnit"
+                <*> o .: "width"
+                <*> o .: "widthUnit"
+                <*> o .: "length"
+                <*> o .: "lengthUnit"
+
+newtype DimensionsWeight = DimensionsWeight
+  { unDimensionsWeight :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type WeightUnit = PieceWeightUnits
+
+newtype DimensionsHeight = DimensionsHeight
+  { unDimensionsHeight :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type HeightUnit = PieceHeightUnits
+
+newtype DimensionsWidth = DimensionsWidth
+  { unDimensionsWidth :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type WidthUnit = PieceWidthUnits
+
+newtype DimensionsLength = DimensionsLength
+  { unDimensionsLength :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type LengthUnit = PieceLengthUnits
+
+data Values = Values
+  { vResourceLocation :: Maybe ResponseResourceLocation
+  , vResource         :: Maybe ValuesResource
+  } deriving (Eq, Show)
+
+instance FromJSON Values where
+  parseJSON = withObject "Values" parse
+    where
+      parse o = Values
+                <$> o .:? "resourceLocation"
+                <*> o .:? "resource"
+
+data ValuesResource = ValuesResource
+  { vrCostValueCurrency      :: CostValueCurrency
+  , vrWholesaleValue         :: WholesaleValue
+  , vrCostValue              :: CostValue
+  , vrWholesaleValueCurrency :: WholesaleValueCurrency
+  , vrRetailValue            :: RetailValue
+  , vrRetailValueCurrency    :: RetailValueCurrency
+  } deriving (Eq, Show)
+
+instance FromJSON ValuesResource where
+  parseJSON = withObject "ValuesResource" parse
+    where
+      parse o = ValuesResource
+                <$> o .: "costValueCurrency"
+                <*> o .: "wholesaleValue"
+                <*> o .: "costValue"
+                <*> o .: "wholesaleValueCurrency"
+                <*> o .: "retailValue"
+                <*> o .: "retailValueCurrency"
+
+type CostValueCurrency      = Currency
+type WholesaleValueCurrency = Currency
+type RetailValueCurrency    = Currency
+
+newtype CostValue = CostValue
+  { unCostValue :: Text
+  } deriving (Eq, Show, FromJSON)
+
+type WholesaleValue = CostValue
+type RetailValue    = CostValue
+
+newtype IndividualItemsPerCase = IndividualItemsPerCase
+  { unIndividualItemsPerCase :: Integer
+  } deriving (Eq, Show, FromJSON)
+
+data MasterCaseFlags = MasterCaseFlags
+  { mcfResourceLocation :: Maybe ResponseResourceLocation
+  , mcfResource         :: MasterCaseFlagsResource
+  } deriving (Eq, Show)
+
+instance FromJSON MasterCaseFlags where
+  parseJSON = withObject "Flags" parse
+    where
+      parse o = MasterCaseFlags
+                <$> o .:? "resourceLocation"
+                <*> o .:  "resource"
+
+newtype MasterCaseFlagsResource = MasterCaseFlagsResource
+  { unFlagsResource :: IsPackagedReadyToShip
+  } deriving (Eq, Show, FromJSON)
+
+data IsPackagedReadyToShip = PackagedReadyToShip
+  | NotPackagedReadyToShip
+  deriving (Eq, Show)
+
+instance FromJSON IsPackagedReadyToShip where
+  parseJSON = withScientific "isPackagedReadyToShip" parse
+    where
+      parse 0 = pure NotPackagedReadyToShip
+      parse 1 = pure PackagedReadyToShip
+      parse _ = error "Bad input"
+
