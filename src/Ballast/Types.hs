@@ -23,6 +23,7 @@ module Ballast.Types
   , City(..)
   , PostalCode(..)
   , Region(..)
+  , IgnoreUnknownSkus(..)
   , Country(..)
   , Currency(..)
   , GroupBy(..)
@@ -503,19 +504,35 @@ instance ToJSON GetRate where
                                ,"order"   .= rateOrder]
 
 data RateOptions = RateOptions
-  { rateOptionCurrency      :: Currency
-  , rateOptionGroupBy       :: GroupBy
-  , rateOptionCanSplit      :: CanSplit
-  , rateOptionWarehouseArea :: WarehouseArea
-  , rateOptionChannelName   :: Maybe ChannelName
+  { rateOptionCurrency            :: Currency
+  , rateOptionGroupBy             :: GroupBy
+  , rateOptionWarehouseId         :: Maybe WarehouseId
+  , rateOptionWarehouseExternalId :: Maybe WarehouseExternalId
+  , rateOptionWarehouseRegion     :: Maybe WarehouseRegion
+  , rateOptionIgnoreUnknownSkus   :: Maybe IgnoreUnknownSkus
+  , rateOptionCanSplit            :: CanSplit
+  , rateOptionWarehouseArea       :: WarehouseArea
+  , rateOptionChannelName         :: Maybe ChannelName
   } deriving (Eq, Show)
 
+data IgnoreUnknownSkus = IgnoreUnknownSkus
+  | DontIgnoreUnknownSkus
+  deriving (Eq, Show)
+
+instance ToJSON IgnoreUnknownSkus where
+  toJSON IgnoreUnknownSkus     = Number 1
+  toJSON DontIgnoreUnknownSkus = Number 0
+
 instance ToJSON RateOptions where
-  toJSON RateOptions {..} = omitNulls ["currency"      .= rateOptionCurrency
-                                      ,"groupBy"       .= rateOptionGroupBy
-                                      ,"canSplit"      .= rateOptionCanSplit
-                                      ,"warehouseArea" .= rateOptionWarehouseArea
-                                      ,"channelName"   .= rateOptionChannelName]
+  toJSON RateOptions {..} = omitNulls ["currency"            .= rateOptionCurrency
+                                      ,"groupBy"             .= rateOptionGroupBy
+                                      ,"warehouseId"         .= rateOptionWarehouseId
+                                      ,"warehouseExternalId" .= rateOptionWarehouseExternalId
+                                      ,"warehouseRegion"     .= rateOptionWarehouseRegion
+                                      ,"ignoreUnknownSkus"   .= rateOptionIgnoreUnknownSkus
+                                      ,"canSplit"            .= rateOptionCanSplit
+                                      ,"warehouseArea"       .= rateOptionWarehouseArea
+                                      ,"channelName"         .= rateOptionChannelName]
 
 newtype CanSplit = CanSplit
   { unCanSplit :: Integer
