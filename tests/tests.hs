@@ -14,7 +14,7 @@ mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "Ballasttest"), Quantity 1)]
+exampleItems = [ItemInfo ((SKU "HspecTest"), Quantity 1)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -44,7 +44,7 @@ exampleCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "Ballasttest") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -72,7 +72,7 @@ exampleBadCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "Ballasttest") (Quantity 0)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 0)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -100,7 +100,7 @@ exampleModifiedReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "Ballasttest") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -112,6 +112,122 @@ exampleModifiedReceiving =
        (Country "Modified Country")
        (Phone "12346"))
     Nothing
+
+exampleCreateProduct :: [CreateProductsWrapper]
+exampleCreateProduct = [CpwBaseProduct $ BaseProduct
+                          (SKU "HspecTest")
+                          Nothing
+                          (BaseProductClassification)
+                          (Description "Hspec test product")
+                          (Just $ HsCode "010612")
+                          (CountryOfOrigin "US")
+                          (Category "TOYS_SPORTS_HOBBIES")
+                          (BatteryConfiguration "ISBATTERY")
+                          (Values 
+                            (CostValue 1)
+                            (WholesaleValue 2)
+                            (RetailValue 4)
+                            (CostCurrency "USD")
+                            (WholesaleCurrency "USD")
+                            (RetailCurrency "USD")
+                          )
+                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt")])
+                          (BaseProductDimensions 
+                            (BaseProductLength 10)
+                            (BaseProductWidth 10)
+                            (BaseProductHeight 10)
+                            (BaseProductWeight 10)
+                          )
+                          (BaseProductTechnicalData 
+                            (BaseProductTechnicalDataResource 
+                                (BatteryType "ALKALINE")
+                                (BatteryWeight 3)
+                                (NumberOfBatteries 5)
+                                (Capacity 6)
+                                (NumberOfCells 7)
+                                (CapacityUnit "WATTHOUR")
+                            )
+                          )
+                          (BaseProductFlags 
+                            PackagedReadyToShip
+                            Fragile
+                            NotDangerous
+                            NotPerishable
+                            NotMedia
+                            NotAdult
+                            NotLiquid
+                            HasInnerPack
+                            HasMasterCase
+                            HasPallet
+                          )
+                          (BaseProductInnerPack 
+                            (IndividualItemsPerCase 2)
+                            (ExternalId "narp22")
+                            (SKU "singleInner2")
+                            (Description "InnerDec")
+                            (Values 
+                                (CostValue 1)
+                                (WholesaleValue 2)
+                                (RetailValue 4)
+                                (CostCurrency "USD")
+                                (WholesaleCurrency "USD")
+                                (RetailCurrency "USD")
+                            )
+                            (BaseProductDimensions 
+                                (BaseProductLength 20)
+                                (BaseProductWidth 20)
+                                (BaseProductHeight 20)
+                                (BaseProductWeight 20)
+                            )
+                            (BaseProductInnerPackFlags 
+                                NotPackagedReadyToShip
+                            )
+                          )
+                          (BaseProductMasterCase 
+                            (IndividualItemsPerCase 10)
+                            (ExternalId "narp3")
+                            (SKU "singleMaster2")
+                            (Description "masterdesc")
+                            (Values
+                                (CostValue 1)
+                                (WholesaleValue 2)
+                                (RetailValue 4)
+                                (CostCurrency "USD")
+                                (WholesaleCurrency "USD")
+                                (RetailCurrency "USD")
+                            )
+                            (BaseProductDimensions 
+                                (BaseProductLength 30)
+                                (BaseProductWidth 30)
+                                (BaseProductHeight 30)
+                                (BaseProductWeight 30)
+                            )
+                            (BaseProductMasterCaseFlags PackagedReadyToShip)
+                          )
+                          (BaseProductPallet 
+                            (IndividualItemsPerCase 1000)
+                            (ExternalId "narp4")
+                            (SKU "singlePallet2")
+                            (Description "palletdesc")
+                            (Values 
+                                (CostValue 1)
+                                (WholesaleValue 2)
+                                (RetailValue 4)
+                                (CostCurrency "USD")
+                                (WholesaleCurrency "USD")
+                                (RetailCurrency "USD")
+                            )
+                            (BaseProductDimensions 
+                                (BaseProductLength 40)
+                                (BaseProductWidth 40)
+                                (BaseProductHeight 40)
+                                (BaseProductWeight 40)
+                            )
+                            (BaseProductPalletFlags 
+                                NotPackagedReadyToShip
+                            )
+                          )
+                        ]
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -131,7 +247,7 @@ main = do
   hspec $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
-        let getRt = mkGetRate (RateOptions USD GroupByAll (CanSplit 1) WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
+        let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) (CanSplit 1) WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
         result <- shipwire config $ createRateRequest getRt
         result `shouldSatisfy` isRight
         let Right RateResponse{..} = result
@@ -140,7 +256,7 @@ main = do
 
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
-        result <- shipwire config $ getStockInfo -&- (SKU "Ballasttest")
+        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest")
         result `shouldSatisfy` isRight
 
     describe "get receivings" $ do
@@ -261,3 +377,11 @@ main = do
         let Right GetProductsResponse {..} = result
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
+
+    -- describe "create a product" $ do
+    --   it "creates a product" $ do
+    --     result <- shipwire config $ createProduct exampleCreateProduct
+    --     result `shouldSatisfy` isRight
+    --     let Right GetProductsResponse {..} = result
+    --     gprWarnings `shouldBe` Nothing
+    --     gprErrors `shouldBe` Nothing

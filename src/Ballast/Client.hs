@@ -156,6 +156,15 @@ getProducts = request
     url = "/products"
     params = []
 
+-- | Create new products of any classification.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire1
+createProduct :: [CreateProductsWrapper] -> ShipwireRequest CreateProductsRequest TupleBS8 BSL.ByteString
+createProduct cpr = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = "/products"
+    params = [Body (encode cpr)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
