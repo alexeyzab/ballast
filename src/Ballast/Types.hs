@@ -4547,11 +4547,11 @@ instance FromJSON ValuesResponse where
 
 data ValuesResource = ValuesResource
   { vrCostValueCurrency      :: Maybe CostValueCurrency
-  , vrWholesaleValue         :: WholesaleValueResponse
-  , vrCostValue              :: CostValueResponse
-  , vrWholesaleValueCurrency :: WholesaleValueCurrency
-  , vrRetailValue            :: RetailValueResponse
-  , vrRetailValueCurrency    :: RetailValueCurrency
+  , vrWholesaleValue         :: Maybe WholesaleValueResponse
+  , vrCostValue              :: Maybe CostValueResponse
+  , vrWholesaleValueCurrency :: Maybe WholesaleValueCurrency
+  , vrRetailValue            :: Maybe RetailValueResponse
+  , vrRetailValueCurrency    :: Maybe RetailValueCurrency
   } deriving (Eq, Show)
 
 data Values = Values
@@ -4576,11 +4576,11 @@ instance FromJSON ValuesResource where
     where
       parse o = ValuesResource
                 <$> o .:? "costValueCurrency"
-                <*> o .:  "wholesaleValue"
-                <*> o .:  "costValue"
-                <*> o .:  "wholesaleValueCurrency"
-                <*> o .:  "retailValue"
-                <*> o .:  "retailValueCurrency"
+                <*> o .:? "wholesaleValue"
+                <*> o .:? "costValue"
+                <*> o .:? "wholesaleValueCurrency"
+                <*> o .:? "retailValue"
+                <*> o .:? "retailValueCurrency"
 
 newtype WholesaleValueCurrency = WholesaleValueCurrency
   { unWholesaleValueCurrency :: Text
