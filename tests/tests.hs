@@ -114,11 +114,46 @@ exampleModifiedReceiving =
     Nothing
 
 exampleCreateProduct :: [CreateProductsWrapper]
-exampleCreateProduct = [CpwBaseProduct $ BaseProduct
-                          (SKU "HspecTest")
+exampleCreateProduct = [CpwMarketingInsert $ MarketingInsert
+                          (SKU "HspecTestInsert2")
+                          Nothing
+                          (MarketingInsertClassification)
+                          (Description "Hspec test marketing insert2")
+                          (InclusionRuleType "CUSTOM")
+                          (MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI22")])
+                          (MarketingInsertDimensions
+                            (MarketingInsertLength 0.1)
+                            (MarketingInsertWidth 0.1)
+                            (MarketingInsertHeight 0.1)
+                            (MarketingInsertWeight 0.2)
+                          )
+                          (MarketingInsertFlags
+                            ShouldNotFold
+                          )
+                          (MarketingInsertInclusionRules
+                            (InsertAfterDate "3016-02-15T13:04:26-05:00")
+                            (InsertBeforeDate "3016-02-15T13:04:26-05:00")
+                            (InsertWhenWorthValue 5)
+                            (InsertWhenQuantity 5)
+                            (InsertWhenWorthCurrency "USD")
+                          )
+                          (MarketingInsertMasterCase
+                            (IndividualItemsPerCase 10)
+                            (SKU "HspecTestMIMCSKU")
+                            Nothing
+                            (Description "Hspec test marketing insert master case2")
+                            (MarketingInsertMasterCaseDimensions
+                              (MarketingInsertMasterCaseDimensionsLength 8)
+                              (MarketingInsertMasterCaseDimensionsWidth 8)
+                              (MarketingInsertMasterCaseDimensionsHeight 8)
+                              (MarketingInsertMasterCaseDimensionsWeight 8)
+                            )
+                          ),
+                        CpwBaseProduct $ BaseProduct
+                          (SKU "HspecTest2")
                           Nothing
                           (BaseProductClassification)
-                          (Description "Hspec test product")
+                          (Description "Hspec test product2")
                           (Just $ HsCode "010612")
                           (CountryOfOrigin "US")
                           (Category "TOYS_SPORTS_HOBBIES")
@@ -131,7 +166,7 @@ exampleCreateProduct = [CpwBaseProduct $ BaseProduct
                             (WholesaleCurrency "USD")
                             (RetailCurrency "USD")
                           )
-                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt")])
+                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt2")])
                           (BaseProductDimensions 
                             (BaseProductLength 10)
                             (BaseProductWidth 10)
@@ -162,9 +197,9 @@ exampleCreateProduct = [CpwBaseProduct $ BaseProduct
                           )
                           (BaseProductInnerPack 
                             (IndividualItemsPerCase 2)
-                            (ExternalId "narp22")
-                            (SKU "singleInner2")
-                            (Description "InnerDec")
+                            (ExternalId "narp222")
+                            (SKU "singleInner22")
+                            (Description "InnerDec2")
                             (Values 
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -185,9 +220,9 @@ exampleCreateProduct = [CpwBaseProduct $ BaseProduct
                           )
                           (BaseProductMasterCase 
                             (IndividualItemsPerCase 10)
-                            (ExternalId "narp3")
-                            (SKU "singleMaster2")
-                            (Description "masterdesc")
+                            (ExternalId "narp33")
+                            (SKU "singleMaster23")
+                            (Description "masterdesc3")
                             (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -206,9 +241,9 @@ exampleCreateProduct = [CpwBaseProduct $ BaseProduct
                           )
                           (BaseProductPallet 
                             (IndividualItemsPerCase 1000)
-                            (ExternalId "narp4")
-                            (SKU "singlePallet2")
-                            (Description "palletdesc")
+                            (ExternalId "narp42")
+                            (SKU "singlePallet22")
+                            (Description "palletdesc2")
                             (Values 
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -378,10 +413,10 @@ main = do
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
-    -- describe "create a product" $ do
-    --   it "creates a product" $ do
-    --     result <- shipwire config $ createProduct exampleCreateProduct
-    --     result `shouldSatisfy` isRight
-    --     let Right GetProductsResponse {..} = result
-    --     gprWarnings `shouldBe` Nothing
-    --     gprErrors `shouldBe` Nothing
+    describe "create a product" $ do
+      it "creates a product" $ do
+        result <- shipwire config $ createProduct exampleCreateProduct
+        result `shouldSatisfy` isRight
+        let Right GetProductsResponse {..} = result
+        gprWarnings `shouldBe` Nothing
+        gprErrors `shouldBe` Nothing

@@ -392,19 +392,19 @@ module Ballast.Types
   , MasterCaseFlagsResource(..)
   , IsPackagedReadyToShip(..)
   , MarketingInsertResponseResource(..)
-  , MarketingInsertMasterCase(..)
-  , MarketingInsertMasterCaseResource(..)
+  , MarketingInsertMasterCaseResponse(..)
+  , MarketingInsertMasterCaseResponseResource(..)
   , InclusionRuleType(..)
   , InclusionRules(..)
   , InclusionRulesResource(..)
-  , InsertAfterDate
-  , InsertBeforeDate
-  , InsertWhenWorthValue(..)
+  , InsertAfterDate(..)
+  , InsertBeforeDate(..)
+  , InsertWhenWorthValueResponse(..)
   , InsertWhenWorthValueCurrency
-  , InsertWhenQuantity
+  , InsertWhenQuantity(..)
   , InclusionRulesResourceFlags(..)
-  , MarketingInsertFlags(..)
-  , MarketingInsertFlagsResource(..)
+  , MarketingInsertFlagsResponse(..)
+  , MarketingInsertFlagsResponseResource(..)
   , VirtualKitResponseResource(..)
   , VirtualKitContent(..)
   , VirtualKitContentResource(..)
@@ -461,7 +461,26 @@ module Ballast.Types
   , RetailValueResponse(..)
   , WholesaleValue(..)
   , WholesaleValueResponse(..)
-  -- , MarketingInsert(..)
+  , MarketingInsert(..)
+  , MarketingInsertAlternateNames(..)
+  , MarketingInsertAlternateName(..)
+  , MarketingInsertDimensions(..)
+  , MarketingInsertLength(..)
+  , MarketingInsertWidth(..)
+  , MarketingInsertHeight(..)
+  , MarketingInsertWeight(..)
+  , MarketingInsertInclusionRules(..)  
+  , ShouldNotFold(..)
+  , MarketingInsertFlags(..)
+  , InsertWhenWorthValue(..)
+  , InsertWhenWorthCurrency(..)
+  , MarketingInsertMasterCase(..)
+  , MarketingInsertMasterCaseDimensions(..)
+  , MarketingInsertMasterCaseDimensionsHeight(..)
+  , MarketingInsertMasterCaseDimensionsLength(..)
+  , MarketingInsertMasterCaseDimensionsWidth(..)
+  , MarketingInsertMasterCaseDimensionsWeight(..)
+  , ProductError(..)
   -- , VirtualKit(..)
   -- , Kit(..)
   ) where
@@ -3129,17 +3148,194 @@ type CreateProductsResponse = GetProductsResponse
 -- by passing them inside a JSON array. To distinguish between different ToJSON instances
 -- we use this wrapper datatype.
 data CreateProductsWrapper = CpwBaseProduct BaseProduct
-  -- | CpwMarketingInsert MarketingInsert
+  | CpwMarketingInsert MarketingInsert
   -- | CpwVirtualKit VirtualKit
   -- | CpwKit Kit
   deriving (Eq, Show)
 
 instance ToJSON CreateProductsWrapper where
   toJSON (CpwBaseProduct x)     = toJSON x
-  -- toJSON (CpwMarketingInsert x) = toJSON x
+  toJSON (CpwMarketingInsert x) = toJSON x
   -- toJSON (CpwVirtualKit x)      = toJSON x
   -- toJSON (CpwKit x)             = toJSON x
 
+data MarketingInsert = MarketingInsert
+  { miSku               :: SKU
+  , miExternalId        :: Maybe ExternalId
+  , miClassification    :: Classification  
+  , miDescription       :: Description
+  , miInclusionRuleType :: InclusionRuleType
+  , miAlternateNames    :: MarketingInsertAlternateNames
+  , miDimensions        :: MarketingInsertDimensions
+  , miFlags             :: MarketingInsertFlags
+  , miInclusionRules    :: MarketingInsertInclusionRules
+  , miMasterCase        :: MarketingInsertMasterCase
+  } deriving (Eq, Show)
+
+-- | There is a separate error class for /products endpoint apparently.
+-- It returns back JSON with field names as object names and
+-- details hidden inside that object. It is not specified anywhere what those might be.
+-- So for now I treat them as an Object.
+-- There must be a better way of dealing with it.
+-- E.g.:
+--   "errors": {
+--    "myMarketingInsert": {
+--      "code": "productSubmitFailed",
+--      "externalId": null,
+--      "id": null,
+--      "sku": "myMarketingInsert",
+--      "message": {
+--        "sku": {
+--          "stringLengthTooLong": "SKU must be between 1 and 16 characters"
+--        },
+--        "masterCase_sku": {
+--          "stringLengthTooLong": "Master case SKU must be between 1 and 16 characters"
+--        },
+--      },
+--      "type": {
+--        "sku": {
+--          "stringLengthTooLong": "error"
+--        },
+--        "masterCase_sku": {
+--          "stringLengthTooLong": "error"
+--        },
+--      }
+--    }
+--  }
+newtype ProductError = ProductError
+  { unProductError :: Object
+  } deriving (Eq, Show, FromJSON)
+
+instance ToJSON MarketingInsert where
+  toJSON MarketingInsert {..} = omitNulls ["sku"               .= miSku
+                                          ,"classification"    .= miClassification
+                                          ,"externalId"        .= miExternalId
+                                          ,"description"       .= miDescription
+                                          ,"inclusionRuleType" .= miInclusionRuleType
+                                          ,"alternateNames"    .= miAlternateNames
+                                          ,"dimensions"        .= miDimensions
+                                          ,"flags"             .= miFlags
+                                          ,"inclusionRules"    .= miInclusionRules
+                                          ,"masterCase"        .= miMasterCase]
+
+newtype MarketingInsertAlternateNames = MarketingInsertAlternateNames
+  { unMarketingInsertAlternateNames :: [MarketingInsertAlternateName]
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertAlternateName = MarketingInsertAlternateName
+  { mianName :: Name
+  } deriving (Eq, Show)
+
+instance ToJSON MarketingInsertAlternateName where
+  toJSON MarketingInsertAlternateName {..} = object ["name" .= mianName]
+
+data MarketingInsertDimensions = MarketingInsertDimensions
+  { midLength :: MarketingInsertLength
+  , midWidth  :: MarketingInsertWidth
+  , midHeight :: MarketingInsertHeight
+  , midWeight :: MarketingInsertWeight
+  } deriving (Eq, Show)
+
+instance ToJSON MarketingInsertDimensions where
+  toJSON MarketingInsertDimensions {..} = object ["length" .= midLength
+                                                 ,"width"  .= midWidth
+                                                 ,"height" .= midHeight
+                                                 ,"weight" .= midWeight]
+
+newtype MarketingInsertLength = MarketingInsertLength
+  { unMarketingInsertLength :: Double
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertWidth = MarketingInsertWidth
+  { unMarketingInsertWidth :: Double
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertHeight = MarketingInsertHeight
+  { unMarketingInsertHeight :: Double
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertWeight = MarketingInsertWeight
+  { unMarketingInsertWeight :: Double
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertFlags = MarketingInsertFlags
+  { mifShouldNotFold :: ShouldNotFold
+  } deriving (Eq, Show, ToJSON)
+
+data ShouldNotFold = ShouldNotFold
+  | ShouldFold
+  deriving (Eq, Show)
+
+data MarketingInsertInclusionRules = MarketingInsertInclusionRules
+  { miirInsertAfterDate         :: InsertAfterDate
+  , miirInsertBeforeDate        :: InsertBeforeDate
+  , miirInsertWhenWorthValue    :: InsertWhenWorthValue
+  , miirInsertWhenQuantity      :: InsertWhenQuantity
+  , miirInsertWhenWorthCurrency :: InsertWhenWorthCurrency
+  } deriving (Eq, Show)
+
+instance ToJSON MarketingInsertInclusionRules where
+  toJSON MarketingInsertInclusionRules {..} = object ["insertAfterDate"         .= miirInsertAfterDate
+                                                     ,"insertBeforeDate"        .= miirInsertBeforeDate
+                                                     ,"insertWhenWorthValue"    .= miirInsertWhenWorthValue
+                                                     ,"insertWhenQuantity"      .= miirInsertWhenQuantity
+                                                     ,"insertWhenWorthCurrency" .= miirInsertWhenWorthCurrency]
+
+instance ToJSON ShouldNotFold where
+  toJSON ShouldNotFold = Number 1
+  toJSON ShouldFold    = Number 0
+
+newtype InsertWhenWorthValue = InsertWhenWorthValue
+  { unInsertWhenWorthValue :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype InsertWhenWorthCurrency = InsertWhenWorthCurrency
+  { unInsertWhenWorthCurrency :: Text
+  } deriving (Eq, Show, ToJSON)
+
+data MarketingInsertMasterCase = MarketingInsertMasterCase
+  { mimcIndividualItemsPerCase :: IndividualItemsPerCase
+  , mimcSku                    :: SKU
+  , mimcExternalId             :: Maybe ExternalId
+  , mimcDescription            :: Description
+  , mimcDimensions             :: MarketingInsertMasterCaseDimensions
+  } deriving (Eq, Show)
+
+instance ToJSON MarketingInsertMasterCase where
+  toJSON MarketingInsertMasterCase {..} = omitNulls ["individualItemsPerCase" .= mimcIndividualItemsPerCase
+                                                    ,"sku"                    .= mimcSku
+                                                    ,"externalId"             .= mimcExternalId
+                                                    ,"description"            .= mimcDescription
+                                                    ,"dimensions"             .= mimcDimensions]
+
+data MarketingInsertMasterCaseDimensions = MarketingInsertMasterCaseDimensions
+  { mimcdLength :: MarketingInsertMasterCaseDimensionsLength
+  , mimcdWidth  :: MarketingInsertMasterCaseDimensionsWidth
+  , mimcdHeight :: MarketingInsertMasterCaseDimensionsHeight
+  , mimcdWeight :: MarketingInsertMasterCaseDimensionsWeight
+  } deriving (Eq, Show)
+
+instance ToJSON MarketingInsertMasterCaseDimensions where
+  toJSON MarketingInsertMasterCaseDimensions {..} = object ["length" .= mimcdLength
+                                                           ,"width"  .= mimcdWidth
+                                                           ,"height" .= mimcdHeight
+                                                           ,"weight" .= mimcdWeight]
+
+newtype MarketingInsertMasterCaseDimensionsLength = MarketingInsertMasterCaseDimensionsLength
+  { unMarketingInsertMasterCaseDimensionsLength :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertMasterCaseDimensionsWidth = MarketingInsertMasterCaseDimensionsWidth
+  { unMarketingInsertMasterCaseDimensionsWidth :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertMasterCaseDimensionsHeight = MarketingInsertMasterCaseDimensionsHeight
+  { unMarketingInsertMasterCaseDimensionsHeight :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype MarketingInsertMasterCaseDimensionsWeight = MarketingInsertMasterCaseDimensionsWeight
+  { unMarketingInsertMasterCaseDimensionsWeight :: Integer
+  } deriving (Eq, Show, ToJSON)
 
 data BaseProduct = BaseProduct
   { bpSku                  :: SKU
@@ -3487,7 +3683,8 @@ data GetProductsResponse = GetProductsResponse
   , gprMessage          :: ResponseMessage
   , gprResource         :: GetProductsResponseResource
   , gprWarnings         :: Maybe ResponseWarnings
-  , gprErrors           :: Maybe ResponseErrors
+  -- , gprErrors           :: Maybe ResponseErrors
+  , gprErrors      :: Maybe ProductError
   } deriving (Eq, Show)
 
 instance FromJSON GetProductsResponse where
@@ -3766,9 +3963,9 @@ data MarketingInsertResponseResource = MarketingInsertResponseResource
   , mirItemCount            :: ItemCount
   , mirDimensions           :: Dimensions
   , mirAlternateNames       :: AlternateNamesResponse
-  , mirFlags                :: Maybe MarketingInsertFlags
+  , mirFlags                :: Maybe MarketingInsertFlagsResponse
   , mirInclusionRules       :: Maybe InclusionRules
-  , mirMasterCase           :: Maybe MarketingInsertMasterCase
+  , mirMasterCase           :: Maybe MarketingInsertMasterCaseResponse
   } deriving (Eq, Show)
 
 instance FromJSON MarketingInsertResponseResource where
@@ -3794,19 +3991,19 @@ parseMarketingInsert o = MarketingInsertResponseResource
                          <*> o .:? "inclusionRules"
                          <*> o .:? "masterCase"
 
-data MarketingInsertMasterCase = MarketingInsertMasterCase
+data MarketingInsertMasterCaseResponse = MarketingInsertMasterCaseResponse
   { mimcResourceLocation :: Maybe ResponseResourceLocation
-  , mimcResource         :: Maybe MarketingInsertMasterCaseResource
+  , mimcResource         :: Maybe MarketingInsertMasterCaseResponseResource
   } deriving (Eq, Show)
 
-instance FromJSON MarketingInsertMasterCase where
-  parseJSON = withObject "MarketingInsertMasterCase" parse
+instance FromJSON MarketingInsertMasterCaseResponse where
+  parseJSON = withObject "MarketingInsertMasterCaseResponse" parse
     where
-      parse o = MarketingInsertMasterCase
+      parse o = MarketingInsertMasterCaseResponse
                 <$> o .:? "resourceLocation"
                 <*> o .:? "resource"
 
-data MarketingInsertMasterCaseResource = MarketingInsertMasterCaseResource
+data MarketingInsertMasterCaseResponseResource = MarketingInsertMasterCaseResponseResource
   { mimcrProductId              :: ProductId
   , mimcrExternalId             :: Maybe ExternalId
   , mimcrIndividualItemsPerCase :: IndividualItemsPerCase
@@ -3815,10 +4012,10 @@ data MarketingInsertMasterCaseResource = MarketingInsertMasterCaseResource
   , mimcrDimensions             :: Dimensions
   } deriving (Eq, Show)
 
-instance FromJSON MarketingInsertMasterCaseResource where
-  parseJSON = withObject "MarketingInsertMasterCaseResource" parse
+instance FromJSON MarketingInsertMasterCaseResponseResource where
+  parseJSON = withObject "MarketingInsertMasterCaseResponseResource" parse
     where
-      parse o = MarketingInsertMasterCaseResource
+      parse o = MarketingInsertMasterCaseResponseResource
                 <$> o .:  "productId"
                 <*> o .:? "externalId"
                 <*> o .:  "individualItemsPerCase"
@@ -3828,7 +4025,7 @@ instance FromJSON MarketingInsertMasterCaseResource where
 
 newtype InclusionRuleType = InclusionRuleType
   { unInclusionRuleType :: Text
-  } deriving (Eq, Show, FromJSON)
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 data InclusionRules = InclusionRules
   { irResourceLocation :: Maybe ResponseResourceLocation
@@ -3846,7 +4043,7 @@ data InclusionRulesResource = InclusionRulesResource
   { irrProductId                    :: ProductId
   , irrInsertAfterDate              :: InsertAfterDate
   , irrInsertBeforeDate             :: InsertBeforeDate
-  , irrInsertWhenWorthValue         :: InsertWhenWorthValue
+  , irrInsertWhenWorthValue         :: InsertWhenWorthValueResponse
   , irrInsertWhenWorthValueCurrency :: InsertWhenWorthValueCurrency
   , irrInsertWhenQuantity           :: InsertWhenQuantity
   , irrFlags                        :: Maybe InclusionRulesResourceFlags
@@ -3864,35 +4061,49 @@ instance FromJSON InclusionRulesResource where
                 <*> o .:  "insertWhenQuantity"
                 <*> o .:? "flags"
 
-type InsertAfterDate = ExpectedDateUTCTime
+-- type InsertAfterDate = ExpectedDateUTCTime
 
-type InsertBeforeDate = ExpectedDateUTCTime
+-- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
+newtype InsertAfterDate = InsertAfterDate
+  { unInsertAfterDate :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
-newtype InsertWhenWorthValue = InsertWhenWorthValue
-  { unInsertWhenWorthValue :: Text
+-- type InsertBeforeDate = ExpectedDateUTCTime
+
+-- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
+newtype InsertBeforeDate = InsertBeforeDate
+  { unInsertBeforeDate :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
+
+newtype InsertWhenWorthValueResponse = InsertWhenWorthValueResponse
+  { unInsertWhenWorthValueResponse :: Text
   } deriving (Eq, Show, FromJSON)
 
 type InsertWhenWorthValueCurrency = CostCurrency
 
-type InsertWhenQuantity = Quantity
+-- type InsertWhenQuantity = Quantity
+
+newtype InsertWhenQuantity = InsertWhenQuantity
+  { unInsertWhenQuantity :: Integer
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 newtype InclusionRulesResourceFlags = InclusionRulesResourceFlags
   { irrfResourceLocation :: Maybe ResponseResourceLocation
   } deriving (Eq, Show, FromJSON)
 
-data MarketingInsertFlags = MarketingInsertFlags
+data MarketingInsertFlagsResponse = MarketingInsertFlagsResponse
   { mifResourceLocation :: Maybe ResponseResourceLocation
-  , mifResource         :: Maybe MarketingInsertFlagsResource
+  , mifResource         :: Maybe MarketingInsertFlagsResponseResource
   } deriving (Eq, Show)
 
-instance FromJSON MarketingInsertFlags where
-  parseJSON = withObject "MarketingInsertFlags" parse
+instance FromJSON MarketingInsertFlagsResponse where
+  parseJSON = withObject "MarketingInsertFlagsResponse" parse
     where
-      parse o = MarketingInsertFlags
+      parse o = MarketingInsertFlagsResponse
                 <$> o .:? "resourceLocation"
                 <*> o .:? "resource"
 
-data MarketingInsertFlagsResource = MarketingInsertFlagsResource
+data MarketingInsertFlagsResponseResource = MarketingInsertFlagsResponseResource
   { mifrIsPackagedReadyToShip :: IsPackagedReadyToShip
   , mifrHasMasterCase         :: HasMasterCase
   , mifrIsArchivable          :: IsArchivable
@@ -3900,10 +4111,10 @@ data MarketingInsertFlagsResource = MarketingInsertFlagsResource
   , mifrHasEditRestrictions   :: HasEditRestrictions
   } deriving (Eq, Show)
 
-instance FromJSON MarketingInsertFlagsResource where
-  parseJSON = withObject "MarketingInsertFlagsResource" parse
+instance FromJSON MarketingInsertFlagsResponseResource where
+  parseJSON = withObject "MarketingInsertFlagsResponseResource" parse
     where
-      parse o = MarketingInsertFlagsResource
+      parse o = MarketingInsertFlagsResponseResource
                 <$> o .: "isPackagedReadyToShip"
                 <*> o .: "hasMasterCase"
                 <*> o .: "isArchivable"
