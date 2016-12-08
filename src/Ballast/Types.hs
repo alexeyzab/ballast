@@ -130,7 +130,7 @@ module Ballast.Types
   , ResponseNext(..)
   , StockItem(..)
   , StockItemResource(..)
-  , ProductId
+  , ProductId(..)
   , ProductExternalId
   , WarehouseRegion(..)
   , StockItemResourcePending(..)
@@ -413,12 +413,12 @@ module Ballast.Types
   , VirtualKitContentResourceItemResource(..)
   , VirtualKitFlags(..)
   , KitResponseResource(..)
-  , KitMasterCase
-  , KitTechnicalData(..)
-  , KitTechnicalDataResource(..)
-  , KitTechnicalDataResourceBattery(..)
+  , KitResponseMasterCase
+  , KitResponseTechnicalData(..)
+  , KitResponseTechnicalDataResource(..)
+  , KitResponseTechnicalDataResourceBattery(..)
   , KitTechnicalDataResourceBatteryResource
-  , KitContent
+  , KitResponseContent
   , ExpandProductsParam(..)
   , ExpandProducts(..)
   , expandProductsToTx
@@ -449,7 +449,7 @@ module Ballast.Types
   , BaseProductMasterCaseFlags(..)
   , BaseProductInnerPackFlags(..)
   , BaseProductTechnicalData(..)
-  , BaseProductTechnicalDataResource(..)
+  , BaseProductTechnicalDataBattery(..)
   , BaseProductDimensions(..)
   , BaseProductLength(..)
   , BaseProductWidth(..)
@@ -482,7 +482,27 @@ module Ballast.Types
   , MarketingInsertMasterCaseDimensionsWeight(..)
   , ProductError(..)
   -- , VirtualKit(..)
-  -- , Kit(..)
+  , Kit(..)
+  , KitPallet(..)
+  , KitPalletFlags(..)
+  , KitMasterCase(..)
+  , KitMasterCaseFlags(..)
+  , KitInnerPack(..)
+  , KitInnerPackFlags(..)
+  , KitFlags(..)
+  , HasBattery(..)
+  , KitTechnicalData(..)
+  , KitTechnicalDataBattery(..)
+  , KitDimensions(..)
+  , KitLength(..)
+  , KitWidth(..)
+  , KitHeight(..)
+  , KitWeight(..)
+  , KitContent(..)
+  , KitContentObject(..)
+  , KitAlternateNames(..)
+  , KitAlternateName(..)
+  , KitValues(..)
   ) where
 
 import           Data.Aeson
@@ -1489,7 +1509,11 @@ instance FromJSON StockItemResource where
                 <*> o .:  "orderedLastWeek"
                 <*> o .:  "orderedLast4Weeks"
 
-type ProductId = Id
+-- type ProductId = Id
+
+newtype ProductId = ProductId
+  { unProductId :: Integer
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 type ProductExternalId = ExternalId
 
@@ -3150,14 +3174,242 @@ type CreateProductsResponse = GetProductsResponse
 data CreateProductsWrapper = CpwBaseProduct BaseProduct
   | CpwMarketingInsert MarketingInsert
   -- | CpwVirtualKit VirtualKit
-  -- | CpwKit Kit
+  | CpwKit Kit
   deriving (Eq, Show)
 
 instance ToJSON CreateProductsWrapper where
   toJSON (CpwBaseProduct x)     = toJSON x
   toJSON (CpwMarketingInsert x) = toJSON x
   -- toJSON (CpwVirtualKit x)      = toJSON x
-  -- toJSON (CpwKit x)             = toJSON x
+  toJSON (CpwKit x)             = toJSON x
+  
+data Kit = Kit
+  { kSku                  :: SKU
+  , kExternalId           :: Maybe ExternalId
+  , kClassification       :: Classification
+  , kDescription          :: Description
+  , kBatteryConfiguration :: BatteryConfiguration
+  , kHsCode               :: HsCode
+  , kCountryOfOrigin      :: CountryOfOrigin
+  , kValues               :: KitValues
+  , kAlternateNames       :: KitAlternateNames
+  , kContent              :: KitContent
+  , kDimensions           :: KitDimensions
+  , kTechnicalData        :: KitTechnicalData
+  , kFlags                :: KitFlags
+  , kInnerPack            :: KitInnerPack
+  , kMasterCase           :: KitMasterCase
+  , kPallet               :: KitPallet
+  } deriving (Eq, Show)
+
+instance ToJSON Kit where
+  toJSON Kit {..} = omitNulls ["sku"                  .= kSku
+                              ,"externalId"           .= kExternalId
+                              ,"classification"       .= kClassification
+                              ,"description"          .= kDescription
+                              ,"batteryConfiguration" .= kBatteryConfiguration
+                              ,"hsCode"               .= kHsCode
+                              ,"countryOfOrigin"      .= kCountryOfOrigin
+                              ,"values"               .= kValues
+                              ,"alternateNames"       .= kAlternateNames
+                              ,"kitContent"           .= kContent
+                              ,"dimensions"           .= kDimensions
+                              ,"technicalData"        .= kTechnicalData
+                              ,"flags"                .= kFlags
+                              ,"innerPack"            .= kInnerPack
+                              ,"masterCase"           .= kMasterCase
+                              ,"pallet"               .= kPallet]
+
+data KitPallet = KitPallet
+  { kpIndividualItemsPerCase :: IndividualItemsPerCase
+  , kpSku                    :: SKU
+  , kpDescription            :: Description
+  , kpValues                 :: KitValues
+  , kpDimensions             :: KitDimensions
+  , kpFlags                  :: KitPalletFlags
+  } deriving (Eq, Show)
+
+instance ToJSON KitPallet where
+  toJSON KitPallet {..} = object ["individualItemsPerCase" .= kpIndividualItemsPerCase
+                                 ,"sku"                    .= kpSku
+                                 ,"description"            .= kpDescription
+                                 ,"values"                 .= kpValues
+                                 ,"dimensions"             .= kpDimensions
+                                 ,"flags"                  .= kpFlags]
+
+newtype KitPalletFlags = KitPalletFlags
+  { kpfIsPackagedReadyToShip :: IsPackagedReadyToShip
+  } deriving (Eq, Show, ToJSON)
+
+data KitMasterCase = KitMasterCase
+  { kmcIndividualItemsPerCase :: IndividualItemsPerCase
+  , kmcSku                    :: SKU
+  , kmcDescription            :: Description
+  , kmcValues                 :: KitValues
+  , kmcDimensions             :: KitDimensions
+  , kmcFlags                  :: KitMasterCaseFlags
+  } deriving (Eq, Show)
+
+instance ToJSON KitMasterCase where
+  toJSON KitMasterCase {..} = object ["individualItemsPerCase" .= kmcIndividualItemsPerCase
+                                     ,"sku"                    .= kmcSku
+                                     ,"description"            .= kmcDescription
+                                     ,"values"                 .= kmcValues
+                                     ,"dimensions"             .= kmcDimensions
+                                     ,"flags"                  .= kmcFlags]
+
+newtype KitMasterCaseFlags = KitMasterCaseFlags
+  { kmcfIsPackagedReadyToShip :: IsPackagedReadyToShip
+  } deriving (Eq, Show, ToJSON)
+
+data KitInnerPack = KitInnerPack
+  { kipIndividualItemsPerCase :: IndividualItemsPerCase
+  , kipSku                    :: SKU
+  , kipDescription            :: Description
+  , kipValues                 :: KitValues
+  , kipDimensions             :: KitDimensions
+  , kipFlags                  :: KitInnerPackFlags
+  } deriving (Eq, Show)
+
+instance ToJSON KitInnerPack where
+  toJSON KitInnerPack {..} = object ["individualItemsPerCase" .= kipIndividualItemsPerCase
+                                    ,"sku"                    .= kipSku
+                                    ,"description"            .= kipDescription
+                                    ,"values"                 .= kipValues
+                                    ,"dimensions"             .= kipDimensions
+                                    ,"flags"                  .= kipFlags]
+
+newtype KitInnerPackFlags = KitInnerPackFlags
+  { kipfIsPackagedReadyToShip :: IsPackagedReadyToShip
+  } deriving (Eq, Show, ToJSON)
+
+data KitFlags = KitFlags
+  { kfIsPackagedReadyToShip :: IsPackagedReadyToShip
+  , kfIsFragile             :: IsFragile
+  , kfIsDangerous           :: IsDangerous
+  , kfIsPerishable          :: IsPerishable
+  , kfIsMedia               :: IsMedia
+  , kfIsAdult               :: IsAdult
+  , kfIsLiquid              :: IsLiquid
+  , kfHasBattery            :: HasBattery
+  , kfHasInnerPack          :: HasInnerPack
+  , kfHasMasterCase         :: HasMasterCase
+  , kfHasPallet             :: HasPallet
+  } deriving (Eq, Show)
+
+instance ToJSON KitFlags where
+  toJSON KitFlags {..} = object ["isPackagedReadyToShip" .= kfIsPackagedReadyToShip
+                                ,"isFragile"             .= kfIsFragile
+                                ,"isDangerous"           .= kfIsDangerous
+                                ,"isPerishable"          .= kfIsPerishable
+                                ,"isMedia"               .= kfIsMedia
+                                ,"isAdult"               .= kfIsAdult
+                                ,"isLiquid"              .= kfIsLiquid
+                                ,"hasBattery"            .= kfHasBattery
+                                ,"hasInnerPack"          .= kfHasInnerPack
+                                ,"hasMasterCase"         .= kfHasMasterCase
+                                ,"hasPallet"             .= kfHasPallet]
+
+data HasBattery = HasBattery
+  | NoBattery
+  deriving (Eq, Show)
+
+instance ToJSON HasBattery where
+  toJSON HasBattery = Number 1
+  toJSON NoBattery  = Number 0
+
+newtype KitTechnicalData = KitTechnicalData
+  { ktdTechnicalDataBattery :: KitTechnicalDataBattery
+  } deriving (Eq, Show, ToJSON)
+
+data KitTechnicalDataBattery = KitTechnicalDataBattery
+  { ktdbType              :: BatteryType
+  , ktdbBatteryWeight     :: BatteryWeight
+  , ktdbNumberOfBatteries :: NumberOfBatteries
+  , ktdbCapacity          :: Capacity
+  , ktdbNumberOfCells     :: NumberOfCells
+  , ktdbCapacityUnit      :: CapacityUnit
+  } deriving (Eq, Show)
+
+instance ToJSON KitTechnicalDataBattery where
+  toJSON KitTechnicalDataBattery {..} = object ["type"              .= ktdbType
+                                               ,"batteryWeight"     .= ktdbBatteryWeight
+                                               ,"numberOfBatteries" .= ktdbNumberOfBatteries
+                                               ,"capacity"          .= ktdbCapacity
+                                               ,"numberOfCells"     .= ktdbNumberOfCells
+                                               ,"capacityUnit"      .= ktdbCapacityUnit]
+
+data KitDimensions = KitDimensions
+  { kdLength :: KitLength
+  , kdWidth  :: KitWidth
+  , kdHeight :: KitHeight
+  , kdWeight :: KitWeight
+  } deriving (Eq, Show)
+
+instance ToJSON KitDimensions where
+  toJSON KitDimensions {..} = object ["length" .= kdLength
+                                     ,"width"  .= kdWidth
+                                     ,"height" .= kdHeight
+                                     ,"weight" .= kdWeight]
+
+newtype KitLength = KitLength
+  { unKitLength :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype KitWidth = KitWidth
+  { unKitWidth :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype KitHeight = KitHeight
+  { unKitHeight :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype KitWeight = KitWeight
+  { unKitWeight :: Integer
+  } deriving (Eq, Show, ToJSON)
+
+newtype KitContent = KitContent
+  { unKitContent :: [KitContentObject]
+  } deriving (Eq, Show, ToJSON)
+
+data KitContentObject = KitContentObject
+  { kcProductId  :: ProductId
+  , kcExternalId :: Maybe ExternalId
+  , kcQuantity   :: Quantity
+  } deriving (Eq, Show)
+
+instance ToJSON KitContentObject where
+  toJSON KitContentObject {..} = omitNulls ["productId"  .= kcProductId
+                                           ,"externalId" .= kcExternalId
+                                           ,"quantity"   .= kcQuantity]
+
+newtype KitAlternateNames = KitAlternateNames
+  { kanAlternateNames :: [KitAlternateName]
+  } deriving (Eq, Show, ToJSON)
+
+newtype KitAlternateName = KitAlternateName
+  { kanAlternateName :: Name
+  } deriving (Eq, Show)
+
+instance ToJSON KitAlternateName where
+  toJSON KitAlternateName {..} = object ["name" .= kanAlternateName]
+
+data KitValues = KitValues
+  { kvCostValue         :: CostValue
+  , kvWholesaleValue    :: WholesaleValue
+  , kvRetailValue       :: RetailValue
+  , kvCostCurrency      :: CostCurrency
+  , kvWholesaleCurrency :: WholesaleCurrency
+  , kvRetailCurrency    :: RetailCurrency
+  } deriving (Eq, Show)
+
+instance ToJSON KitValues where
+  toJSON KitValues {..} = object ["costValue"         .= kvCostValue
+                                 ,"wholesaleValue"    .= kvWholesaleValue
+                                 ,"retailValue"       .= kvRetailValue
+                                 ,"costCurrency"      .= kvCostCurrency
+                                 ,"wholesaleCurrency" .=  kvWholesaleCurrency
+                                 ,"retailCurrency"    .= kvRetailCurrency]
 
 data MarketingInsert = MarketingInsert
   { miSku               :: SKU
@@ -3480,25 +3732,25 @@ instance ToJSON BaseProductFlags where
                                         ,"hasPallet"             .= bpfHasPallet]
 
 newtype BaseProductTechnicalData = BaseProductTechnicalData
-  { unTechnicalDataResource :: BaseProductTechnicalDataResource
+  { bptdTechnicalDataBattery :: BaseProductTechnicalDataBattery
   } deriving (Eq, Show, ToJSON)
 
-data BaseProductTechnicalDataResource = BaseProductTechnicalDataResource
-  { bptdrType              :: BatteryType
-  , bptdrBatteryWeight     :: BatteryWeight
-  , bptdrNumberOfBatteries :: NumberOfBatteries
-  , bptdrCapacity          :: Capacity
-  , bptdrNumberOfCells     :: NumberOfCells
-  , bptdrCapacityUnit      :: CapacityUnit
+data BaseProductTechnicalDataBattery = BaseProductTechnicalDataBattery
+  { bptdbType              :: BatteryType
+  , bptdbBatteryWeight     :: BatteryWeight
+  , bptdbNumberOfBatteries :: NumberOfBatteries
+  , bptdbCapacity          :: Capacity
+  , bptdbNumberOfCells     :: NumberOfCells
+  , bptdbCapacityUnit      :: CapacityUnit
   } deriving (Eq, Show)
 
-instance ToJSON BaseProductTechnicalDataResource where
-  toJSON BaseProductTechnicalDataResource {..} = object ["type"              .= bptdrType
-                                                        ,"batteryWeight"     .= bptdrBatteryWeight
-                                                        ,"numberOfBatteries" .= bptdrNumberOfBatteries
-                                                        ,"capacity"          .= bptdrCapacity
-                                                        ,"numberOfCells"     .= bptdrNumberOfCells
-                                                        ,"capacityUnit"      .= bptdrCapacityUnit]
+instance ToJSON BaseProductTechnicalDataBattery where
+  toJSON BaseProductTechnicalDataBattery {..} = object ["type"              .= bptdbType
+                                                       ,"batteryWeight"     .= bptdbBatteryWeight
+                                                       ,"numberOfBatteries" .= bptdbNumberOfBatteries
+                                                       ,"capacity"          .= bptdbCapacity
+                                                       ,"numberOfCells"     .= bptdbNumberOfCells
+                                                       ,"capacityUnit"      .= bptdbCapacityUnit]
 
 data BaseProductDimensions = BaseProductDimensions
   { bpdLength :: BaseProductLength
@@ -3731,7 +3983,6 @@ instance FromJSON GetProductsResponseResourceItem where
       parse o = GetProductsResponseResourceItem
                 <$> o .: "resourceLocation"
                 <*> o .: "resource"
-
                 
 -- | This a wrapper for different classifications of products.
 -- Possible options are: baseProduct, marketingInsert, virtualKit, kit.
@@ -3777,12 +4028,12 @@ data KitResponseResource = KitResponseResource
   , krDimensions           :: Dimensions
   , krValues               :: ValuesResource
   , krAlternateNames       :: AlternateNamesResponse
-  , krKitContent           :: Maybe KitContent
-  , krTechnicalData        :: Maybe KitTechnicalData
+  , krKitContent           :: Maybe KitResponseContent
+  , krTechnicalData        :: Maybe KitResponseTechnicalData
   , krFlags                :: Flags
   , krEnqueuedDimensions   :: EnqueuedDimensions
   , krInnerPack            :: Maybe InnerPack
-  , krMasterCase           :: Maybe KitMasterCase
+  , krMasterCase           :: Maybe KitResponseMasterCase
   , krPallet               :: Maybe Pallet
   } deriving (Eq, Show)
 
@@ -3817,39 +4068,39 @@ parseKit o = KitResponseResource
              <*> o .:? "masterCase"
              <*> o .:? "pallet"
 
-type KitMasterCase = BaseProductResponseMasterCase
+type KitResponseMasterCase = BaseProductResponseMasterCase
 
-data KitTechnicalData = KitTechnicalData
+data KitResponseTechnicalData = KitResponseTechnicalData
   { ktdResourceLocation :: Maybe ResponseResourceLocation
-  , ktdResource         :: Maybe KitTechnicalDataResource
+  , ktdResource         :: Maybe KitResponseTechnicalDataResource
   } deriving (Eq, Show)
 
-instance FromJSON KitTechnicalData where
-  parseJSON = withObject "KitTechnicalData" parse
+instance FromJSON KitResponseTechnicalData where
+  parseJSON = withObject "KitResponseTechnicalData" parse
     where
-      parse o = KitTechnicalData
+      parse o = KitResponseTechnicalData
                 <$> o .:? "resourceLocation"
                 <*> o .:? "resource"
 
-newtype KitTechnicalDataResource = KitTechnicalDataResource
-  { ktdrBattery :: KitTechnicalDataResourceBattery
+newtype KitResponseTechnicalDataResource = KitResponseTechnicalDataResource
+  { ktdrBattery :: KitResponseTechnicalDataResourceBattery
   } deriving (Eq, Show, FromJSON)
 
-data KitTechnicalDataResourceBattery = KitTechnicalDataResourceBattery
+data KitResponseTechnicalDataResourceBattery = KitResponseTechnicalDataResourceBattery
   { ktdrbResourceLocation :: Maybe ResponseResourceLocation
   , ktdrbResource         :: KitTechnicalDataResourceBatteryResource
   } deriving (Eq, Show)
 
-instance FromJSON KitTechnicalDataResourceBattery where
-  parseJSON = withObject "KitTechnicalDataResourceBattery" parse
+instance FromJSON KitResponseTechnicalDataResourceBattery where
+  parseJSON = withObject "KitResponseTechnicalDataResourceBattery" parse
     where
-      parse o = KitTechnicalDataResourceBattery
+      parse o = KitResponseTechnicalDataResourceBattery
                 <$> o .:? "resourceLocation"
                 <*> o .:  "resource"
 
 type KitTechnicalDataResourceBatteryResource = TechnicalDataResource
 
-type KitContent = VirtualKitContent
+type KitResponseContent = VirtualKitContent
 
 data VirtualKitResponseResource = VirtualKitResponseResource
   { vkrId                :: Id
@@ -4061,14 +4312,10 @@ instance FromJSON InclusionRulesResource where
                 <*> o .:  "insertWhenQuantity"
                 <*> o .:? "flags"
 
--- type InsertAfterDate = ExpectedDateUTCTime
-
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype InsertAfterDate = InsertAfterDate
   { unInsertAfterDate :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
-
--- type InsertBeforeDate = ExpectedDateUTCTime
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype InsertBeforeDate = InsertBeforeDate
@@ -4080,8 +4327,6 @@ newtype InsertWhenWorthValueResponse = InsertWhenWorthValueResponse
   } deriving (Eq, Show, FromJSON)
 
 type InsertWhenWorthValueCurrency = CostCurrency
-
--- type InsertWhenQuantity = Quantity
 
 newtype InsertWhenQuantity = InsertWhenQuantity
   { unInsertWhenQuantity :: Integer

@@ -113,8 +113,131 @@ exampleModifiedReceiving =
        (Phone "12346"))
     Nothing
 
-exampleCreateProduct :: [CreateProductsWrapper]
-exampleCreateProduct = [CpwMarketingInsert $ MarketingInsert
+-- | Takes a product id as an integer and inserts it in the right spot.
+exampleCreateProduct :: Integer -> [CreateProductsWrapper]
+exampleCreateProduct productId = [CpwKit $ Kit
+                          (SKU "HspecTestKit")
+                          Nothing
+                          (KitClassification)
+                          (Description "This is a kit test")
+                          (BatteryConfiguration "HASLOOSEBATTERY")
+                          (HsCode "010612")
+                          (CountryOfOrigin "US")
+                          (KitValues
+                            (CostValue 1)
+                            (WholesaleValue 2)
+                            (RetailValue 4)
+                            (CostCurrency "USD")
+                            (WholesaleCurrency "USD")
+                            (RetailCurrency "USD")
+                          )
+                          (KitAlternateNames [KitAlternateName (Name "HspecTestAlt")])
+                          -- KitContentObject needs to include ids of other products
+                          -- included in this kit. We use a helper function to create a
+                          -- product and get back that product's id.
+                          (KitContent
+                            [KitContentObject
+                              (ProductId productId)
+                              Nothing
+                              (Quantity 5)
+                            ]
+                          )
+                          (KitDimensions
+                            (KitLength 2)
+                            (KitWidth 2)
+                            (KitHeight 2)
+                            (KitWeight 2)
+                          )
+                          (KitTechnicalData
+                            (KitTechnicalDataBattery
+                              (BatteryType "ALKALINE")
+                              (BatteryWeight 3)
+                              (NumberOfBatteries 5)
+                              (Capacity 6)
+                              (NumberOfCells 7)
+                              (CapacityUnit "WATTHOUR")
+                            )
+                          )
+                          (KitFlags
+                            NotPackagedReadyToShip
+                            NotFragile
+                            NotDangerous
+                            NotPerishable
+                            NotMedia
+                            NotAdult
+                            Liquid
+                            HasBattery
+                            HasInnerPack
+                            HasMasterCase
+                            HasPallet
+                          )
+                          (KitInnerPack
+                           (IndividualItemsPerCase 2)
+                           (SKU "KitInnerPack")
+                           (Description "This is a test for kit inner pack")
+                           (KitValues
+                             (CostValue 1)
+                             (WholesaleValue 2)
+                             (RetailValue 4)
+                             (CostCurrency "USD")
+                             (WholesaleCurrency "USD")
+                             (RetailCurrency "USD")
+                           )
+                           (KitDimensions
+                             (KitLength 2)
+                             (KitWidth 2)
+                             (KitHeight 2)
+                             (KitWeight 2)
+                           )
+                           (KitInnerPackFlags
+                             NotPackagedReadyToShip
+                           )
+                          )
+                          (KitMasterCase
+                            (IndividualItemsPerCase 10)
+                            (SKU "KitMasterCase")
+                            (Description "This is a test for kit master case")
+                            (KitValues
+                              (CostValue 1)
+                              (WholesaleValue 2)
+                              (RetailValue 4)
+                              (CostCurrency "USD")
+                              (WholesaleCurrency "USD")
+                              (RetailCurrency "USD")
+                            )
+                            (KitDimensions
+                              (KitLength 4)
+                              (KitWidth 4)
+                              (KitHeight 4)
+                              (KitWeight 4)
+                            )
+                            (KitMasterCaseFlags
+                              NotPackagedReadyToShip
+                            )
+                          )
+                          (KitPallet
+                            (IndividualItemsPerCase 1000)
+                            (SKU "KitPallet")
+                            (Description "A pallet for hspec kit")
+                            (KitValues
+                              (CostValue 1)
+                              (WholesaleValue 2)
+                              (RetailValue 4)
+                              (CostCurrency "USD")
+                              (WholesaleCurrency "USD")
+                              (RetailCurrency "USD")
+                            )
+                            (KitDimensions
+                              (KitLength 8)
+                              (KitWidth 8)
+                              (KitHeight 8)
+                              (KitWeight 8)
+                            )
+                            (KitPalletFlags
+                              NotPackagedReadyToShip
+                            )
+                          ),
+                        CpwMarketingInsert $ MarketingInsert
                           (SKU "HspecTestInsert2")
                           Nothing
                           (MarketingInsertClassification)
@@ -174,7 +297,7 @@ exampleCreateProduct = [CpwMarketingInsert $ MarketingInsert
                             (BaseProductWeight 10)
                           )
                           (BaseProductTechnicalData 
-                            (BaseProductTechnicalDataResource 
+                            (BaseProductTechnicalDataBattery 
                                 (BatteryType "ALKALINE")
                                 (BatteryWeight 3)
                                 (NumberOfBatteries 5)
@@ -264,6 +387,106 @@ exampleCreateProduct = [CpwMarketingInsert $ MarketingInsert
                           )
                         ]
 
+exampleCreateBaseProduct :: [CreateProductsWrapper]
+exampleCreateBaseProduct =
+  [ CpwBaseProduct $
+    BaseProduct
+      (SKU "HspecTest3")
+      Nothing
+      (BaseProductClassification)
+      (Description "Hspec test product3")
+      (Just $ HsCode "010612")
+      (CountryOfOrigin "US")
+      (Category "TOYS_SPORTS_HOBBIES")
+      (BatteryConfiguration "ISBATTERY")
+      (Values
+         (CostValue 1)
+         (WholesaleValue 2)
+         (RetailValue 4)
+         (CostCurrency "USD")
+         (WholesaleCurrency "USD")
+         (RetailCurrency "USD"))
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
+      (BaseProductDimensions
+         (BaseProductLength 10)
+         (BaseProductWidth 10)
+         (BaseProductHeight 10)
+         (BaseProductWeight 10))
+      (BaseProductTechnicalData
+         (BaseProductTechnicalDataBattery
+            (BatteryType "ALKALINE")
+            (BatteryWeight 3)
+            (NumberOfBatteries 5)
+            (Capacity 6)
+            (NumberOfCells 7)
+            (CapacityUnit "WATTHOUR")))
+      (BaseProductFlags
+         PackagedReadyToShip
+         Fragile
+         NotDangerous
+         NotPerishable
+         NotMedia
+         NotAdult
+         NotLiquid
+         HasInnerPack
+         HasMasterCase
+         HasPallet)
+      (BaseProductInnerPack
+         (IndividualItemsPerCase 2)
+         (ExternalId "narp55")
+         (SKU "singleInner3")
+         (Description "InnerDesc3")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (CostCurrency "USD")
+            (WholesaleCurrency "USD")
+            (RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 20)
+            (BaseProductWidth 20)
+            (BaseProductHeight 20)
+            (BaseProductWeight 20))
+         (BaseProductInnerPackFlags NotPackagedReadyToShip))
+      (BaseProductMasterCase
+         (IndividualItemsPerCase 10)
+         (ExternalId "narp66")
+         (SKU "singleMaster4")
+         (Description "masterdesc4")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (CostCurrency "USD")
+            (WholesaleCurrency "USD")
+            (RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 30)
+            (BaseProductWidth 30)
+            (BaseProductHeight 30)
+            (BaseProductWeight 30))
+         (BaseProductMasterCaseFlags PackagedReadyToShip))
+      (BaseProductPallet
+         (IndividualItemsPerCase 1000)
+         (ExternalId "narp77")
+         (SKU "singlePallet3")
+         (Description "palletdesc3")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (CostCurrency "USD")
+            (WholesaleCurrency "USD")
+            (RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 40)
+            (BaseProductWidth 40)
+            (BaseProductHeight 40)
+            (BaseProductWeight 40))
+         (BaseProductPalletFlags NotPackagedReadyToShip))
+  ]
+  
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
@@ -275,9 +498,24 @@ createReceivingHelper conf cr = do
   let receivingId = T.pack $ show $ unId rirId
   return (receiving, ReceivingId receivingId)
 
+createProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
+createProductHelper conf cp = do
+  baseProduct <- shipwire conf $ createProduct cp
+  let Right GetProductsResponse {..} = baseProduct
+  let GetProductsResponseResource {..} = gprResource
+  let GetProductsResponseResourceItems {..} = gprrItems
+  let GetProductsResponseResourceItem {..} = last gprriItems
+  let pwBaseProduct@(PwBaseProduct x) = gprriResource
+  let productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
+  return (baseProduct, productId)
+
+unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
+unwrapBaseProduct (PwBaseProduct x) = x
+unwrapBaseProduct _ = error "Bad input"
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
+  (_, productId) <- createProductHelper config exampleCreateBaseProduct
   (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
   hspec $ do
     describe "get rates" $ do
@@ -291,7 +529,7 @@ main = do
 
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
-        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest")
+        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest3")
         result `shouldSatisfy` isRight
 
     describe "get receivings" $ do
@@ -415,7 +653,7 @@ main = do
 
     describe "create a product" $ do
       it "creates a product" $ do
-        result <- shipwire config $ createProduct exampleCreateProduct
+        result <- shipwire config $ createProduct (exampleCreateProduct productId)
         result `shouldSatisfy` isRight
         let Right GetProductsResponse {..} = result
         gprWarnings `shouldBe` Nothing
