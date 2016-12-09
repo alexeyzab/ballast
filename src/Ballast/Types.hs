@@ -406,7 +406,7 @@ module Ballast.Types
   , MarketingInsertFlagsResponse(..)
   , MarketingInsertFlagsResponseResource(..)
   , VirtualKitResponseResource(..)
-  , VirtualKitContent(..)
+  , VirtualKitResponseContent(..)
   , VirtualKitContentResource(..)
   , VirtualKitContentResourceItems(..)
   , VirtualKitContentResourceItem(..)
@@ -481,7 +481,9 @@ module Ballast.Types
   , MarketingInsertMasterCaseDimensionsWidth(..)
   , MarketingInsertMasterCaseDimensionsWeight(..)
   , ProductError(..)
-  -- , VirtualKit(..)
+  , VirtualKit(..)
+  , VirtualKitContent(..)
+  , VirtualKitContentObject(..)
   , Kit(..)
   , KitPallet(..)
   , KitPalletFlags(..)
@@ -3173,15 +3175,43 @@ type CreateProductsResponse = GetProductsResponse
 -- we use this wrapper datatype.
 data CreateProductsWrapper = CpwBaseProduct BaseProduct
   | CpwMarketingInsert MarketingInsert
-  -- | CpwVirtualKit VirtualKit
+  | CpwVirtualKit VirtualKit
   | CpwKit Kit
   deriving (Eq, Show)
 
 instance ToJSON CreateProductsWrapper where
   toJSON (CpwBaseProduct x)     = toJSON x
   toJSON (CpwMarketingInsert x) = toJSON x
-  -- toJSON (CpwVirtualKit x)      = toJSON x
+  toJSON (CpwVirtualKit x)      = toJSON x
   toJSON (CpwKit x)             = toJSON x
+
+data VirtualKit = VirtualKit
+  { vkSku               :: SKU
+  , vkClassification    :: Classification
+  , vkDescription       :: Description
+  , vkVirtualKitContent :: VirtualKitContent
+  } deriving (Eq, Show)
+
+instance ToJSON VirtualKit where
+  toJSON VirtualKit {..} = object ["sku"               .= vkSku
+                                  ,"classification"    .= vkClassification
+                                  ,"description"       .= vkDescription
+                                  ,"virtualKitContent" .= vkVirtualKitContent]
+
+newtype VirtualKitContent = VirtualKitContent
+  { unVirtualKitContent :: [VirtualKitContentObject]
+  } deriving (Eq, Show, ToJSON)
+
+data VirtualKitContentObject = VirtualKitContentObject
+  { vkcoProductId  :: ProductId
+  , vkcoExternalId :: Maybe ExternalId
+  , vkcoQuantity   :: Quantity
+  } deriving (Eq, Show)
+
+instance ToJSON VirtualKitContentObject where
+  toJSON VirtualKitContentObject {..} = omitNulls ["productId"  .= vkcoProductId
+                                                  ,"externalId" .= vkcoExternalId
+                                                  ,"quantity"   .= vkcoQuantity]
   
 data Kit = Kit
   { kSku                  :: SKU
@@ -4100,7 +4130,7 @@ instance FromJSON KitResponseTechnicalDataResourceBattery where
 
 type KitTechnicalDataResourceBatteryResource = TechnicalDataResource
 
-type KitResponseContent = VirtualKitContent
+type KitResponseContent = VirtualKitResponseContent
 
 data VirtualKitResponseResource = VirtualKitResponseResource
   { vkrId                :: Id
@@ -4110,7 +4140,7 @@ data VirtualKitResponseResource = VirtualKitResponseResource
   , vkrCreationDate      :: CreationDate
   , vkrDescription       :: Description
   , vkrStatus            :: Status
-  , vkrVirtualKitContent :: VirtualKitContent
+  , vkrVirtualKitContent :: VirtualKitResponseContent
   , vkrFlags             :: VirtualKitFlags
   } deriving (Eq, Show)
 
@@ -4130,15 +4160,15 @@ parseVirtualKit o = VirtualKitResponseResource
                     <*> o .:  "virtualKitContent"
                     <*> o .:  "flags"
 
-data VirtualKitContent = VirtualKitContent
+data VirtualKitResponseContent = VirtualKitResponseContent
   { vkcResourceLocation :: ResponseResourceLocation
   , vkcResource         :: Maybe VirtualKitContentResource
   } deriving (Eq, Show)
 
-instance FromJSON VirtualKitContent where
-  parseJSON = withObject "VirtualKitContent" parse
+instance FromJSON VirtualKitResponseContent where
+  parseJSON = withObject "VirtualKitContentResponse" parse
     where
-      parse o = VirtualKitContent
+      parse o = VirtualKitResponseContent
                 <$> o .:  "resourceLocation"
                 <*> o .:? "resource"
 

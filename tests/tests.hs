@@ -115,7 +115,20 @@ exampleModifiedReceiving =
 
 -- | Takes a product id as an integer and inserts it in the right spot.
 exampleCreateProduct :: Integer -> [CreateProductsWrapper]
-exampleCreateProduct productId = [CpwKit $ Kit
+exampleCreateProduct productId =
+                       [CpwVirtualKit $ VirtualKit
+                          (SKU "HspecTestVKit")
+                          (VirtualKitClassification)
+                          (Description "This is a virtual kit test")
+                          (VirtualKitContent
+                            [(VirtualKitContentObject
+                              (ProductId productId)
+                              Nothing
+                              (Quantity 5)
+                            )
+                            ]
+                          ),
+                        CpwKit $ Kit
                           (SKU "HspecTestKit")
                           Nothing
                           (KitClassification)
@@ -652,7 +665,7 @@ main = do
         gprErrors `shouldBe` Nothing
 
     describe "create a product" $ do
-      it "creates a product" $ do
+      it "creates all possible product classifications" $ do
         result <- shipwire config $ createProduct (exampleCreateProduct productId)
         result `shouldSatisfy` isRight
         let Right GetProductsResponse {..} = result
