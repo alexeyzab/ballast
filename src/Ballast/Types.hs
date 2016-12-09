@@ -731,10 +731,10 @@ instance ToJSON Currency where
   toJSON USD = String "USD"
 
 instance FromJSON Currency where
-  parseJSON = withText "currency" parse
+  parseJSON = withText "Currency" parse
     where
       parse "USD" = pure USD
-      parse _     = error "Bad input"
+      parse o     = fail $ "Unexpected Currency: " <> show o
 
 omitNulls :: [(Text, Value)] -> Value
 omitNulls = object . filter notNull
@@ -753,11 +753,11 @@ instance ToJSON GroupBy where
   toJSON GroupByWarehouse = String "warehouse"
 
 instance FromJSON GroupBy where
-  parseJSON = withText "groupBy" parse
+  parseJSON = withText "GroupBy" parse
     where
       parse "all"       = pure GroupByAll
       parse "warehouse" = pure GroupByWarehouse
-      parse o           = fail ("Unexpected groupBy value: " <> show o)
+      parse o           = fail $ "Unexpected GroupBy: " <> show o
 
 data WarehouseArea =
   WarehouseAreaUS
@@ -842,11 +842,11 @@ data WarningType
   deriving (Eq, Show)
 
 instance FromJSON WarningType where
-  parseJSON = withText "warningType" parse
+  parseJSON = withText "WarningType" parse
     where
       parse "warning" = pure WarningWarning
       parse "error"   = pure WarningError
-      parse o         = fail ("Unexpected warningType value: " <> show o)
+      parse o         = fail $ "Unexpected WarningType: " <> show o
 
 data Error = Error
   { errorCode    :: ErrorCode
@@ -876,11 +876,11 @@ data ErrorType
   deriving (Eq, Show)
 
 instance FromJSON ErrorType where
-  parseJSON = withText "errorType" parse
+  parseJSON = withText "ErrorType" parse
     where
       parse "warning" = pure ErrorWarning
       parse "error"   = pure ErrorError
-      parse o         = fail ("Unexpected errorType value: " <> show o)
+      parse o         = fail $ "Unexpected ErrorType: " <> show o
 
 data RateResource = RateResource
   { resourceGroupBy :: GroupBy
@@ -952,7 +952,7 @@ data ServiceLevelCode
   deriving (Eq, Show)
 
 instance FromJSON ServiceLevelCode where
-  parseJSON = withText "serviceLevelCode" parse
+  parseJSON = withText "ServiceLevelCode" parse
     where
       parse "GD"      = pure DomesticGround
       parse "2D"      = pure DomesticTwoDay
@@ -961,7 +961,7 @@ instance FromJSON ServiceLevelCode where
       parse "INTL"    = pure InternationalStandard
       parse "PL-INTL" = pure InternationalPlus
       parse "PM-INTL" = pure InternationalPremium
-      parse o         = fail ("Unexpected serviceLevelCode value: " <> show o)
+      parse o         = fail $ "Unexpected ServiceLevelCode: " <> show o
 
 data Shipment = Shipment
   { shipmentWarehouseName           :: WarehouseName
@@ -1609,7 +1609,7 @@ data IsBundle
 instance FromJSON IsBundle where
   parseJSON (Number 1) = pure Bundle
   parseJSON (Number 0) = pure NotBundle
-  parseJSON o          = fail ("Unexpected isBundle value: " <> show o)
+  parseJSON o          = fail $ "Unexpected isBundle: " <> show o
 
 data IsAlias
   = Alias
@@ -1619,7 +1619,7 @@ data IsAlias
 instance FromJSON IsAlias where
   parseJSON (Number 1) = pure Alias
   parseJSON (Number 0) = pure NotAlias
-  parseJSON o          = fail ("Unexpected isAlias value: " <> show o)
+  parseJSON o          = fail $ "Unexpected isAlias: " <> show o
 
 -- | Either production or sandbox API host
 type Host = Text
@@ -2825,13 +2825,13 @@ data ArrangementType = ArrangementTypeNone
   deriving (Eq, Show)
 
 instance FromJSON ArrangementType where
-  parseJSON = withText "arrangementType" parse
+  parseJSON = withText "ArrangementType" parse
     where
       parse "none"     = pure ArrangementTypeNone
       parse "overseas" = pure ArrangementTypeOverseas
       parse "label"    = pure ArrangementTypeLabel
       parse "pickup"   = pure ArrangementTypePickup
-      parse o          = fail ("Unexpected arrangementType value: " <> show o)
+      parse o          = fail $ "Unexpected ArrangementType: " <> show o
 
 instance ToJSON ArrangementType where
   toJSON ArrangementTypeNone     = String "none"
@@ -4535,14 +4535,14 @@ data StorageConfiguration = IndividualItemConfiguration
   deriving (Eq, Show)
 
 instance FromJSON StorageConfiguration where
-  parseJSON = withText "storageConfiguration" parse
+  parseJSON = withText "StorageConfiguration" parse
     where
       parse "INDIVIDUAL_ITEM" = pure IndividualItemConfiguration
       parse "INNER_PACK"      = pure InnerPackConfiguration
       parse "MASTER_CASE"     = pure MasterCaseConfiguration
       parse "PALLET"          = pure PalletConfiguration
       parse "KIT"             = pure KitConfiguration
-      parse _                = error "Bad input"
+      parse o                 = fail $ "Unexpected StorageConfiguration: " <> show o
 
 newtype HsCode = HsCode
   { unHsCode :: Text
@@ -4601,11 +4601,11 @@ data IsAdult = Adult
   deriving (Eq, Show)
 
 instance FromJSON IsAdult where
-  parseJSON = withScientific "isAdult" parse
+  parseJSON = withScientific "IsAdult" parse
     where
       parse 0 = pure NotAdult
       parse 1 = pure Adult
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsAdult: " <> show o
 
 instance ToJSON IsAdult where
   toJSON NotAdult = Number 0
@@ -4616,11 +4616,11 @@ data HasInnerPack = HasInnerPack
   deriving (Eq, Show)
 
 instance FromJSON HasInnerPack where
-  parseJSON = withScientific "hasInnerPack" parse
+  parseJSON = withScientific "HasInnerPack" parse
     where
       parse 0 = pure NoInnerPack
       parse 1 = pure HasInnerPack
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected HasInnerPack: " <> show o
 
 instance ToJSON HasInnerPack where
   toJSON NoInnerPack  = Number 0
@@ -4631,22 +4631,22 @@ data HasEditRestrictions = EditRestrictions
   deriving (Eq, Show)
 
 instance FromJSON HasEditRestrictions where
-  parseJSON = withScientific "hasEditRestrictions" parse
+  parseJSON = withScientific "HasEditRestrictions" parse
     where
       parse 0 = pure NoEditRestrictions
       parse 1 = pure EditRestrictions
-      parse _ = error "Bad value"      
+      parse o = fail $ "Unexpected HasEditRestrictions: " <> show o
 
 data IsPerishable = Perishable
   | NotPerishable
   deriving (Eq, Show)
 
 instance FromJSON IsPerishable where
-  parseJSON = withScientific "isPerishable" parse
+  parseJSON = withScientific "IsPerishable" parse
     where
       parse 0 = pure NotPerishable
       parse 1 = pure Perishable
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsPerishable: " <> show o
 
 instance ToJSON IsPerishable where
   toJSON NotPerishable = Number 0
@@ -4657,11 +4657,11 @@ data IsDangerous = Dangerous
   deriving (Eq, Show)
 
 instance FromJSON IsDangerous where
-  parseJSON = withScientific "isDangerous" parse
+  parseJSON = withScientific "IsDangerous" parse
     where
       parse 0 = pure NotDangerous
       parse 1 = pure Dangerous
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsDangerous: " <> show o
 
 instance ToJSON IsDangerous where
   toJSON NotDangerous = Number 0
@@ -4672,11 +4672,11 @@ data IsLiquid = Liquid
   deriving (Eq, Show)
 
 instance FromJSON IsLiquid where
-  parseJSON = withScientific "isLiquid" parse
+  parseJSON = withScientific "IsLiquid" parse
     where
       parse 0 = pure NotLiquid
       parse 1 = pure Liquid
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsLiquid: " <> show o
 
 instance ToJSON IsLiquid where
   toJSON NotLiquid = Number 0
@@ -4687,22 +4687,22 @@ data IsArchivable = Archivable
   deriving (Eq, Show)
 
 instance FromJSON IsArchivable where
-  parseJSON = withScientific "isArchivable" parse
+  parseJSON = withScientific "IsArchivable" parse
     where
       parse 0 = pure NotArchivable
       parse 1 = pure Archivable
-      parse _ = error "Bad value"      
+      parse o = fail $ "Unexpected IsArchivable: " <> show o
 
 data IsFragile = Fragile
   | NotFragile
   deriving (Eq, Show)
 
 instance FromJSON IsFragile where
-  parseJSON = withScientific "isFragile" parse
+  parseJSON = withScientific "IsFragile" parse
     where
       parse 0 = pure NotFragile
       parse 1 = pure Fragile
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsFragile: " <> show o
 
 instance ToJSON IsFragile where
   toJSON NotFragile = Number 0
@@ -4713,11 +4713,11 @@ data HasMasterCase = HasMasterCase
   deriving (Eq, Show)
 
 instance FromJSON HasMasterCase where
-  parseJSON = withScientific "hasMasterCase" parse
+  parseJSON = withScientific "HasMasterCase" parse
     where
       parse 0 = pure NoMasterCase
       parse 1 = pure HasMasterCase
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected HasMasterCase: " <> show o
 
 instance ToJSON HasMasterCase where
   toJSON NoMasterCase  = Number 0
@@ -4728,11 +4728,11 @@ data HasPallet = HasPallet
   deriving (Eq, Show)
 
 instance FromJSON HasPallet where
-  parseJSON = withScientific "hasPallet" parse
+  parseJSON = withScientific "HasPallet" parse
     where
       parse 0 = pure NoPallet
       parse 1 = pure HasPallet
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected HasPallet: " <> show o
 
 instance ToJSON HasPallet where
   toJSON NoPallet  = Number 0
@@ -4743,22 +4743,22 @@ data IsDeletable = Deletable
   deriving (Eq, Show)
 
 instance FromJSON IsDeletable where
-  parseJSON = withScientific "isDeletable" parse
+  parseJSON = withScientific "IsDeletable" parse
     where
       parse 0 = pure NotDeletable
       parse 1 = pure Deletable
-      parse _ = error "Bad value"      
+      parse o = fail $ "Unexpected IsDeletable: " <> show o
 
 data IsMedia = Media
   | NotMedia
   deriving (Eq, Show)
 
 instance FromJSON IsMedia where
-  parseJSON = withScientific "isMedia" parse
+  parseJSON = withScientific "IsMedia" parse
     where
       parse 0 = pure NotMedia
       parse 1 = pure Media
-      parse _ = error "Bad value"
+      parse o = fail $ "Unexpected IsMedia: " <> show o
 
 instance ToJSON IsMedia where
   toJSON NotMedia = Number 0
@@ -4911,13 +4911,13 @@ instance ToJSON Classification where
   toJSON KitClassification             = String "kit"
 
 instance FromJSON Classification where
-  parseJSON = withText "classification" parse
+  parseJSON = withText "Classification" parse
     where
       parse "baseProduct"     = pure BaseProductClassification
       parse "marketingInsert" = pure MarketingInsertClassification
       parse "virtualKit"      = pure VirtualKitClassification
       parse "kit"             = pure KitClassification
-      parse _                 = error "Bad input"
+      parse o                 = fail $ "Unexpected Classification: " <> show o
 
 newtype BatteryConfiguration = BatteryConfiguration
   { unBatteryConfiguration :: Text
@@ -5137,11 +5137,11 @@ data IsPackagedReadyToShip = PackagedReadyToShip
   deriving (Eq, Show)
 
 instance FromJSON IsPackagedReadyToShip where
-  parseJSON = withScientific "isPackagedReadyToShip" parse
+  parseJSON = withScientific "IsPackagedReadyToShip" parse
     where
       parse 0 = pure NotPackagedReadyToShip
       parse 1 = pure PackagedReadyToShip
-      parse _ = error "Bad input"
+      parse o = fail $ "Unexpected IsPackagedReadyToShip: " <> show o
 
 instance ToJSON IsPackagedReadyToShip where
   toJSON NotPackagedReadyToShip = Number 0
