@@ -147,6 +147,24 @@ getReceivingLabels receivingId = request
     url = T.concat ["/receivings/", getReceivingId receivingId, "/labels"]
     params = []
 
+-- | Get an itemized list of products.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire0
+getProducts :: ShipwireRequest GetProductsRequest TupleBS8 BSL.ByteString
+getProducts = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = "/products"
+    params = []
+
+-- | Create new products of any classification.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire1
+createProduct :: [CreateProductsWrapper] -> ShipwireRequest CreateProductsRequest TupleBS8 BSL.ByteString
+createProduct cpr = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = "/products"
+    params = [Body (encode cpr)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
