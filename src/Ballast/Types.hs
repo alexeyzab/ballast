@@ -517,7 +517,8 @@ import           Data.Monoid ((<>))
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import           Data.Time.Clock (UTCTime)
+import           Data.Time.Clock
+import           Data.Time.LocalTime
 import qualified Data.Vector as V
 import           Network.HTTP.Client
 import qualified Network.HTTP.Types.Method as NHTM
@@ -4341,6 +4342,24 @@ instance FromJSON InclusionRulesResource where
                 <*> o .:  "insertWhenWorthValueCurrency"
                 <*> o .:  "insertWhenQuantity"
                 <*> o .:? "flags"
+
+utcToDumbShipwire :: UTCTime -> Text
+utcToDumbShipwire t =
+  (tshow day) <> "T" <> clockTime <> "-00:00"
+  where tshow :: Show a => a -> Text
+        tshow = T.pack . show
+        day = utctDay t
+        time = utctDayTime t
+        tod = snd $ utcToLocalTimeOfDay utc (timeToTimeOfDay time)
+        atLeastTwo :: Text -> Int -> Text
+        atLeastTwo t i
+          | i < 10 = t <> (tshow i)
+          | otherwise = tshow i
+        clockTime = (atLeastTwo "0" $ todHour tod)
+                 <> ":"
+                 <> (atLeastTwo "0" $ todMin tod)
+                 <> ":"
+                 <> (atLeastTwo "0" $ floor $ todSec tod)
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype InsertAfterDate = InsertAfterDate
