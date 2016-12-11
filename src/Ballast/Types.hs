@@ -3204,7 +3204,7 @@ newtype VirtualKitContent = VirtualKitContent
   } deriving (Eq, Show, ToJSON)
 
 data VirtualKitContentObject = VirtualKitContentObject
-  { vkcoProductId  :: ProductId
+  { vkcoProductId  :: Maybe ProductId
   , vkcoExternalId :: Maybe ExternalId
   , vkcoQuantity   :: Quantity
   } deriving (Eq, Show)
@@ -3220,13 +3220,13 @@ data Kit = Kit
   , kClassification       :: Classification
   , kDescription          :: Description
   , kBatteryConfiguration :: BatteryConfiguration
-  , kHsCode               :: HsCode
-  , kCountryOfOrigin      :: CountryOfOrigin
+  , kHsCode               :: Maybe HsCode
+  , kCountryOfOrigin      :: Maybe CountryOfOrigin
   , kValues               :: KitValues
-  , kAlternateNames       :: KitAlternateNames
+  , kAlternateNames       :: Maybe KitAlternateNames
   , kContent              :: KitContent
   , kDimensions           :: KitDimensions
-  , kTechnicalData        :: KitTechnicalData
+  , kTechnicalData        :: Maybe KitTechnicalData
   , kFlags                :: KitFlags
   , kInnerPack            :: KitInnerPack
   , kMasterCase           :: KitMasterCase
@@ -3355,20 +3355,20 @@ newtype KitTechnicalData = KitTechnicalData
 
 data KitTechnicalDataBattery = KitTechnicalDataBattery
   { ktdbType              :: BatteryType
-  , ktdbBatteryWeight     :: BatteryWeight
-  , ktdbNumberOfBatteries :: NumberOfBatteries
-  , ktdbCapacity          :: Capacity
-  , ktdbNumberOfCells     :: NumberOfCells
-  , ktdbCapacityUnit      :: CapacityUnit
+  , ktdbBatteryWeight     :: Maybe BatteryWeight
+  , ktdbNumberOfBatteries :: Maybe NumberOfBatteries
+  , ktdbCapacity          :: Maybe Capacity
+  , ktdbNumberOfCells     :: Maybe NumberOfCells
+  , ktdbCapacityUnit      :: Maybe CapacityUnit
   } deriving (Eq, Show)
 
 instance ToJSON KitTechnicalDataBattery where
-  toJSON KitTechnicalDataBattery {..} = object ["type"              .= ktdbType
-                                               ,"batteryWeight"     .= ktdbBatteryWeight
-                                               ,"numberOfBatteries" .= ktdbNumberOfBatteries
-                                               ,"capacity"          .= ktdbCapacity
-                                               ,"numberOfCells"     .= ktdbNumberOfCells
-                                               ,"capacityUnit"      .= ktdbCapacityUnit]
+  toJSON KitTechnicalDataBattery {..} = omitNulls ["type"              .= ktdbType
+                                                  ,"batteryWeight"     .= ktdbBatteryWeight
+                                                  ,"numberOfBatteries" .= ktdbNumberOfBatteries
+                                                  ,"capacity"          .= ktdbCapacity
+                                                  ,"numberOfCells"     .= ktdbNumberOfCells
+                                                  ,"capacityUnit"      .= ktdbCapacityUnit]
 
 data KitDimensions = KitDimensions
   { kdLength :: KitLength
@@ -3404,7 +3404,7 @@ newtype KitContent = KitContent
   } deriving (Eq, Show, ToJSON)
 
 data KitContentObject = KitContentObject
-  { kcProductId  :: ProductId
+  { kcProductId  :: Maybe ProductId
   , kcExternalId :: Maybe ExternalId
   , kcQuantity   :: Quantity
   } deriving (Eq, Show)
@@ -3429,18 +3429,18 @@ data KitValues = KitValues
   { kvCostValue         :: CostValue
   , kvWholesaleValue    :: WholesaleValue
   , kvRetailValue       :: RetailValue
-  , kvCostCurrency      :: CostCurrency
-  , kvWholesaleCurrency :: WholesaleCurrency
-  , kvRetailCurrency    :: RetailCurrency
+  , kvCostCurrency      :: Maybe CostCurrency
+  , kvWholesaleCurrency :: Maybe WholesaleCurrency
+  , kvRetailCurrency    :: Maybe RetailCurrency
   } deriving (Eq, Show)
 
 instance ToJSON KitValues where
-  toJSON KitValues {..} = object ["costValue"         .= kvCostValue
-                                 ,"wholesaleValue"    .= kvWholesaleValue
-                                 ,"retailValue"       .= kvRetailValue
-                                 ,"costCurrency"      .= kvCostCurrency
-                                 ,"wholesaleCurrency" .=  kvWholesaleCurrency
-                                 ,"retailCurrency"    .= kvRetailCurrency]
+  toJSON KitValues {..} = omitNulls ["costValue"         .= kvCostValue
+                                    ,"wholesaleValue"    .= kvWholesaleValue
+                                    ,"retailValue"       .= kvRetailValue
+                                    ,"costCurrency"      .= kvCostCurrency
+                                    ,"wholesaleCurrency" .= kvWholesaleCurrency
+                                    ,"retailCurrency"    .= kvRetailCurrency]
 
 data MarketingInsert = MarketingInsert
   { miSku               :: SKU
@@ -3448,10 +3448,10 @@ data MarketingInsert = MarketingInsert
   , miClassification    :: Classification  
   , miDescription       :: Description
   , miInclusionRuleType :: InclusionRuleType
-  , miAlternateNames    :: MarketingInsertAlternateNames
+  , miAlternateNames    :: Maybe MarketingInsertAlternateNames
   , miDimensions        :: MarketingInsertDimensions
   , miFlags             :: MarketingInsertFlags
-  , miInclusionRules    :: MarketingInsertInclusionRules
+  , miInclusionRules    :: Maybe MarketingInsertInclusionRules
   , miMasterCase        :: MarketingInsertMasterCase
   } deriving (Eq, Show)
 
@@ -3550,19 +3550,19 @@ data ShouldNotFold = ShouldNotFold
   deriving (Eq, Show)
 
 data MarketingInsertInclusionRules = MarketingInsertInclusionRules
-  { miirInsertAfterDate         :: InsertAfterDate
-  , miirInsertBeforeDate        :: InsertBeforeDate
-  , miirInsertWhenWorthValue    :: InsertWhenWorthValue
-  , miirInsertWhenQuantity      :: InsertWhenQuantity
-  , miirInsertWhenWorthCurrency :: InsertWhenWorthCurrency
+  { miirInsertAfterDate         :: Maybe InsertAfterDate
+  , miirInsertBeforeDate        :: Maybe InsertBeforeDate
+  , miirInsertWhenWorthValue    :: Maybe InsertWhenWorthValue
+  , miirInsertWhenQuantity      :: Maybe InsertWhenQuantity
+  , miirInsertWhenWorthCurrency :: Maybe InsertWhenWorthCurrency
   } deriving (Eq, Show)
 
 instance ToJSON MarketingInsertInclusionRules where
-  toJSON MarketingInsertInclusionRules {..} = object ["insertAfterDate"         .= miirInsertAfterDate
-                                                     ,"insertBeforeDate"        .= miirInsertBeforeDate
-                                                     ,"insertWhenWorthValue"    .= miirInsertWhenWorthValue
-                                                     ,"insertWhenQuantity"      .= miirInsertWhenQuantity
-                                                     ,"insertWhenWorthCurrency" .= miirInsertWhenWorthCurrency]
+  toJSON MarketingInsertInclusionRules {..} = omitNulls ["insertAfterDate"         .= miirInsertAfterDate
+                                                        ,"insertBeforeDate"        .= miirInsertBeforeDate
+                                                        ,"insertWhenWorthValue"    .= miirInsertWhenWorthValue
+                                                        ,"insertWhenQuantity"      .= miirInsertWhenQuantity
+                                                        ,"insertWhenWorthCurrency" .= miirInsertWhenWorthCurrency]
 
 instance ToJSON ShouldNotFold where
   toJSON ShouldNotFold = Number 1
@@ -3626,7 +3626,7 @@ data BaseProduct = BaseProduct
   , bpClassification       :: Classification
   , bpDescription          :: Description
   , bpHsCode               :: Maybe HsCode
-  , bpCountryOfOrigin      :: CountryOfOrigin
+  , bpCountryOfOrigin      :: Maybe CountryOfOrigin
   , bpCategory             :: Category
   , bpBatteryConfiguration :: BatteryConfiguration
   , bpValues               :: Values
@@ -3659,7 +3659,7 @@ instance ToJSON BaseProduct where
 
 data BaseProductPallet = BaseProductPallet
   { bppIndividualItemsPerCase :: IndividualItemsPerCase
-  , bppExternalid             :: ExternalId
+  , bppExternalid             :: Maybe ExternalId
   , bppSku                    :: SKU
   , bppDescription            :: Description
   , bppValues                 :: Values
@@ -3668,13 +3668,13 @@ data BaseProductPallet = BaseProductPallet
   } deriving (Eq, Show)
 
 instance ToJSON BaseProductPallet where
-  toJSON BaseProductPallet {..} = object ["individualItemsPerCase" .= bppIndividualItemsPerCase
-                                         ,"externalId"             .= bppExternalid
-                                         ,"sku"                    .= bppSku
-                                         ,"description"            .= bppDescription
-                                         ,"values"                 .= bppValues
-                                         ,"dimensions"             .= bppDimensions
-                                         ,"flags"                  .= bppFlags]
+  toJSON BaseProductPallet {..} = omitNulls ["individualItemsPerCase" .= bppIndividualItemsPerCase
+                                            ,"externalId"             .= bppExternalid
+                                            ,"sku"                    .= bppSku
+                                            ,"description"            .= bppDescription
+                                            ,"values"                 .= bppValues
+                                            ,"dimensions"             .= bppDimensions
+                                            ,"flags"                  .= bppFlags]
                                           
 newtype BaseProductPalletFlags = BaseProductPalletFlags
   { bppfIsPackagedReadyToShip :: IsPackagedReadyToShip
@@ -3682,7 +3682,7 @@ newtype BaseProductPalletFlags = BaseProductPalletFlags
 
 data BaseProductMasterCase = BaseProductMasterCase
   { bpmcIndividualItemsPerCase :: IndividualItemsPerCase
-  , bpmcExternalId             :: ExternalId
+  , bpmcExternalId             :: Maybe ExternalId
   , bpmcSku                    :: SKU
   , bpmcDescription            :: Description
   , bpmcValues                 :: Values
@@ -3705,7 +3705,7 @@ newtype BaseProductMasterCaseFlags = BaseProductMasterCaseFlags
 
 data BaseProductInnerPack = BaseProductInnerPack
   { bpipIndividualItemsPerCase :: IndividualItemsPerCase
-  , bpipExternalId             :: ExternalId
+  , bpipExternalId             :: Maybe ExternalId
   , bpipSku                    :: SKU
   , bpipDescription            :: Description
   , bpipValues                 :: Values
@@ -3714,13 +3714,13 @@ data BaseProductInnerPack = BaseProductInnerPack
   } deriving (Eq, Show)
 
 instance ToJSON BaseProductInnerPack where
-  toJSON BaseProductInnerPack {..} = object ["individualItemsPerCase" .= bpipIndividualItemsPerCase
-                                            ,"externalId"             .= bpipExternalId
-                                            ,"sku"                    .= bpipSku
-                                            ,"description"            .= bpipDescription
-                                            ,"values"                 .= bpipValues
-                                            ,"dimensions"             .= bpipDimensions
-                                            ,"flags"                  .= bpipFlags]
+  toJSON BaseProductInnerPack {..} = omitNulls ["individualItemsPerCase" .= bpipIndividualItemsPerCase
+                                               ,"externalId"             .= bpipExternalId
+                                               ,"sku"                    .= bpipSku
+                                               ,"description"            .= bpipDescription
+                                               ,"values"                 .= bpipValues
+                                               ,"dimensions"             .= bpipDimensions
+                                               ,"flags"                  .= bpipFlags]
 
 newtype BaseProductInnerPackFlags = BaseProductInnerPackFlags
   { bpipfIsPackagedReadyToShip :: IsPackagedReadyToShip
@@ -3767,21 +3767,21 @@ newtype BaseProductTechnicalData = BaseProductTechnicalData
   } deriving (Eq, Show, ToJSON)
 
 data BaseProductTechnicalDataBattery = BaseProductTechnicalDataBattery
-  { bptdbType              :: BatteryType
-  , bptdbBatteryWeight     :: BatteryWeight
-  , bptdbNumberOfBatteries :: NumberOfBatteries
-  , bptdbCapacity          :: Capacity
-  , bptdbNumberOfCells     :: NumberOfCells
-  , bptdbCapacityUnit      :: CapacityUnit
+  { bptdbType              :: Maybe BatteryType
+  , bptdbBatteryWeight     :: Maybe BatteryWeight
+  , bptdbNumberOfBatteries :: Maybe NumberOfBatteries
+  , bptdbCapacity          :: Maybe Capacity
+  , bptdbNumberOfCells     :: Maybe NumberOfCells
+  , bptdbCapacityUnit      :: Maybe CapacityUnit
   } deriving (Eq, Show)
 
 instance ToJSON BaseProductTechnicalDataBattery where
-  toJSON BaseProductTechnicalDataBattery {..} = object ["type"              .= bptdbType
-                                                       ,"batteryWeight"     .= bptdbBatteryWeight
-                                                       ,"numberOfBatteries" .= bptdbNumberOfBatteries
-                                                       ,"capacity"          .= bptdbCapacity
-                                                       ,"numberOfCells"     .= bptdbNumberOfCells
-                                                       ,"capacityUnit"      .= bptdbCapacityUnit]
+  toJSON BaseProductTechnicalDataBattery {..} = omitNulls ["type"              .= bptdbType
+                                                          ,"batteryWeight"     .= bptdbBatteryWeight
+                                                          ,"numberOfBatteries" .= bptdbNumberOfBatteries
+                                                          ,"capacity"          .= bptdbCapacity
+                                                          ,"numberOfCells"     .= bptdbNumberOfCells
+                                                          ,"capacityUnit"      .= bptdbCapacityUnit]
 
 data BaseProductDimensions = BaseProductDimensions
   { bpdLength :: BaseProductLength
@@ -5063,18 +5063,18 @@ data Values = Values
   { vCostValue         :: CostValue
   , vWholesaleValue    :: WholesaleValue
   , vRetailValue       :: RetailValue
-  , vCostCurrency      :: CostCurrency
-  , vWholesaleCurrency :: WholesaleCurrency
-  , vRetailCurrency    :: RetailCurrency
+  , vCostCurrency      :: Maybe CostCurrency
+  , vWholesaleCurrency :: Maybe WholesaleCurrency
+  , vRetailCurrency    :: Maybe RetailCurrency
   } deriving (Eq, Show)
 
 instance ToJSON Values where
-  toJSON Values {..} = object ["costValue"         .= vCostValue
-                              ,"wholesaleValue"    .= vWholesaleValue
-                              ,"retailValue"       .= vRetailValue
-                              ,"costCurrency"      .= vCostCurrency
-                              ,"wholesaleCurrency" .= vWholesaleCurrency
-                              ,"retailCurrency"    .= vRetailCurrency]
+  toJSON Values {..} = omitNulls ["costValue"         .= vCostValue
+                                 ,"wholesaleValue"    .= vWholesaleValue
+                                 ,"retailValue"       .= vRetailValue
+                                 ,"costCurrency"      .= vCostCurrency
+                                 ,"wholesaleCurrency" .= vWholesaleCurrency
+                                 ,"retailCurrency"    .= vRetailCurrency]
 
 instance FromJSON ValuesResource where
   parseJSON = withObject "ValuesResource" parse

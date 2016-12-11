@@ -122,7 +122,7 @@ exampleCreateProduct productId =
                           (Description "This is a virtual kit test")
                           (VirtualKitContent
                             [(VirtualKitContentObject
-                              (ProductId productId)
+                              (Just $ ProductId productId)
                               Nothing
                               (Quantity 5)
                             )
@@ -134,23 +134,23 @@ exampleCreateProduct productId =
                           (KitClassification)
                           (Description "This is a kit test")
                           (BatteryConfiguration "HASLOOSEBATTERY")
-                          (HsCode "010612")
-                          (CountryOfOrigin "US")
+                          (Just $ HsCode "010612")
+                          (Just $ CountryOfOrigin "US")
                           (KitValues
                             (CostValue 1)
                             (WholesaleValue 2)
                             (RetailValue 4)
-                            (CostCurrency "USD")
-                            (WholesaleCurrency "USD")
-                            (RetailCurrency "USD")
+                            (Just $ CostCurrency "USD")
+                            (Just $ WholesaleCurrency "USD")
+                            (Just $ RetailCurrency "USD")
                           )
-                          (KitAlternateNames [KitAlternateName (Name "HspecTestAlt")])
+                          (Just $ KitAlternateNames [KitAlternateName (Name "HspecTestAlt")])
                           -- KitContentObject needs to include ids of other products
                           -- included in this kit. We use a helper function to create a
                           -- product and get back that product's id.
                           (KitContent
                             [KitContentObject
-                              (ProductId productId)
+                              (Just $ ProductId productId)
                               Nothing
                               (Quantity 5)
                             ]
@@ -161,14 +161,14 @@ exampleCreateProduct productId =
                             (KitHeight 2)
                             (KitWeight 2)
                           )
-                          (KitTechnicalData
+                          (Just $ KitTechnicalData
                             (KitTechnicalDataBattery
                               (BatteryType "ALKALINE")
-                              (BatteryWeight 3)
-                              (NumberOfBatteries 5)
-                              (Capacity 6)
-                              (NumberOfCells 7)
-                              (CapacityUnit "WATTHOUR")
+                              (Just $ BatteryWeight 3)
+                              (Just $ NumberOfBatteries 5)
+                              (Just $ Capacity 6)
+                              (Just $ NumberOfCells 7)
+                              (Just $ CapacityUnit "WATTHOUR")
                             )
                           )
                           (KitFlags
@@ -192,9 +192,9 @@ exampleCreateProduct productId =
                              (CostValue 1)
                              (WholesaleValue 2)
                              (RetailValue 4)
-                             (CostCurrency "USD")
-                             (WholesaleCurrency "USD")
-                             (RetailCurrency "USD")
+                             (Just $ CostCurrency "USD")
+                             (Just $ WholesaleCurrency "USD")
+                             (Just $ RetailCurrency "USD")
                            )
                            (KitDimensions
                              (KitLength 2)
@@ -214,9 +214,9 @@ exampleCreateProduct productId =
                               (CostValue 1)
                               (WholesaleValue 2)
                               (RetailValue 4)
-                              (CostCurrency "USD")
-                              (WholesaleCurrency "USD")
-                              (RetailCurrency "USD")
+                              (Just $ CostCurrency "USD")
+                              (Just $ WholesaleCurrency "USD")
+                              (Just $ RetailCurrency "USD")
                             )
                             (KitDimensions
                               (KitLength 4)
@@ -236,9 +236,9 @@ exampleCreateProduct productId =
                               (CostValue 1)
                               (WholesaleValue 2)
                               (RetailValue 4)
-                              (CostCurrency "USD")
-                              (WholesaleCurrency "USD")
-                              (RetailCurrency "USD")
+                              (Just $ CostCurrency "USD")
+                              (Just $ WholesaleCurrency "USD")
+                              (Just $ RetailCurrency "USD")
                             )
                             (KitDimensions
                               (KitLength 8)
@@ -256,7 +256,7 @@ exampleCreateProduct productId =
                           (MarketingInsertClassification)
                           (Description "Hspec test marketing insert2")
                           (InclusionRuleType "CUSTOM")
-                          (MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI22")])
+                          (Just $ MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI22")])
                           (MarketingInsertDimensions
                             (MarketingInsertLength 0.1)
                             (MarketingInsertWidth 0.1)
@@ -266,12 +266,12 @@ exampleCreateProduct productId =
                           (MarketingInsertFlags
                             ShouldNotFold
                           )
-                          (MarketingInsertInclusionRules
-                            (InsertAfterDate "3016-02-15T13:04:26-05:00")
-                            (InsertBeforeDate "3016-02-15T13:04:26-05:00")
-                            (InsertWhenWorthValue 5)
-                            (InsertWhenQuantity 5)
-                            (InsertWhenWorthCurrency "USD")
+                          (Just $ MarketingInsertInclusionRules
+                            (Just $ InsertAfterDate "3016-02-15T13:04:26-05:00")
+                            (Just $ InsertBeforeDate "3016-02-15T13:04:26-05:00")
+                            (Just $ InsertWhenWorthValue 5)
+                            (Just $ InsertWhenQuantity 5)
+                            (Just $ InsertWhenWorthCurrency "USD")
                           )
                           (MarketingInsertMasterCase
                             (IndividualItemsPerCase 10)
@@ -291,16 +291,16 @@ exampleCreateProduct productId =
                           (BaseProductClassification)
                           (Description "Hspec test product2")
                           (Just $ HsCode "010612")
-                          (CountryOfOrigin "US")
+                          (Just $ CountryOfOrigin "US")
                           (Category "TOYS_SPORTS_HOBBIES")
                           (BatteryConfiguration "ISBATTERY")
                           (Values 
                             (CostValue 1)
                             (WholesaleValue 2)
                             (RetailValue 4)
-                            (CostCurrency "USD")
-                            (WholesaleCurrency "USD")
-                            (RetailCurrency "USD")
+                            (Just $ CostCurrency "USD")
+                            (Just $ WholesaleCurrency "USD")
+                            (Just $ RetailCurrency "USD")
                           )
                           (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt2")])
                           (BaseProductDimensions 
@@ -311,12 +311,12 @@ exampleCreateProduct productId =
                           )
                           (BaseProductTechnicalData 
                             (BaseProductTechnicalDataBattery 
-                                (BatteryType "ALKALINE")
-                                (BatteryWeight 3)
-                                (NumberOfBatteries 5)
-                                (Capacity 6)
-                                (NumberOfCells 7)
-                                (CapacityUnit "WATTHOUR")
+                                (Just $ BatteryType "ALKALINE")
+                                (Just $ BatteryWeight 3)
+                                (Just $ NumberOfBatteries 5)
+                                (Just $ Capacity 6)
+                                (Just $ NumberOfCells 7)
+                                (Just $ CapacityUnit "WATTHOUR")
                             )
                           )
                           (BaseProductFlags 
@@ -333,16 +333,16 @@ exampleCreateProduct productId =
                           )
                           (BaseProductInnerPack 
                             (IndividualItemsPerCase 2)
-                            (ExternalId "narp222")
+                            (Just $ ExternalId "narp222")
                             (SKU "singleInner22")
                             (Description "InnerDec2")
                             (Values 
                                 (CostValue 1)
                                 (WholesaleValue 2)
                                 (RetailValue 4)
-                                (CostCurrency "USD")
-                                (WholesaleCurrency "USD")
-                                (RetailCurrency "USD")
+                                (Just $ CostCurrency "USD")
+                                (Just $ WholesaleCurrency "USD")
+                                (Just $ RetailCurrency "USD")
                             )
                             (BaseProductDimensions 
                                 (BaseProductLength 20)
@@ -356,16 +356,16 @@ exampleCreateProduct productId =
                           )
                           (BaseProductMasterCase 
                             (IndividualItemsPerCase 10)
-                            (ExternalId "narp33")
+                            (Just $ ExternalId "narp33")
                             (SKU "singleMaster23")
                             (Description "masterdesc3")
                             (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
                                 (RetailValue 4)
-                                (CostCurrency "USD")
-                                (WholesaleCurrency "USD")
-                                (RetailCurrency "USD")
+                                (Just $ CostCurrency "USD")
+                                (Just $ WholesaleCurrency "USD")
+                                (Just $ RetailCurrency "USD")
                             )
                             (BaseProductDimensions 
                                 (BaseProductLength 30)
@@ -377,16 +377,16 @@ exampleCreateProduct productId =
                           )
                           (BaseProductPallet 
                             (IndividualItemsPerCase 1000)
-                            (ExternalId "narp42")
+                            (Just $ ExternalId "narp42")
                             (SKU "singlePallet22")
                             (Description "palletdesc2")
                             (Values 
                                 (CostValue 1)
                                 (WholesaleValue 2)
                                 (RetailValue 4)
-                                (CostCurrency "USD")
-                                (WholesaleCurrency "USD")
-                                (RetailCurrency "USD")
+                                (Just $ CostCurrency "USD")
+                                (Just $ WholesaleCurrency "USD")
+                                (Just $ RetailCurrency "USD")
                             )
                             (BaseProductDimensions 
                                 (BaseProductLength 40)
@@ -409,16 +409,16 @@ exampleCreateBaseProduct =
       (BaseProductClassification)
       (Description "Hspec test product3")
       (Just $ HsCode "010612")
-      (CountryOfOrigin "US")
+      (Just $ CountryOfOrigin "US")
       (Category "TOYS_SPORTS_HOBBIES")
       (BatteryConfiguration "ISBATTERY")
       (Values
          (CostValue 1)
          (WholesaleValue 2)
          (RetailValue 4)
-         (CostCurrency "USD")
-         (WholesaleCurrency "USD")
-         (RetailCurrency "USD"))
+         (Just $ CostCurrency "USD")
+         (Just $ WholesaleCurrency "USD")
+         (Just $ RetailCurrency "USD"))
       (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
       (BaseProductDimensions
          (BaseProductLength 10)
@@ -427,12 +427,12 @@ exampleCreateBaseProduct =
          (BaseProductWeight 10))
       (BaseProductTechnicalData
          (BaseProductTechnicalDataBattery
-            (BatteryType "ALKALINE")
-            (BatteryWeight 3)
-            (NumberOfBatteries 5)
-            (Capacity 6)
-            (NumberOfCells 7)
-            (CapacityUnit "WATTHOUR")))
+            (Just $ BatteryType "ALKALINE")
+            (Just $ BatteryWeight 3)
+            (Just $ NumberOfBatteries 5)
+            (Just $ Capacity 6)
+            (Just $ NumberOfCells 7)
+            (Just $ CapacityUnit "WATTHOUR")))
       (BaseProductFlags
          PackagedReadyToShip
          Fragile
@@ -446,16 +446,16 @@ exampleCreateBaseProduct =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (ExternalId "narp55")
+         (Just $ ExternalId "narp55")
          (SKU "singleInner3")
          (Description "InnerDesc3")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
             (RetailValue 4)
-            (CostCurrency "USD")
-            (WholesaleCurrency "USD")
-            (RetailCurrency "USD"))
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
          (BaseProductDimensions
             (BaseProductLength 20)
             (BaseProductWidth 20)
@@ -464,16 +464,16 @@ exampleCreateBaseProduct =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (ExternalId "narp66")
+         (Just $ ExternalId "narp66")
          (SKU "singleMaster4")
          (Description "masterdesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
             (RetailValue 4)
-            (CostCurrency "USD")
-            (WholesaleCurrency "USD")
-            (RetailCurrency "USD"))
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
          (BaseProductDimensions
             (BaseProductLength 30)
             (BaseProductWidth 30)
@@ -482,16 +482,16 @@ exampleCreateBaseProduct =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (ExternalId "narp77")
+         (Just $ ExternalId "narp77")
          (SKU "singlePallet3")
          (Description "palletdesc3")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
             (RetailValue 4)
-            (CostCurrency "USD")
-            (WholesaleCurrency "USD")
-            (RetailCurrency "USD"))
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
          (BaseProductDimensions
             (BaseProductLength 40)
             (BaseProductWidth 40)
@@ -504,22 +504,22 @@ createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either Shipwir
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
   let Right ReceivingsResponse {..} = receiving
-  let ReceivingsResource {..} = receivingsResponseResource
-  let ReceivingsItems {..} = receivingsResponseItems
-  let ReceivingsItem {..} = last unReceivingsItems
-  let ReceivingsItemResource {..} = receivingsItemResource
-  let receivingId = T.pack $ show $ unId rirId
+      ReceivingsResource {..} = receivingsResponseResource
+      ReceivingsItems {..} = receivingsResponseItems
+      ReceivingsItem {..} = last unReceivingsItems
+      ReceivingsItemResource {..} = receivingsItemResource
+      receivingId = T.pack $ show $ unId rirId
   return (receiving, ReceivingId receivingId)
 
 createProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
 createProductHelper conf cp = do
   baseProduct <- shipwire conf $ createProduct cp
   let Right GetProductsResponse {..} = baseProduct
-  let GetProductsResponseResource {..} = gprResource
-  let GetProductsResponseResourceItems {..} = gprrItems
-  let GetProductsResponseResourceItem {..} = last gprriItems
-  let pwBaseProduct@(PwBaseProduct x) = gprriResource
-  let productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
+      GetProductsResponseResource {..} = gprResource
+      GetProductsResponseResourceItems {..} = gprrItems
+      GetProductsResponseResourceItem {..} = last gprriItems
+      pwBaseProduct@(PwBaseProduct x) = gprriResource
+      productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId)
 
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
@@ -589,9 +589,9 @@ main = do
         receivingsResponseWarnings `shouldBe` Nothing
         modifiedReceiving <- shipwire config $ getReceiving receivingId
         let Right ReceivingResponse {..} = modifiedReceiving
-        let ReceivingsItemResource {..} = receivingResponseResource
-        let ItemResourceShipFrom {..} = rirShipFrom
-        let ItemResourceShipFromResource {..} = irsfResource
+            ReceivingsItemResource {..} = receivingResponseResource
+            ItemResourceShipFrom {..} = rirShipFrom
+            ItemResourceShipFromResource {..} = irsfResource
         irsfrCountry `shouldBe` Just (Country "Modified Country")
 
     describe "cancel a receiving" $ do
