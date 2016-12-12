@@ -5,7 +5,8 @@ module Main where
 
 import           Ballast.Client
 import           Ballast.Types
-import qualified Data.Text                       as T
+import qualified Data.Text as T
+import           Data.Time.Clock (UTCTime)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 -- isLeft,
@@ -34,7 +35,7 @@ exampleCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-11-08T00:00:00-07:00")
+    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -62,7 +63,7 @@ exampleBadCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-11-27T00:00:00-07:00")
+    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -90,7 +91,7 @@ exampleModifiedReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDateText "2016-11-27T00:00:00-07:00")
+    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -267,8 +268,8 @@ exampleCreateProduct productId =
                             ShouldNotFold
                           )
                           (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate "3016-02-15T13:04:26-05:00")
-                            (Just $ InsertBeforeDate "3016-02-15T13:04:26-05:00")
+                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
                             (Just $ InsertWhenWorthValue 5)
                             (Just $ InsertWhenQuantity 5)
                             (Just $ InsertWhenWorthCurrency "USD")
@@ -525,6 +526,7 @@ createProductHelper conf cp = do
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
 unwrapBaseProduct (PwBaseProduct x) = x
 unwrapBaseProduct _ = error "Bad input"
+
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
@@ -550,6 +552,7 @@ main = do
         result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (ReceivingStatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
+                                                  -&- (UpdatedAfter $ (read "2017-11-19 18:28:52 UTC" :: UTCTime))
         result `shouldSatisfy` isRight
 
     describe "create a new receiving" $ do

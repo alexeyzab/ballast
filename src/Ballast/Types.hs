@@ -196,7 +196,7 @@ module Ballast.Types
   , ItemResourceRoutingResource(..)
   , Latitude(..)
   , Longitude
-  , ExpectedDateUTCTime
+  , ExpectedDate(..)
   , LastUpdatedDate
   , ItemResourceEvents(..)
   , ItemResourceEventsResource(..)
@@ -265,7 +265,6 @@ module Ballast.Types
   , CommerceName(..)
   , TransactionId
   , CreateReceiving(..)
-  , ExpectedDateText(..)
   , OrderNo(..)
   , ReceivingOptions(..)
   , WarehouseId
@@ -505,6 +504,7 @@ module Ballast.Types
   , KitAlternateNames(..)
   , KitAlternateName(..)
   , KitValues(..)
+  , utcToShipwire
   ) where
 
 import           Data.Aeson
@@ -1871,12 +1871,12 @@ type instance ShipwireReturn GetReceivingLabelsRequest = GetReceivingLabelsRespo
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
-  { updatedAfter :: Text
+  { updatedAfter :: UTCTime
   } deriving (Eq, Show)
 
 instance ToShipwireParam UpdatedAfter where
   toShipwireParam (UpdatedAfter x) =
-    (Query ("updatedAfter", TE.encodeUtf8 x) :)
+    (Query ("updatedAfter", TE.encodeUtf8 $ utcToShipwire x) :)
 
 newtype ReceivingStatusParams = ReceivingStatusParams
   { statusParam :: [ReceivingStatusParam]
@@ -2031,7 +2031,7 @@ data ReceivingsItemResource = ReceivingsItemResource
   , rirExternalId             :: Maybe ExternalId
   , rirOrderNo                :: Maybe OrderNo
   , rirTransactionId          :: TransactionId
-  , rirExpectedDate           :: Maybe ExpectedDateUTCTime
+  , rirExpectedDate           :: Maybe ExpectedDate
   , rirCommerceName           :: CommerceName
   , rirLastUpdatedDate        :: LastUpdatedDate
   , rirStatus                 :: ItemResourceStatus
@@ -2170,7 +2170,12 @@ newtype Latitude = Latitude
 
 type Longitude = Latitude
 
-type ExpectedDateUTCTime = ExpectedShipDate
+newtype ExpectedDate = ExpectedDate
+  { unExpectedDate :: UTCTime
+  } deriving (Eq, Show, FromJSON)
+
+instance ToJSON ExpectedDate where
+  toJSON (ExpectedDate x) = object ["expectedDate" .= utcToShipwire x]
 
 type LastUpdatedDate = ExpectedShipDate
 
@@ -2192,7 +2197,7 @@ data ItemResourceEventsResource = ItemResourceEventsResource
   , irerSubmittedDate        :: Maybe SubmittedDate
   , irerProcessedDate        :: ProcessedDate
   , irerCompletedDate        :: Maybe CompletedDate
-  , irerExpectedDate         :: Maybe ExpectedDateText
+  , irerExpectedDate         :: Maybe ExpectedDate
   , irerDeliveredDate        :: Maybe DeliveredDate
   , irerCancelledDate        :: Maybe CancelledDate
   , irerReturnedDate         :: Maybe ReturnedDate
@@ -2747,7 +2752,7 @@ type TransactionId = ExternalId
 data CreateReceiving = CreateReceiving
   { createReceivingExternalId             :: Maybe ExternalId
   , createReceivingOrderNo                :: Maybe OrderNo
-  , createReceivingExpectedDate           :: Maybe ExpectedDateText
+  , createReceivingExpectedDate           :: Maybe ExpectedDate
   , createReceivingOptions                :: ReceivingOptions
   , createReceivingArrangement            :: ReceivingArrangement
   , createReceivingShipments              :: ReceivingShipments
@@ -2770,12 +2775,6 @@ instance ToJSON CreateReceiving where
                                           ,"items"                  .= createReceivingItems
                                           ,"shipFrom"               .= createReceivingShipFrom
                                           ,"instructionsRecipients" .= createReceivingInstructionsRecipients]
-
--- | The expected format is YYYY-MM-DDThh:mm:ssTZD (ISO8601)
--- "2014-05-27T00:00:00-07:00"
-newtype ExpectedDateText = ExpectedDateText
-  { unExpectedDate :: Text
-  } deriving (Eq, Show, ToJSON, FromJSON)
 
 newtype OrderNo = OrderNo
   { unOrderNo :: Text
@@ -4343,13 +4342,13 @@ instance FromJSON InclusionRulesResource where
                 <*> o .:  "insertWhenQuantity"
                 <*> o .:? "flags"
 
-utcToDumbShipwire :: UTCTime -> Text
-utcToDumbShipwire t =
+utcToShipwire :: UTCTime -> Text
+utcToShipwire ut =
   (tshow day) <> "T" <> clockTime <> "-00:00"
   where tshow :: Show a => a -> Text
         tshow = T.pack . show
-        day = utctDay t
-        time = utctDayTime t
+        day = utctDay ut
+        time = utctDayTime ut
         tod = snd $ utcToLocalTimeOfDay utc (timeToTimeOfDay time)
         atLeastTwo :: Text -> Int -> Text
         atLeastTwo t i
@@ -4361,15 +4360,19 @@ utcToDumbShipwire t =
                  <> ":"
                  <> (atLeastTwo "0" $ floor $ todSec tod)
 
--- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype InsertAfterDate = InsertAfterDate
-  { unInsertAfterDate :: Text
-  } deriving (Eq, Show, ToJSON, FromJSON)
+  { unInsertAfterDate :: UTCTime
+  } deriving (Eq, Show, FromJSON)
 
--- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
+instance ToJSON InsertAfterDate where
+  toJSON (InsertAfterDate x) = object ["insertAfterDate" .= utcToShipwire x]
+
 newtype InsertBeforeDate = InsertBeforeDate
-  { unInsertBeforeDate :: Text
-  } deriving (Eq, Show, ToJSON, FromJSON)
+  { unInsertBeforeDate :: UTCTime
+  } deriving (Eq, Show, FromJSON)
+
+instance ToJSON InsertBeforeDate where
+  toJSON (InsertBeforeDate x) = object ["insertBeforeDate" .= utcToShipwire x]
 
 newtype InsertWhenWorthValueResponse = InsertWhenWorthValueResponse
   { unInsertWhenWorthValueResponse :: Text
@@ -4567,7 +4570,7 @@ newtype HsCode = HsCode
   { unHsCode :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
 
-type CreationDate = ExpectedDateUTCTime
+type CreationDate = ExpectedDate
 
 data Flags = Flags
   { fResourceLocation :: Maybe ResponseResourceLocation
@@ -4915,7 +4918,7 @@ newtype ItemCount = ItemCount
   { unItemCount :: Integer
   } deriving (Eq, Show, FromJSON)
 
-type ArchivedDate = ExpectedDateUTCTime
+type ArchivedDate = ExpectedDate
 
 data Classification = BaseProductClassification
   | MarketingInsertClassification
