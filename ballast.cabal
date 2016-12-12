@@ -44,7 +44,8 @@ test-suite tests
                        bytestring,
                        hspec                >= 1.8 && <2.3,
                        hspec-expectations,
-                       text
+                       text,
+                       time
                        
   default-language:    Haskell2010
 
