@@ -2,8 +2,7 @@ Ballast [![TravisCI](https://travis-ci.org/bitemyapp/ballast.svg)](https://travi
 ==========
 
 ![Ship cross-section showing ballast](./ballast.jpg)
-
-<sup>(Image courtesy University of Edinburgh)</sup>
+<sup><sub>Image courtesy University of Edinburgh</sub></sup>
 
 
 A Haskell wrapper for the Shipwire API
