@@ -468,7 +468,7 @@ module Ballast.Types
   , MarketingInsertWidth(..)
   , MarketingInsertHeight(..)
   , MarketingInsertWeight(..)
-  , MarketingInsertInclusionRules(..)  
+  , MarketingInsertInclusionRules(..)
   , ShouldNotFold(..)
   , MarketingInsertFlags(..)
   , InsertWhenWorthValue(..)
@@ -3212,7 +3212,7 @@ instance ToJSON VirtualKitContentObject where
   toJSON VirtualKitContentObject {..} = omitNulls ["productId"  .= vkcoProductId
                                                   ,"externalId" .= vkcoExternalId
                                                   ,"quantity"   .= vkcoQuantity]
-  
+
 data Kit = Kit
   { kSku                  :: SKU
   , kExternalId           :: Maybe ExternalId
@@ -3444,7 +3444,7 @@ instance ToJSON KitValues where
 data MarketingInsert = MarketingInsert
   { miSku               :: SKU
   , miExternalId        :: Maybe ExternalId
-  , miClassification    :: Classification  
+  , miClassification    :: Classification
   , miDescription       :: Description
   , miInclusionRuleType :: InclusionRuleType
   , miAlternateNames    :: Maybe MarketingInsertAlternateNames
@@ -3674,7 +3674,7 @@ instance ToJSON BaseProductPallet where
                                             ,"values"                 .= bppValues
                                             ,"dimensions"             .= bppDimensions
                                             ,"flags"                  .= bppFlags]
-                                          
+
 newtype BaseProductPalletFlags = BaseProductPalletFlags
   { bppfIsPackagedReadyToShip :: IsPackagedReadyToShip
   } deriving (Eq, Show, ToJSON)
@@ -3724,7 +3724,7 @@ instance ToJSON BaseProductInnerPack where
 newtype BaseProductInnerPackFlags = BaseProductInnerPackFlags
   { bpipfIsPackagedReadyToShip :: IsPackagedReadyToShip
   } deriving (Eq, Show, ToJSON)
-    
+
 newtype BaseProductAlternateNames = BaseProductAlternateNames
   { bpanAlternateNames :: [BaseProductAlternateName]
   } deriving (Eq, Show, ToJSON)
@@ -4013,7 +4013,7 @@ instance FromJSON GetProductsResponseResourceItem where
       parse o = GetProductsResponseResourceItem
                 <$> o .: "resourceLocation"
                 <*> o .: "resource"
-                
+
 -- | This a wrapper for different classifications of products.
 -- Possible options are: baseProduct, marketingInsert, virtualKit, kit.
 data ProductsWrapper = PwBaseProduct BaseProductResponseResource
@@ -4456,31 +4456,31 @@ instance FromJSON BaseProductResponseResource where
 
 parseBaseProduct :: Object -> Parser BaseProductResponseResource
 parseBaseProduct o = BaseProductResponseResource
-                     <$> o .:  "classification"      
+                     <$> o .:  "classification"
                      <*> o .:? "batteryConfiguration"
-                     <*> o .:? "masterCase"          
-                     <*> o .:  "itemCount"           
-                     <*> o .:  "id"                  
-                     <*> o .:  "sku"                 
-                     <*> o .:? "archivedDate"        
-                     <*> o .:  "enqueuedDimensions"  
-                     <*> o .:  "dimensions"          
-                     <*> o .:? "innerPack"           
-                     <*> o .:? "pallet"              
-                     <*> o .:? "externalId"          
-                     <*> o .:  "alternateNames"      
-                     <*> o .:  "values"              
-                     <*> o .:  "status"              
+                     <*> o .:? "masterCase"
+                     <*> o .:  "itemCount"
+                     <*> o .:  "id"
+                     <*> o .:  "sku"
+                     <*> o .:? "archivedDate"
+                     <*> o .:  "enqueuedDimensions"
+                     <*> o .:  "dimensions"
+                     <*> o .:? "innerPack"
+                     <*> o .:? "pallet"
+                     <*> o .:? "externalId"
+                     <*> o .:  "alternateNames"
+                     <*> o .:  "values"
+                     <*> o .:  "status"
                      <*> o .:? "category"
                      <*> o .:? "vendorId"
                      <*> o .:? "vendorExternalId"
-                     <*> o .:  "description"         
-                     <*> o .:  "flags"               
-                     <*> o .:  "creationDate"        
-                     <*> o .:? "hsCode"              
-                     <*> o .:? "countryOfOrigin"     
+                     <*> o .:  "description"
+                     <*> o .:  "flags"
+                     <*> o .:  "creationDate"
+                     <*> o .:? "hsCode"
+                     <*> o .:? "countryOfOrigin"
                      <*> o .:  "storageConfiguration"
-                     <*> o .:? "technicalData"       
+                     <*> o .:? "technicalData"
 
 data TechnicalData = TechnicalData
   { tdResourceLocation :: Maybe ResponseResourceLocation
@@ -4673,7 +4673,7 @@ instance FromJSON IsPerishable where
 instance ToJSON IsPerishable where
   toJSON NotPerishable = Number 0
   toJSON Perishable    = Number 1
- 
+
 data IsDangerous = Dangerous
   | NotDangerous
   deriving (Eq, Show)
@@ -4996,10 +4996,10 @@ instance FromJSON Dimensions where
 data DimensionsResource = DimensionsResource
   { drWeight     :: DimensionsWeight
   , drWeightUnit :: WeightUnit
-  , drHeight     :: DimensionsHeight  
+  , drHeight     :: DimensionsHeight
   , drHeightUnit :: HeightUnit
   , drWidth      :: DimensionsWidth
-  , drWidthUnit  :: WidthUnit  
+  , drWidthUnit  :: WidthUnit
   , drLength     :: DimensionsLength
   , drLengthUnit :: LengthUnit
   } deriving (Eq, Show)

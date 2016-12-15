@@ -295,7 +295,7 @@ exampleCreateProduct productId =
                           (Just $ CountryOfOrigin "US")
                           (Category "TOYS_SPORTS_HOBBIES")
                           (BatteryConfiguration "ISBATTERY")
-                          (Values 
+                          (Values
                             (CostValue 1)
                             (WholesaleValue 2)
                             (RetailValue 4)
@@ -304,14 +304,14 @@ exampleCreateProduct productId =
                             (Just $ RetailCurrency "USD")
                           )
                           (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt2")])
-                          (BaseProductDimensions 
+                          (BaseProductDimensions
                             (BaseProductLength 10)
                             (BaseProductWidth 10)
                             (BaseProductHeight 10)
                             (BaseProductWeight 10)
                           )
-                          (BaseProductTechnicalData 
-                            (BaseProductTechnicalDataBattery 
+                          (BaseProductTechnicalData
+                            (BaseProductTechnicalDataBattery
                                 (Just $ BatteryType "ALKALINE")
                                 (Just $ BatteryWeight 3)
                                 (Just $ NumberOfBatteries 5)
@@ -320,7 +320,7 @@ exampleCreateProduct productId =
                                 (Just $ CapacityUnit "WATTHOUR")
                             )
                           )
-                          (BaseProductFlags 
+                          (BaseProductFlags
                             PackagedReadyToShip
                             Fragile
                             NotDangerous
@@ -332,12 +332,12 @@ exampleCreateProduct productId =
                             HasMasterCase
                             HasPallet
                           )
-                          (BaseProductInnerPack 
+                          (BaseProductInnerPack
                             (IndividualItemsPerCase 2)
                             (Just $ ExternalId "narp222")
                             (SKU "singleInner22")
                             (Description "InnerDec2")
-                            (Values 
+                            (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
                                 (RetailValue 4)
@@ -345,17 +345,17 @@ exampleCreateProduct productId =
                                 (Just $ WholesaleCurrency "USD")
                                 (Just $ RetailCurrency "USD")
                             )
-                            (BaseProductDimensions 
+                            (BaseProductDimensions
                                 (BaseProductLength 20)
                                 (BaseProductWidth 20)
                                 (BaseProductHeight 20)
                                 (BaseProductWeight 20)
                             )
-                            (BaseProductInnerPackFlags 
+                            (BaseProductInnerPackFlags
                                 NotPackagedReadyToShip
                             )
                           )
-                          (BaseProductMasterCase 
+                          (BaseProductMasterCase
                             (IndividualItemsPerCase 10)
                             (Just $ ExternalId "narp33")
                             (SKU "singleMaster23")
@@ -368,7 +368,7 @@ exampleCreateProduct productId =
                                 (Just $ WholesaleCurrency "USD")
                                 (Just $ RetailCurrency "USD")
                             )
-                            (BaseProductDimensions 
+                            (BaseProductDimensions
                                 (BaseProductLength 30)
                                 (BaseProductWidth 30)
                                 (BaseProductHeight 30)
@@ -376,12 +376,12 @@ exampleCreateProduct productId =
                             )
                             (BaseProductMasterCaseFlags PackagedReadyToShip)
                           )
-                          (BaseProductPallet 
+                          (BaseProductPallet
                             (IndividualItemsPerCase 1000)
                             (Just $ ExternalId "narp42")
                             (SKU "singlePallet22")
                             (Description "palletdesc2")
-                            (Values 
+                            (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
                                 (RetailValue 4)
@@ -389,13 +389,13 @@ exampleCreateProduct productId =
                                 (Just $ WholesaleCurrency "USD")
                                 (Just $ RetailCurrency "USD")
                             )
-                            (BaseProductDimensions 
+                            (BaseProductDimensions
                                 (BaseProductLength 40)
                                 (BaseProductWidth 40)
                                 (BaseProductHeight 40)
                                 (BaseProductWeight 40)
                             )
-                            (BaseProductPalletFlags 
+                            (BaseProductPalletFlags
                                 NotPackagedReadyToShip
                             )
                           )
@@ -500,7 +500,7 @@ exampleCreateBaseProduct =
             (BaseProductWeight 40))
          (BaseProductPalletFlags NotPackagedReadyToShip))
   ]
-  
+
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
