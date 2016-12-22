@@ -18,7 +18,7 @@ mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "HspecTest"), Quantity 5)]
+exampleItems = [ItemInfo ((SKU "HspecTest3"), Quantity 5)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -48,7 +48,7 @@ exampleCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest3") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -104,7 +104,7 @@ exampleModifiedReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest3") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -408,7 +408,7 @@ exampleCreateBaseProduct :: [CreateProductsWrapper]
 exampleCreateBaseProduct =
   [ CpwBaseProduct $
     BaseProduct
-      (SKU "HspecTest")
+      (SKU "HspecTest3")
       Nothing
       (BaseProductClassification)
       (Description "Hspec test product3")
