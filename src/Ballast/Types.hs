@@ -4322,8 +4322,8 @@ instance FromJSON InclusionRules where
 
 data InclusionRulesResource = InclusionRulesResource
   { irrProductId                    :: ProductId
-  , irrInsertAfterDate              :: InsertAfterDate
-  , irrInsertBeforeDate             :: InsertBeforeDate
+  , irrInsertAfterDate              :: Maybe InsertAfterDate
+  , irrInsertBeforeDate             :: Maybe InsertBeforeDate
   , irrInsertWhenWorthValue         :: InsertWhenWorthValueResponse
   , irrInsertWhenWorthValueCurrency :: InsertWhenWorthValueCurrency
   , irrInsertWhenQuantity           :: InsertWhenQuantity
@@ -4335,8 +4335,8 @@ instance FromJSON InclusionRulesResource where
     where
       parse o = InclusionRulesResource
                 <$> o .:  "productId"
-                <*> o .:  "insertAfterDate"
-                <*> o .:  "insertBeforeDate"
+                <*> o .:? "insertAfterDate"
+                <*> o .:? "insertBeforeDate"
                 <*> o .:  "insertWhenWorthValue"
                 <*> o .:  "insertWhenWorthValueCurrency"
                 <*> o .:  "insertWhenQuantity"
@@ -4402,7 +4402,7 @@ instance FromJSON MarketingInsertFlagsResponse where
 
 data MarketingInsertFlagsResponseResource = MarketingInsertFlagsResponseResource
   { mifrIsPackagedReadyToShip :: IsPackagedReadyToShip
-  , mifrHasMasterCase         :: HasMasterCase
+  , mifrHasMasterCase         :: Maybe HasMasterCase
   , mifrIsArchivable          :: IsArchivable
   , mifrIsDeletable           :: IsDeletable
   , mifrHasEditRestrictions   :: HasEditRestrictions
@@ -4412,11 +4412,11 @@ instance FromJSON MarketingInsertFlagsResponseResource where
   parseJSON = withObject "MarketingInsertFlagsResponseResource" parse
     where
       parse o = MarketingInsertFlagsResponseResource
-                <$> o .: "isPackagedReadyToShip"
-                <*> o .: "hasMasterCase"
-                <*> o .: "isArchivable"
-                <*> o .: "isDeletable"
-                <*> o .: "hasEditRestrictions"
+                <$> o .:  "isPackagedReadyToShip"
+                <*> o .:? "hasMasterCase"
+                <*> o .:  "isArchivable"
+                <*> o .:  "isDeletable"
+                <*> o .:  "hasEditRestrictions"
 
 data BaseProductResponseResource = BaseProductResponseResource
   { bprClassification       :: Classification
@@ -4496,12 +4496,12 @@ instance FromJSON TechnicalData where
 
 data TechnicalDataResource = TechnicalDataResource
   { tdrCapacityUnit      :: Maybe CapacityUnit
-  , tdrCapacity          :: CapacityResponse
-  , tdrBatteryWeight     :: BatteryWeightResponse
-  , tdrNumberOfCells     :: NumberOfCells
-  , tdrType              :: BatteryType
-  , tdrNumberOfBatteries :: NumberOfBatteries
-  , tdrProductId         :: ProductId
+  , tdrCapacity          :: Maybe CapacityResponse
+  , tdrBatteryWeight     :: Maybe BatteryWeightResponse
+  , tdrNumberOfCells     :: Maybe NumberOfCells
+  , tdrType              :: Maybe BatteryType
+  , tdrNumberOfBatteries :: Maybe NumberOfBatteries
+  , tdrProductId         :: Maybe ProductId
   } deriving (Eq, Show)
 
 instance FromJSON TechnicalDataResource where
@@ -4509,12 +4509,12 @@ instance FromJSON TechnicalDataResource where
     where
       parse o = TechnicalDataResource
                 <$> o .:? "capacityUnit"
-                <*> o .:  "capacity"
-                <*> o .:  "batteryWeight"
-                <*> o .:  "numberOfCells"
-                <*> o .:  "type"
-                <*> o .:  "numberOfBatteries"
-                <*> o .:  "productId"
+                <*> o .:? "capacity"
+                <*> o .:? "batteryWeight"
+                <*> o .:? "numberOfCells"
+                <*> o .:? "type"
+                <*> o .:? "numberOfBatteries"
+                <*> o .:? "productId"
 
 newtype NumberOfBatteries = NumberOfBatteries
   { unNumberOfBatteries :: Integer
@@ -4587,16 +4587,16 @@ instance FromJSON Flags where
 data FlagsResource = FlagsResource
   { frIsMedia               :: IsMedia
   , frIsDeletable           :: IsDeletable
-  , frHasPallet             :: HasPallet
+  , frHasPallet             :: Maybe HasPallet
   , frIsPackagedReadyToShip :: IsPackagedReadyToShip
-  , frHasMasterCase         :: HasMasterCase
+  , frHasMasterCase         :: Maybe HasMasterCase
   , frIsFragile             :: IsFragile
   , frIsArchivable          :: IsArchivable
   , frIsLiquid              :: IsLiquid
-  , frIsDangerous           :: IsDangerous
+  , frIsDangerous           :: Maybe IsDangerous
   , frIsPerishable          :: IsPerishable
   , frHasEditRestrictions   :: HasEditRestrictions
-  , frHasInnerPack          :: HasInnerPack
+  , frHasInnerPack          :: Maybe HasInnerPack
   , frIsAdult               :: IsAdult
   } deriving (Eq, Show)
 
@@ -4604,19 +4604,19 @@ instance FromJSON FlagsResource where
   parseJSON = withObject "FlagsResource" parse
     where
       parse o = FlagsResource
-                <$> o .: "isMedia"
-                <*> o .: "isDeletable"
-                <*> o .: "hasPallet"
-                <*> o .: "isPackagedReadyToShip"
-                <*> o .: "hasMasterCase"
-                <*> o .: "isFragile"
-                <*> o .: "isArchivable"
-                <*> o .: "isLiquid"
-                <*> o .: "isDangerous"
-                <*> o .: "isPerishable"
-                <*> o .: "hasEditRestrictions"
-                <*> o .: "hasInnerPack"
-                <*> o .: "isAdult"
+                <$> o .:  "isMedia"
+                <*> o .:  "isDeletable"
+                <*> o .:? "hasPallet"
+                <*> o .:  "isPackagedReadyToShip"
+                <*> o .:? "hasMasterCase"
+                <*> o .:  "isFragile"
+                <*> o .:  "isArchivable"
+                <*> o .:  "isLiquid"
+                <*> o .:? "isDangerous"
+                <*> o .:  "isPerishable"
+                <*> o .:  "hasEditRestrictions"
+                <*> o .:? "hasInnerPack"
+                <*> o .:  "isAdult"
 
 data IsAdult = Adult
   | NotAdult
@@ -4958,28 +4958,28 @@ instance FromJSON BaseProductResponseMasterCase where
                 <*> o .:? "resource"
 
 data BaseProductResponseMasterCaseResource = BaseProductResponseMasterCaseResource
-  { mcrSku                    :: SKU
-  , mcrDimensions             :: Dimensions
-  , mcrValues                 :: ValuesResource
-  , mcrExternalId             :: ExternalId
-  , mcrIndividualItemsPerCase :: IndividualItemsPerCase
-  , mcrFlags                  :: MasterCaseFlags
-  , mcrProductId              :: ProductId
-  , mcrDescription            :: Description
+  { mcrSku                    :: Maybe SKU
+  , mcrDimensions             :: Maybe Dimensions
+  , mcrValues                 :: Maybe ValuesResource
+  , mcrExternalId             :: Maybe ExternalId
+  , mcrIndividualItemsPerCase :: Maybe IndividualItemsPerCase
+  , mcrFlags                  :: Maybe MasterCaseFlags
+  , mcrProductId              :: Maybe ProductId
+  , mcrDescription            :: Maybe Description
   } deriving (Eq, Show)
 
 instance FromJSON BaseProductResponseMasterCaseResource where
   parseJSON = withObject "MasterCaseResource" parse
     where
       parse o = BaseProductResponseMasterCaseResource
-                <$> o .: "sku"
-                <*> o .: "dimensions"
-                <*> o .: "values"
-                <*> o .: "externalId"
-                <*> o .: "individualItemsPerCase"
-                <*> o .: "flags"
-                <*> o .: "productId"
-                <*> o .: "description"
+                <$> o .:? "sku"
+                <*> o .:? "dimensions"
+                <*> o .:? "values"
+                <*> o .:? "externalId"
+                <*> o .:? "individualItemsPerCase"
+                <*> o .:? "flags"
+                <*> o .:? "productId"
+                <*> o .:? "description"
 
 data Dimensions = Dimensions
   { dResourceLocation :: Maybe ResponseResourceLocation
