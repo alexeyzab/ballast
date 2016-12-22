@@ -165,6 +165,15 @@ createProduct cpr = request
     url = "/products"
     params = [Body (encode cpr)]
 
+-- | Indicates that the listed products will not longer be used.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire5
+retireProducts :: ProductsToRetire -> ShipwireRequest RetireProductsRequest TupleBS8 BSL.ByteString
+retireProducts ptr = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = "/products/retire"
+    params = [Body (encode ptr)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))

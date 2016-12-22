@@ -505,6 +505,15 @@ module Ballast.Types
   , KitAlternateName(..)
   , KitValues(..)
   , utcToShipwire
+  , RetireProductsRequest
+  , RetireProductsResponse(..)
+  , ProductsToRetire(..)
+  , Message(..)
+  , MoreInfo(..)
+  , MoreInfoItems(..)
+  , MoreInfoItem(..)
+  , Configuration(..)
+  , Success(..)
   ) where
 
 import           Data.Aeson
@@ -3169,6 +3178,73 @@ data CreateProductsRequest
 type instance ShipwireReturn CreateProductsRequest = CreateProductsResponse
 
 type CreateProductsResponse = GetProductsResponse
+
+-- | POST /api/v3/products/retire
+data RetireProductsRequest
+type instance ShipwireReturn RetireProductsRequest = RetireProductsResponse
+
+newtype ProductsToRetire = ProductsToRetire
+  { rpIds :: [ProductId]
+  } deriving (Eq, Show)
+
+instance ToJSON ProductsToRetire where
+  toJSON ProductsToRetire {..} = object ["ids" .= rpIds]
+
+data RetireProductsResponse = RetireProductsResponse
+  { rprMessage          :: Message
+  , rprMoreInfo         :: Maybe MoreInfo
+  , rprResourceLocation :: Maybe ResponseResourceLocation
+  , rprStatus           :: ResponseStatus
+  } deriving (Eq, Show)
+
+instance FromJSON RetireProductsResponse where
+  parseJSON = withObject "RetireProductsResponse" parse
+    where
+      parse o = RetireProductsResponse
+                <$> o .:  "message"
+                <*> o .:? "moreInfo"
+                <*> o .:? "resourceLocation"
+                <*> o .:  "status"
+
+newtype Message = Message
+  { unMessage :: Text
+  } deriving (Eq, Show, FromJSON)
+
+newtype MoreInfo = MoreInfo
+  { miItems :: [MoreInfoItems]
+  } deriving (Eq, Show, FromJSON)
+
+newtype MoreInfoItems = MoreInfoItems
+  { miiItems :: [MoreInfoItem]
+  } deriving (Eq, Show, FromJSON)
+
+data MoreInfoItem = MoreInfoItem
+  { miiId            :: Id
+  , miiExternalId    :: Maybe ExternalId
+  , miiSku           :: SKU
+  , miiStatus        :: Status
+  , miiConfiguration :: Configuration
+  , miiSuccess       :: Success
+  } deriving (Eq, Show)
+
+instance FromJSON MoreInfoItem where
+  parseJSON = withObject "MoreInfoItem" parse
+    where
+      parse o = MoreInfoItem
+                <$> o .: "id"
+                <*> o .: "externalId"
+                <*> o .: "sku"
+                <*> o .: "status"
+                <*> o .: "configuration"
+                <*> o .: "success"
+
+newtype Configuration = Configuration
+  { unConfiguration :: Text
+  } deriving (Eq, Show, FromJSON)
+
+newtype Success = Success
+  { unSuccess :: Bool
+  } deriving (Eq, Show, FromJSON)
 
 -- | You can create multiple products of different classifications at the same time
 -- by passing them inside a JSON array. To distinguish between different ToJSON instances

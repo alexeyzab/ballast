@@ -5,6 +5,9 @@ module Main where
 
 import           Ballast.Client
 import           Ballast.Types
+import           Data.Either.Unwrap (fromRight)
+import           Data.Maybe (fromJust)
+import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import           Data.Time.Clock (UTCTime)
 import           Test.Hspec
@@ -15,7 +18,7 @@ mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "HspecTest"), Quantity 1)]
+exampleItems = [ItemInfo ((SKU "HspecTest"), Quantity 5)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -405,7 +408,7 @@ exampleCreateBaseProduct :: [CreateProductsWrapper]
 exampleCreateBaseProduct =
   [ CpwBaseProduct $
     BaseProduct
-      (SKU "HspecTest3")
+      (SKU "HspecTest")
       Nothing
       (BaseProductClassification)
       (Description "Hspec test product3")
@@ -523,13 +526,53 @@ createProductHelper conf cp = do
       productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId)
 
+-- | This function unwraps the wrappers for each type of product and gets all of those products' ids
+-- It helps retire the products to clean up after the tests.
+getProductIds :: GetProductsResponse -> IO [Integer]
+getProductIds products = do
+  let getProductsResponseResource      = gprResource products
+      getProductsResponseResourceItems = gprrItems getProductsResponseResource
+      responseResourceItems            = gprriItems getProductsResponseResourceItems
+      productWrappers                  = map gprriResource responseResourceItems
+      unwrappedBaseProducts            = unwrapPwBaseProduct productWrappers
+      unwrappedMarketingInserts        = unwrapPwMarketingInsert productWrappers
+      unwrappedKits                    = unwrapPwKit productWrappers
+      unwrappedVirtualKits             = unwrapPwVirtualKit productWrappers
+      baseProductIds                   = map (unId . bprId) unwrappedBaseProducts
+      marketingInsertIds               = map (unId . mirId) unwrappedMarketingInserts
+      kitIds                           = map (unId . krId) unwrappedKits
+      virtualKitIds                    = map (unId . vkrId) unwrappedVirtualKits
+      allIds                           = baseProductIds <> marketingInsertIds <> kitIds <> virtualKitIds
+  return allIds
+
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
 unwrapBaseProduct (PwBaseProduct x) = x
 unwrapBaseProduct _ = error "Bad input"
 
+unwrapPwBaseProduct :: [ProductsWrapper] -> [BaseProductResponseResource]
+unwrapPwBaseProduct [] = []
+unwrapPwBaseProduct ((PwBaseProduct x):xs) = x : unwrapPwBaseProduct xs
+unwrapPwBaseProduct (_:xs) = unwrapPwBaseProduct xs
+
+unwrapPwMarketingInsert :: [ProductsWrapper] -> [MarketingInsertResponseResource]
+unwrapPwMarketingInsert [] = []
+unwrapPwMarketingInsert ((PwMarketingInsert x):xs) = x : unwrapPwMarketingInsert xs
+unwrapPwMarketingInsert (_:xs) = unwrapPwMarketingInsert xs
+
+unwrapPwKit :: [ProductsWrapper] -> [KitResponseResource]
+unwrapPwKit [] = []
+unwrapPwKit ((PwKit x):xs) = x : unwrapPwKit xs
+unwrapPwKit (_:xs) = unwrapPwKit xs
+
+unwrapPwVirtualKit :: [ProductsWrapper] -> [VirtualKitResponseResource]
+unwrapPwVirtualKit [] = []
+unwrapPwVirtualKit ((PwVirtualKit x):xs) = x : unwrapPwVirtualKit xs
+unwrapPwVirtualKit (_:xs) = unwrapPwVirtualKit xs
+
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
+  -- We need to create a dummy product to be able to create a receiving
   (_, productId) <- createProductHelper config exampleCreateBaseProduct
   (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
   hspec $ do
@@ -671,6 +714,20 @@ main = do
       it "creates all possible product classifications" $ do
         result <- shipwire config $ createProduct (exampleCreateProduct productId)
         result `shouldSatisfy` isRight
-        let Right GetProductsResponse {..} = result
+        let gpr@(Right GetProductsResponse {..}) = result
+        ids <- getProductIds $ fromRight gpr
+        _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId (productId : ids))
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
+
+    describe "retire a product" $ do
+      it "retires a product" $ do
+        (_, anotherProductId) <- createProductHelper config exampleCreateBaseProduct
+        result <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
+        let Right RetireProductsResponse {..} = result
+            MoreInfo {..} = fromJust $ rprMoreInfo
+            MoreInfoItems {..} = last miItems
+            MoreInfoItem {..} = last miiItems
+            status@Status {..} = miiStatus
+        result `shouldSatisfy` isRight
+        status `shouldBe` Status "deprecated"
