@@ -695,6 +695,10 @@ unwrapPwVirtualKit (_:xs) = unwrapPwVirtualKit xs
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
+  allProducts <- shipwire config $ getProducts
+  let gpr@(Right GetProductsResponse {..}) = allProducts
+  ids <- getProductIds $ fromRight gpr
+  _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId ids)
   -- We need to create a dummy product to be able to create a receiving
   (_, productId) <- createProductHelper config exampleCreateBaseProduct
   (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
@@ -837,9 +841,9 @@ main = do
       it "creates all possible product classifications" $ do
         result <- shipwire config $ createProduct (exampleCreateProduct productId)
         result `shouldSatisfy` isRight
-        let gpr@(Right GetProductsResponse {..}) = result
-        ids <- getProductIds $ fromRight gpr
-        _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId (productId : ids))
+        let response@(Right GetProductsResponse {..}) = result
+        productIds <- getProductIds $ fromRight response
+        _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId (productId : productIds))
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
