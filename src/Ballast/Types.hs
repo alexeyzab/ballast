@@ -872,9 +872,16 @@ instance FromJSON Error where
                 <*> o .: "message"
                 <*> o .: "type"
 
-newtype ErrorCode = ErrorCode
-  { unErrorCode :: Text
-  } deriving (Eq, Show, FromJSON)
+-- newtype ErrorCode = ErrorCode
+--   { unErrorCode :: Integer
+--   } deriving (Eq, Show, FromJSON)
+
+data ErrorCode = ErrorCodeText Text
+  | ErrorCodeInteger Integer
+  deriving (Eq, Show)
+
+instance FromJSON ErrorCode where
+  parseJSON o = (ErrorCodeText <$> parseJSON o) <|> (ErrorCodeInteger <$> parseJSON o)
 
 newtype ErrorMessage = ErrorMessage
   { unErrorMessage :: Text
