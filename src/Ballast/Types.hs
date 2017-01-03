@@ -514,8 +514,11 @@ module Ballast.Types
   , MoreInfoItem(..)
   , Configuration(..)
   , Success(..)
+  , ModifyProductsRequest
+  , ModifyProductsResponse(..)
   ) where
 
+import           Control.Applicative ((<|>))
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as BS8
@@ -3186,9 +3189,33 @@ type instance ShipwireReturn CreateProductsRequest = CreateProductsResponse
 
 type CreateProductsResponse = GetProductsResponse
 
+-- | PUT /api/v3/products
+data ModifyProductsRequest
+type instance ShipwireReturn ModifyProductsRequest = ModifyProductsResponse
+
 -- | POST /api/v3/products/retire
 data RetireProductsRequest
 type instance ShipwireReturn RetireProductsRequest = RetireProductsResponse
+
+data ModifyProductsResponse = ModifyProductsResponse
+  { mprStatus           :: ResponseStatus
+  , mprResourceLocation :: ResponseResourceLocation
+  , mprMessage          :: ResponseMessage
+  , mprResource         :: GetProductsResponseResource
+  , mprWarnings         :: Maybe ResponseWarnings
+  , mprErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON ModifyProductsResponse where
+  parseJSON = withObject "ModifyProductsResponse" parse
+    where
+      parse o = ModifyProductsResponse
+                <$> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
 
 newtype ProductsToRetire = ProductsToRetire
   { rpIds :: [ProductId]
@@ -3269,14 +3296,17 @@ instance ToJSON CreateProductsWrapper where
   toJSON (CpwKit x)             = toJSON x
 
 data VirtualKit = VirtualKit
-  { vkSku               :: SKU
+  -- Have to set the Id when modifying a previously created VirtualKit
+  { vkId                :: Maybe Id
+  , vkSku               :: SKU
   , vkClassification    :: Classification
   , vkDescription       :: Description
   , vkVirtualKitContent :: VirtualKitContent
   } deriving (Eq, Show)
 
 instance ToJSON VirtualKit where
-  toJSON VirtualKit {..} = object ["sku"               .= vkSku
+  toJSON VirtualKit {..} = object ["id"                .= vkId
+                                  ,"sku"               .= vkSku
                                   ,"classification"    .= vkClassification
                                   ,"description"       .= vkDescription
                                   ,"virtualKitContent" .= vkVirtualKitContent]
@@ -3297,7 +3327,9 @@ instance ToJSON VirtualKitContentObject where
                                                   ,"quantity"   .= vkcoQuantity]
 
 data Kit = Kit
-  { kSku                  :: SKU
+  -- Have to set the Id when modifying a previously created Kit
+  { kId                   :: Maybe Id
+  , kSku                  :: SKU
   , kExternalId           :: Maybe ExternalId
   , kClassification       :: Classification
   , kDescription          :: Description
@@ -3316,7 +3348,8 @@ data Kit = Kit
   } deriving (Eq, Show)
 
 instance ToJSON Kit where
-  toJSON Kit {..} = omitNulls ["sku"                  .= kSku
+  toJSON Kit {..} = omitNulls ["id"                   .= kId
+                              ,"sku"                  .= kSku
                               ,"externalId"           .= kExternalId
                               ,"classification"       .= kClassification
                               ,"description"          .= kDescription
@@ -3525,7 +3558,9 @@ instance ToJSON KitValues where
                                     ,"retailCurrency"    .= kvRetailCurrency]
 
 data MarketingInsert = MarketingInsert
-  { miSku               :: SKU
+  -- Have to set the Id when modifying a previously created MarketingInsert
+  { miId                :: Maybe Id
+  , miSku               :: SKU
   , miExternalId        :: Maybe ExternalId
   , miClassification    :: Classification
   , miDescription       :: Description
@@ -3572,7 +3607,8 @@ newtype ProductError = ProductError
   } deriving (Eq, Show, FromJSON)
 
 instance ToJSON MarketingInsert where
-  toJSON MarketingInsert {..} = omitNulls ["sku"               .= miSku
+  toJSON MarketingInsert {..} = omitNulls ["id"                .= miId
+                                          ,"sku"               .= miSku
                                           ,"classification"    .= miClassification
                                           ,"externalId"        .= miExternalId
                                           ,"description"       .= miDescription
@@ -3703,7 +3739,9 @@ newtype MarketingInsertMasterCaseDimensionsWeight = MarketingInsertMasterCaseDim
   } deriving (Eq, Show, ToJSON)
 
 data BaseProduct = BaseProduct
-  { bpSku                  :: SKU
+  -- Have to set the Id when modifying a previously created BaseProduct
+  { bpId                   :: Maybe Id
+  , bpSku                  :: SKU
   , bpExternalId           :: Maybe ExternalId
   , bpClassification       :: Classification
   , bpDescription          :: Description
@@ -3722,7 +3760,8 @@ data BaseProduct = BaseProduct
   } deriving (Eq, Show)
 
 instance ToJSON BaseProduct where
-  toJSON BaseProduct {..} = omitNulls ["sku"                  .= bpSku
+  toJSON BaseProduct {..} = omitNulls ["id"                   .= bpId
+                                      ,"sku"                  .= bpSku
                                       ,"externalId"           .= bpExternalId
                                       ,"classification"       .= bpClassification
                                       ,"description"          .= bpDescription

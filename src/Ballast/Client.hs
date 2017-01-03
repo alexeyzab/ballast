@@ -174,6 +174,15 @@ retireProducts ptr = request
     url = "/products/retire"
     params = [Body (encode ptr)]
 
+-- | Modify products of any classification.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire2
+modifyProduct :: [CreateProductsWrapper] -> ShipwireRequest ModifyProductsRequest TupleBS8 BSL.ByteString
+modifyProduct mpr = request
+  where
+    request = mkShipwireRequest NHTM.methodPut url params
+    url = "/products"
+    params = [Body (encode mpr)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
