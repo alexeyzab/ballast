@@ -516,6 +516,9 @@ module Ballast.Types
   , Success(..)
   , ModifyProductsRequest
   , ModifyProductsResponse(..)
+  , GetProductRequest
+  , GetProductResponse(..)
+  , GetProductResponseResource(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -3193,9 +3196,37 @@ type CreateProductsResponse = GetProductsResponse
 data ModifyProductsRequest
 type instance ShipwireReturn ModifyProductsRequest = ModifyProductsResponse
 
+-- | GET /api/v3/products/{id}
+data GetProductRequest
+type instance ShipwireReturn GetProductRequest = GetProductResponse
+
 -- | POST /api/v3/products/retire
 data RetireProductsRequest
 type instance ShipwireReturn RetireProductsRequest = RetireProductsResponse
+
+data GetProductResponse = GetProductResponse
+  { gpreStatus           :: ResponseStatus
+  , gpreResourceLocation :: Maybe ResponseResourceLocation
+  , gpreMessage          :: ResponseMessage
+  , gpreResource         :: Maybe GetProductResponseResource
+  , gpreWarnings         :: Maybe ResponseWarnings
+  , gpreErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetProductResponse where
+  parseJSON = withObject "GetProductResponse" parse
+    where
+      parse o = GetProductResponse
+                <$> o .:  "status"
+                <*> o .:? "resourceLocation"
+                <*> o .:  "message"
+                <*> o .:? "resource"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+newtype GetProductResponseResource = GetProductResponseResource
+  { gprrProductWrapper :: ProductsWrapper
+  } deriving (Eq, Show, FromJSON)
 
 data ModifyProductsResponse = ModifyProductsResponse
   { mprStatus           :: ResponseStatus

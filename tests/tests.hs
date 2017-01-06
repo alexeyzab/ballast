@@ -610,6 +610,45 @@ exampleCreateBaseProduct =
          (BaseProductPalletFlags NotPackagedReadyToShip))
   ]
 
+exampleCreateMarketingInsert :: [CreateProductsWrapper]
+exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
+                          Nothing
+                          (SKU "HspecTestInsert2")
+                          Nothing
+                          (MarketingInsertClassification)
+                          (Description "Hspec test marketing insert2")
+                          (InclusionRuleType "CUSTOM")
+                          (Just $ MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI22")])
+                          (MarketingInsertDimensions
+                            (MarketingInsertLength 0.1)
+                            (MarketingInsertWidth 0.1)
+                            (MarketingInsertHeight 0.1)
+                            (MarketingInsertWeight 0.2)
+                          )
+                          (MarketingInsertFlags
+                            ShouldNotFold
+                          )
+                          (Just $ MarketingInsertInclusionRules
+                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertWhenWorthValue 5)
+                            (Just $ InsertWhenQuantity 5)
+                            (Just $ InsertWhenWorthCurrency "USD")
+                          )
+                          (MarketingInsertMasterCase
+                            (IndividualItemsPerCase 10)
+                            (SKU "HspecTestMIMCSKU")
+                            Nothing
+                            (Description "Hspec test marketing insert master case2")
+                            (MarketingInsertMasterCaseDimensions
+                              (MarketingInsertMasterCaseDimensionsLength 8)
+                              (MarketingInsertMasterCaseDimensionsWidth 8)
+                              (MarketingInsertMasterCaseDimensionsHeight 8)
+                              (MarketingInsertMasterCaseDimensionsWeight 8)
+                            )
+                          )
+                        ]
+
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
@@ -621,8 +660,8 @@ createReceivingHelper conf cr = do
       receivingId = T.pack $ show $ unId rirId
   return (receiving, ReceivingId receivingId)
 
-createProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
-createProductHelper conf cp = do
+createBaseProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
+createBaseProductHelper conf cp = do
   baseProduct <- shipwire conf $ createProduct cp
   let Right GetProductsResponse {..} = baseProduct
       GetProductsResponseResource {..} = gprResource
@@ -631,6 +670,17 @@ createProductHelper conf cp = do
       pwBaseProduct@(PwBaseProduct x) = gprriResource
       productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId)
+
+createMarketingInsertHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
+createMarketingInsertHelper conf cp = do
+  marketingInsert <- shipwire conf $ createProduct cp
+  let Right GetProductsResponse {..} = marketingInsert
+      GetProductsResponseResource {..} = gprResource
+      GetProductsResponseResourceItems {..} = gprrItems
+      GetProductsResponseResourceItem {..} = last gprriItems
+      pwMarketingInsert@(PwMarketingInsert x) = gprriResource
+      productId = unId $ mirId $ unwrapMarketingInsert pwMarketingInsert
+  return (marketingInsert, productId)
 
 -- | This function unwraps the wrappers for each type of product and gets all of those products' ids
 -- It helps retire the products to clean up after the tests.
@@ -668,9 +718,20 @@ getModifiedProductsIds products = do
       allIds                           = baseProductIds <> marketingInsertIds <> kitIds <> virtualKitIds
   return allIds
 
+getAllReceivingsIds :: ReceivingsResponse -> IO [Integer]
+getAllReceivingsIds rr = do
+  let receivingsResource = receivingsResponseResource rr
+      receivingsItems = receivingsResponseItems receivingsResource
+      ids = map (unId . rirId . receivingsItemResource) $ unReceivingsItems receivingsItems
+  return ids
+
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
 unwrapBaseProduct (PwBaseProduct x) = x
 unwrapBaseProduct _ = error "Bad input"
+
+unwrapMarketingInsert :: ProductsWrapper -> MarketingInsertResponseResource
+unwrapMarketingInsert (PwMarketingInsert x) = x
+unwrapMarketingInsert _ = error "Bad input"
 
 unwrapPwBaseProduct :: [ProductsWrapper] -> [BaseProductResponseResource]
 unwrapPwBaseProduct [] = []
@@ -695,45 +756,55 @@ unwrapPwVirtualKit (_:xs) = unwrapPwVirtualKit xs
 main :: IO ()
 main = do
   config <- sandboxEnvConfig
-  allProducts <- shipwire config $ getProducts
-  let gpr@(Right GetProductsResponse {..}) = allProducts
-  ids <- getProductIds $ fromRight gpr
-  _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId ids)
-  -- We need to create a dummy product to be able to create a receiving
-  (_, productId) <- createProductHelper config exampleCreateBaseProduct
-  (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
   hspec $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) (CanSplit 1) WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
         result <- shipwire config $ createRateRequest getRt
         result `shouldSatisfy` isRight
-        let Right RateResponse{..} = result
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        let Right RateResponse {..} = result
         rateResponseWarnings `shouldBe` Nothing
         rateResponseErrors `shouldBe` Nothing
 
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         result <- shipwire config $ getStockInfo -&- (SKU "HspecTest3")
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         result `shouldSatisfy` isRight
+        let Right StockResponse {..} = result
+        stockResponseWarnings `shouldBe` Nothing
+        stockResponseErrors `shouldBe` Nothing
 
     describe "get receivings" $ do
       it "gets an itemized list of receivings with optional args" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (ReceivingStatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
                                                   -&- (UpdatedAfter $ (read "2017-11-19 18:28:52 UTC" :: UTCTime))
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         result `shouldSatisfy` isRight
 
     describe "create a new receiving" $ do
       it "creates a new receiving with optional args" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
         receiving `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right ReceivingsResponse {..} = receiving
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
 
       it "doesn't create a receiving with bad JSON" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         result <- shipwire config $ createReceiving exampleBadCreateReceiving
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right ReceivingsResponse {..} = result
         receivingsResponseErrors `shouldBe`
           Just
@@ -745,22 +816,30 @@ main = do
                    ErrorError
                ])
 
-    describe "get infromation about a receiving" $ do
+    describe "get information about a receiving" $ do
       it "gets info about a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right ReceivingResponse {..} = result
         receivingResponseErrors `shouldBe` Nothing
         receivingResponseWarnings `shouldBe` Nothing
 
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
         let Right ReceivingsResponse {..} = result
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
         modifiedReceiving <- shipwire config $ getReceiving receivingId
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right ReceivingResponse {..} = modifiedReceiving
             ReceivingsItemResource {..} = receivingResponseResource
             ItemResourceShipFrom {..} = rirShipFrom
@@ -769,87 +848,120 @@ main = do
 
     describe "cancel a receiving" $ do
       it "cancels a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Receiving was cancelled")
 
     describe "cancel shipping labels" $ do
       it "cancels shipping labels on a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ cancelReceivingLabels receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Labels cancelled")
 
     describe "get list of holds for a receiving" $ do
       it "gets a list of holds for a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingHolds receivingId -&- IncludeCleared
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingHoldsResponse {..} = result
         grhrWarnings `shouldBe` Nothing
         grhrErrors `shouldBe` Nothing
 
     describe "get email recipients and instructions for a receiving" $ do
       it "gets email recipients and instructions for a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingInstructionsRecipients receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingInstructionsRecipientsResponse {..} = result
         grirrWarnings `shouldBe` Nothing
         grirrErrors `shouldBe` Nothing
 
     describe "get contents of a receiving" $ do
       it "gets contents of a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingItems receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingItemsResponse {..} = result
         grirWarnings `shouldBe` Nothing
         grirErrors `shouldBe` Nothing
 
     describe "get shipping dimension and container information" $ do
       it "gets shipping dimension and container infromation" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingShipments receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingShipmentsResponse {..} = result
         grsrWarnings `shouldBe` Nothing
         grsrErrors `shouldBe` Nothing
 
     describe "get tracking information for a receiving" $ do
       it "gets tracking information for a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingTrackings receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingTrackingsResponse {..} = result
         grtrWarnings `shouldBe` Nothing
         grtrErrors `shouldBe` Nothing
 
     describe "get labels information for a receiving" $ do
       it "gets labels information for a receiving" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
         result <- shipwire config $ getReceivingLabels receivingId
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ cancelReceiving receivingId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetReceivingLabelsResponse {..} = result
         grlrWarnings `shouldBe` Nothing
         grlrErrors `shouldBe` Nothing
 
     describe "get an itemized list of products" $ do
       it "gets an itemized list of products" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         result <- shipwire config $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
         result `shouldSatisfy` isRight
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         let Right GetProductsResponse {..} = result
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
     describe "create a product" $ do
       it "creates all possible product classifications" $ do
-        result <- shipwire config $ createProduct (exampleCreateProduct productId)
-        result `shouldSatisfy` isRight
-        let response@(Right GetProductsResponse {..}) = result
-        productIds <- getProductIds $ fromRight response
-        _ <- shipwire config $ retireProducts $ ProductsToRetire (map ProductId (productId : productIds))
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        product `shouldSatisfy` isRight
+        let response@(Right GetProductsResponse {..}) = product
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
     describe "retire a product" $ do
       it "retires a product" $ do
-        (_, anotherProductId) <- createProductHelper config exampleCreateBaseProduct
+        (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
         result <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
         let Right RetireProductsResponse {..} = result
             MoreInfo {..} = fromJust $ rprMoreInfo
@@ -861,12 +973,21 @@ main = do
 
     describe "modify a product" $ do
       it "modifies a previously created product" $ do
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
-        (_, anotherProductId) <- createProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ modifyProduct (exampleModifyProduct anotherProductId)
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        result <- shipwire config $ modifyProduct (exampleModifyProduct productId)
         result `shouldSatisfy` isRight
-        let mpr@(Right ModifyProductsResponse {..}) = result
-        ids <- getModifiedProductsIds $ fromRight mpr
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
+        let Right ModifyProductsResponse {..} = result
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         mprWarnings `shouldBe` Nothing
         mprErrors `shouldBe` Nothing
+
+    describe "get a product" $ do
+      it "gets information about a single product" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        result <- shipwire config $ getProduct $ Id productId
+        result `shouldSatisfy` isRight
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        let Right GetProductResponse {..} = result
+        gpreStatus `shouldNotBe` (ResponseStatus 404)
+        gpreWarnings `shouldBe` Nothing
+        gpreErrors `shouldBe` Nothing

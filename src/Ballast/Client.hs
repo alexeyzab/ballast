@@ -183,6 +183,15 @@ modifyProduct mpr = request
     url = "/products"
     params = [Body (encode mpr)]
 
+-- | Get information about a product.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire4
+getProduct :: Id -> ShipwireRequest GetProductRequest TupleBS8 BSL.ByteString
+getProduct productId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.append "/products/" $ T.pack . show $ unId productId
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
