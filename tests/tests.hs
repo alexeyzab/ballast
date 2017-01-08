@@ -408,8 +408,8 @@ exampleCreateProduct productId =
                           )
                         ]
 
-exampleModifyProduct :: Integer -> [CreateProductsWrapper]
-exampleModifyProduct productId =
+exampleModifyProducts :: Integer -> [CreateProductsWrapper]
+exampleModifyProducts productId =
   [ CpwBaseProduct $
     BaseProduct
       (Just $ Id productId)
@@ -508,6 +508,106 @@ exampleModifyProduct productId =
             (BaseProductWeight 40))
          (BaseProductPalletFlags NotPackagedReadyToShip))
   ]
+
+exampleModifyProduct :: Integer -> CreateProductsWrapper
+exampleModifyProduct productId =
+  CpwBaseProduct $
+    BaseProduct
+      (Just $ Id productId)
+      (SKU "HspecTest3")
+      (Just $ ExternalId "hspectest3")
+      (BaseProductClassification)
+      (Description "Modified description")
+      (Just $ HsCode "010612")
+      (Just $ CountryOfOrigin "US")
+      (Category "TOYS_SPORTS_HOBBIES")
+      (BatteryConfiguration "ISBATTERY")
+      (Values
+         (CostValue 1)
+         (WholesaleValue 2)
+         (RetailValue 4)
+         (Just $ CostCurrency "USD")
+         (Just $ WholesaleCurrency "USD")
+         (Just $ RetailCurrency "USD"))
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
+      (BaseProductDimensions
+         (BaseProductLength 10)
+         (BaseProductWidth 10)
+         (BaseProductHeight 10)
+         (BaseProductWeight 10))
+      (BaseProductTechnicalData
+         (BaseProductTechnicalDataBattery
+            (Just $ BatteryType "ALKALINE")
+            (Just $ BatteryWeight 3)
+            (Just $ NumberOfBatteries 5)
+            (Just $ Capacity 6)
+            (Just $ NumberOfCells 7)
+            (Just $ CapacityUnit "WATTHOUR")))
+      (BaseProductFlags
+         PackagedReadyToShip
+         Fragile
+         NotDangerous
+         NotPerishable
+         NotMedia
+         NotAdult
+         NotLiquid
+         HasInnerPack
+         HasMasterCase
+         HasPallet)
+      (BaseProductInnerPack
+         (IndividualItemsPerCase 2)
+         (Just $ ExternalId "narp55")
+         (SKU "singleInner3")
+         (Description "InnerDesc3")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 20)
+            (BaseProductWidth 20)
+            (BaseProductHeight 20)
+            (BaseProductWeight 20))
+         (BaseProductInnerPackFlags NotPackagedReadyToShip))
+      (BaseProductMasterCase
+         (IndividualItemsPerCase 10)
+         (Just $ ExternalId "narp66")
+         (SKU "singleMaster4")
+         (Description "masterdesc4")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 30)
+            (BaseProductWidth 30)
+            (BaseProductHeight 30)
+            (BaseProductWeight 30))
+         (BaseProductMasterCaseFlags PackagedReadyToShip))
+      (BaseProductPallet
+         (IndividualItemsPerCase 1000)
+         (Just $ ExternalId "narp77")
+         (SKU "singlePallet3")
+         (Description "palletdesc3")
+         (Values
+            (CostValue 1)
+            (WholesaleValue 2)
+            (RetailValue 4)
+            (Just $ CostCurrency "USD")
+            (Just $ WholesaleCurrency "USD")
+            (Just $ RetailCurrency "USD"))
+         (BaseProductDimensions
+            (BaseProductLength 40)
+            (BaseProductWidth 40)
+            (BaseProductHeight 40)
+            (BaseProductWeight 40))
+         (BaseProductPalletFlags NotPackagedReadyToShip))
 
 exampleCreateBaseProduct :: [CreateProductsWrapper]
 exampleCreateBaseProduct =
@@ -959,22 +1059,20 @@ main = do
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
-    describe "retire a product" $ do
-      it "retires a product" $ do
-        (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
-        result <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
-        let Right RetireProductsResponse {..} = result
-            MoreInfo {..} = fromJust $ rprMoreInfo
-            MoreInfoItems {..} = last miItems
-            MoreInfoItem {..} = last miiItems
-            status@Status {..} = miiStatus
+    describe "modify products" $ do
+      it "modifies several previously created products" $ do
+        (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        result <- shipwire config $ modifyProducts (exampleModifyProducts productId)
         result `shouldSatisfy` isRight
-        status `shouldBe` Status "deprecated"
+        let Right ModifyProductsResponse {..} = result
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        mprWarnings `shouldBe` Nothing
+        mprErrors `shouldBe` Nothing
 
     describe "modify a product" $ do
-      it "modifies a previously created product" $ do
+      it "modifies a single product" $ do
         (product, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ modifyProduct (exampleModifyProduct productId)
+        result <- shipwire config $ modifyProduct (exampleModifyProduct productId) (Id productId)
         result `shouldSatisfy` isRight
         let Right ModifyProductsResponse {..} = result
         _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
@@ -991,3 +1089,15 @@ main = do
         gpreStatus `shouldNotBe` (ResponseStatus 404)
         gpreWarnings `shouldBe` Nothing
         gpreErrors `shouldBe` Nothing
+
+    describe "retire a product" $ do
+      it "retires a product" $ do
+        (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
+        result <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
+        let Right RetireProductsResponse {..} = result
+            MoreInfo {..} = fromJust $ rprMoreInfo
+            MoreInfoItems {..} = last miItems
+            MoreInfoItem {..} = last miiItems
+            status@Status {..} = miiStatus
+        result `shouldSatisfy` isRight
+        status `shouldBe` Status "deprecated"

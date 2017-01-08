@@ -519,6 +519,8 @@ module Ballast.Types
   , GetProductRequest
   , GetProductResponse(..)
   , GetProductResponseResource(..)
+  , ModifyProductRequest
+  , ModifyProductResponse
   ) where
 
 import           Control.Applicative ((<|>))
@@ -563,9 +565,9 @@ mkShipwireRequest m e p = ShipwireRequest m e p
 
 type family ShipwireReturn a :: *
 
----------------------------------------------------------------------
--- Rate Endpoint -- https://www.shipwire.com/w/developers/rate/
----------------------------------------------------------------------
+---------------------------------------------------------------
+-- Rate Endpoint https://www.shipwire.com/w/developers/rate/ --
+---------------------------------------------------------------
 
 data RateRequest
 type instance ShipwireReturn RateRequest = RateResponse
@@ -1291,9 +1293,9 @@ instance FromJSON PieceContent where
 type Reply = Network.HTTP.Client.Response BSL.ByteString
 type Method = NHTM.Method
 
----------------------------------------------------------------------
--- Stock Endpoint -- https://www.shipwire.com/w/developers/stock/
----------------------------------------------------------------------
+-----------------------------------------------------------------
+-- Stock Endpoint https://www.shipwire.com/w/developers/stock/ --
+-----------------------------------------------------------------
 
 data StockRequest
 type instance ShipwireReturn StockRequest = StockResponse
@@ -1806,9 +1808,9 @@ filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, 
 filterQuery [] = []
 filterQuery xs = [b | Query b <- xs]
 
--------------------------------------------------------------------------
--- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving
--------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving --
+---------------------------------------------------------------------------
 
 -- | GET /api/v3/receivings
 data GetReceivingsRequest
@@ -3167,9 +3169,9 @@ instance FromJSON GetReceivingLabelsResponse where
                 <*> o .:? "warnings"
                 <*> o .:? "errors"
 
--------------------------------------------------------------------------
--- Product Endpoint -- https://www.shipwire.com/w/developers/product
--------------------------------------------------------------------------
+-----------------------------------------------------------------------
+-- Product Endpoint -- https://www.shipwire.com/w/developers/product --
+-----------------------------------------------------------------------
 
 -- | GET /api/v3/products
 data GetProductsRequest
@@ -3195,6 +3197,12 @@ type CreateProductsResponse = GetProductsResponse
 -- | PUT /api/v3/products
 data ModifyProductsRequest
 type instance ShipwireReturn ModifyProductsRequest = ModifyProductsResponse
+
+-- | PUT /api/v3/products/{id}
+data ModifyProductRequest
+type instance ShipwireReturn ModifyProductRequest = ModifyProductResponse
+
+type ModifyProductResponse = ModifyProductsResponse
 
 -- | GET /api/v3/products/{id}
 data GetProductRequest
