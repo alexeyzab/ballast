@@ -147,6 +147,61 @@ getReceivingLabels receivingId = request
     url = T.concat ["/receivings/", getReceivingId receivingId, "/labels"]
     params = []
 
+-- | Get an itemized list of products.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire0
+getProducts :: ShipwireRequest GetProductsRequest TupleBS8 BSL.ByteString
+getProducts = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = "/products"
+    params = []
+
+-- | Create new products of any classification.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire1
+createProduct :: [CreateProductsWrapper] -> ShipwireRequest CreateProductsRequest TupleBS8 BSL.ByteString
+createProduct cpr = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = "/products"
+    params = [Body (encode cpr)]
+
+-- | Modify products of any classification.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire2
+modifyProducts :: [CreateProductsWrapper] -> ShipwireRequest ModifyProductsRequest TupleBS8 BSL.ByteString
+modifyProducts mpr = request
+  where
+    request = mkShipwireRequest NHTM.methodPut url params
+    url = "/products"
+    params = [Body (encode mpr)]
+
+-- | Modify a product.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire3
+modifyProduct :: CreateProductsWrapper -> Id -> ShipwireRequest ModifyProductRequest TupleBS8 BSL.ByteString
+modifyProduct mpr productId= request
+  where
+    request = mkShipwireRequest NHTM.methodPut url params
+    url = T.append "/products/" $ T.pack . show $ unId productId
+    params = [Body (encode mpr)]
+
+-- | Get information about a product.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire4
+getProduct :: Id -> ShipwireRequest GetProductRequest TupleBS8 BSL.ByteString
+getProduct productId = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = T.append "/products/" $ T.pack . show $ unId productId
+    params = []
+
+-- | Indicates that the listed products will not longer be used.
+-- https://www.shipwire.com/w/developers/product/#panel-shipwire5
+retireProducts :: ProductsToRetire -> ShipwireRequest RetireProductsRequest TupleBS8 BSL.ByteString
+retireProducts ptr = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = "/products/retire"
+    params = [Body (encode ptr)]
+
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))

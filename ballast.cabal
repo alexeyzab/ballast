@@ -30,6 +30,8 @@ library
                      , hspec
                      , hspec-expectations
                      , vector
+                     , unordered-containers
+                     , either-unwrap
   default-language:    Haskell2010
   ghc-options: -Wall
 
@@ -43,7 +45,9 @@ test-suite tests
                        bytestring,
                        hspec                >= 1.8 && <2.3,
                        hspec-expectations,
-                       text
+                       text,
+                       time,
+                       either-unwrap
                        
   default-language:    Haskell2010
 
