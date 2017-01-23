@@ -11,13 +11,12 @@ import qualified Data.Text as T
 import           Data.Time.Clock (UTCTime)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
--- isLeft,
 
 mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "HspecTest3"), Quantity 5)]
+exampleItems = [ItemInfo ((SKU "HspecTest4"), Quantity 5)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -47,7 +46,7 @@ exampleCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest3") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest4") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -103,7 +102,7 @@ exampleModifiedReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest3") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest4") (Quantity 3)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -412,8 +411,8 @@ exampleModifyProducts productId =
   [ CpwBaseProduct $
     BaseProduct
       (Just $ Id productId)
-      (SKU "HspecTest3")
-      (Just $ ExternalId "hspectest3")
+      (SKU "HspecTest4")
+      (Just $ ExternalId "hspectest4")
       (BaseProductClassification)
       (Description "Modified description")
       (Just $ HsCode "010612")
@@ -427,7 +426,7 @@ exampleModifyProducts productId =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt4")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -454,9 +453,9 @@ exampleModifyProducts productId =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp55")
-         (SKU "singleInner3")
-         (Description "InnerDesc3")
+         (Just $ ExternalId "narp6")
+         (SKU "singleInner4")
+         (Description "InnerDesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -472,9 +471,9 @@ exampleModifyProducts productId =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp66")
-         (SKU "singleMaster4")
-         (Description "masterdesc4")
+         (Just $ ExternalId "narp7")
+         (SKU "singleMaster5")
+         (Description "masterdesc5")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -490,9 +489,9 @@ exampleModifyProducts productId =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp77")
-         (SKU "singlePallet3")
-         (Description "palletdesc3")
+         (Just $ ExternalId "narp8")
+         (SKU "singlePallet4")
+         (Description "palletdesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -513,8 +512,8 @@ exampleModifyProduct productId =
   CpwBaseProduct $
     BaseProduct
       (Just $ Id productId)
-      (SKU "HspecTest3")
-      (Just $ ExternalId "hspectest3")
+      (SKU "HspecTest4")
+      (Just $ ExternalId "hspectest4")
       (BaseProductClassification)
       (Description "Modified description")
       (Just $ HsCode "010612")
@@ -528,7 +527,7 @@ exampleModifyProduct productId =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt4")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -555,9 +554,9 @@ exampleModifyProduct productId =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp55")
-         (SKU "singleInner3")
-         (Description "InnerDesc3")
+         (Just $ ExternalId "narp6")
+         (SKU "singleInner4")
+         (Description "InnerDesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -573,9 +572,9 @@ exampleModifyProduct productId =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp66")
-         (SKU "singleMaster4")
-         (Description "masterdesc4")
+         (Just $ ExternalId "narp7")
+         (SKU "singleMaster5")
+         (Description "masterdesc5")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -591,9 +590,9 @@ exampleModifyProduct productId =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp77")
-         (SKU "singlePallet3")
-         (Description "palletdesc3")
+         (Just $ ExternalId "narp8")
+         (SKU "singlePallet4")
+         (Description "palletdesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -613,10 +612,10 @@ exampleCreateBaseProduct =
   [ CpwBaseProduct $
     BaseProduct
       Nothing
-      (SKU "HspecTest3")
-      (Just $ ExternalId "hspectest3")
+      (SKU "HspecTest4")
+      (Just $ ExternalId "hspectest4")
       (BaseProductClassification)
-      (Description "Hspec test product3")
+      (Description "Hspec test product4")
       (Just $ HsCode "010612")
       (Just $ CountryOfOrigin "US")
       (Category "TOYS_SPORTS_HOBBIES")
@@ -628,7 +627,7 @@ exampleCreateBaseProduct =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt3")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt5")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -655,9 +654,9 @@ exampleCreateBaseProduct =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp55")
-         (SKU "singleInner3")
-         (Description "InnerDesc3")
+         (Just $ ExternalId "narp6")
+         (SKU "singleInner4")
+         (Description "InnerDesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -673,9 +672,9 @@ exampleCreateBaseProduct =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp66")
-         (SKU "singleMaster4")
-         (Description "masterdesc4")
+         (Just $ ExternalId "narp7")
+         (SKU "singleMaster5")
+         (Description "masterdesc5")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -691,9 +690,9 @@ exampleCreateBaseProduct =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp77")
-         (SKU "singlePallet3")
-         (Description "palletdesc3")
+         (Just $ ExternalId "narp8")
+         (SKU "singlePallet4")
+         (Description "palletdesc4")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -887,7 +886,7 @@ main = do
     describe "get rates" $ do
       it "gets the correct rates" $ do
         (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) (CanSplit 1) WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
+        let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) CanSplit WarehouseAreaUS Nothing) (RateOrder exampleShipTo exampleItems)
         result <- shipwire config $ createRateRequest getRt
         result `shouldSatisfy` isRight
         _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
