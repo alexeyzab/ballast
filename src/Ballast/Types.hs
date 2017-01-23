@@ -3592,19 +3592,19 @@ instance ToJSON KitDimensions where
                                      ,"weight" .= kdWeight]
 
 newtype KitLength = KitLength
-  { unKitLength :: Integer
+  { unKitLength :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype KitWidth = KitWidth
-  { unKitWidth :: Integer
+  { unKitWidth :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype KitHeight = KitHeight
-  { unKitHeight :: Integer
+  { unKitHeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype KitWeight = KitWeight
-  { unKitWeight :: Integer
+  { unKitWeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype KitContent = KitContent
@@ -3780,7 +3780,7 @@ instance ToJSON ShouldNotFold where
   toJSON ShouldFold    = Number 0
 
 newtype InsertWhenWorthValue = InsertWhenWorthValue
-  { unInsertWhenWorthValue :: Integer
+  { unInsertWhenWorthValue :: Centi
   } deriving (Eq, Show, ToJSON)
 
 newtype InsertWhenWorthCurrency = InsertWhenWorthCurrency
@@ -3816,19 +3816,19 @@ instance ToJSON MarketingInsertMasterCaseDimensions where
                                                            ,"weight" .= mimcdWeight]
 
 newtype MarketingInsertMasterCaseDimensionsLength = MarketingInsertMasterCaseDimensionsLength
-  { unMarketingInsertMasterCaseDimensionsLength :: Integer
+  { unMarketingInsertMasterCaseDimensionsLength :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype MarketingInsertMasterCaseDimensionsWidth = MarketingInsertMasterCaseDimensionsWidth
-  { unMarketingInsertMasterCaseDimensionsWidth :: Integer
+  { unMarketingInsertMasterCaseDimensionsWidth :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype MarketingInsertMasterCaseDimensionsHeight = MarketingInsertMasterCaseDimensionsHeight
-  { unMarketingInsertMasterCaseDimensionsHeight :: Integer
+  { unMarketingInsertMasterCaseDimensionsHeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype MarketingInsertMasterCaseDimensionsWeight = MarketingInsertMasterCaseDimensionsWeight
-  { unMarketingInsertMasterCaseDimensionsWeight :: Integer
+  { unMarketingInsertMasterCaseDimensionsWeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 data BaseProduct = BaseProduct
@@ -4011,19 +4011,19 @@ instance ToJSON BaseProductDimensions where
                                              ,"weight" .= bpdWeight]
 
 newtype BaseProductLength = BaseProductLength
-  { unBaseProductLength :: Integer
+  { unBaseProductLength :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype BaseProductWidth = BaseProductWidth
-  { unBaseProductWidth :: Integer
+  { unBaseProductWidth :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype BaseProductHeight = BaseProductHeight
-  { unBaseProductHeight :: Integer
+  { unBaseProductHeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype BaseProductWeight = BaseProductWeight
-  { unBaseProductWeight :: Integer
+  { unBaseProductWeight :: Double
   } deriving (Eq, Show, ToJSON)
 
 newtype SkusParam = SkusParam
@@ -5330,11 +5330,11 @@ newtype CostValueResponse = CostValueResponse
   } deriving (Eq, Show, FromJSON)
 
 newtype CostValue = CostValue
-  { unCostValue :: Integer
+  { unCostValue :: Centi
   } deriving (Eq, Show, ToJSON)
 
 newtype WholesaleValue = WholesaleValue
-  { unWholesaleValue :: Integer
+  { unWholesaleValue :: Centi
   } deriving (Eq, Show, ToJSON)
 
 newtype WholesaleValueResponse = WholesaleValueResponse
@@ -5342,7 +5342,7 @@ newtype WholesaleValueResponse = WholesaleValueResponse
   } deriving (Eq, Show, FromJSON)
 
 newtype RetailValue = RetailValue
-  { unRetailValue :: Integer
+  { unRetailValue :: Centi
   } deriving (Eq, Show, ToJSON)
 
 newtype RetailValueResponse = RetailValueResponse
