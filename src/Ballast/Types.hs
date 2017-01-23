@@ -521,6 +521,42 @@ module Ballast.Types
   , GetProductResponseResource(..)
   , ModifyProductRequest
   , ModifyProductResponse
+  , CreateOrderRequest
+  , CreateOrderResponse(..)
+  , CreateOrder(..)
+  , OrderItem(..)
+  , CommercialInvoiceValueCurrency(..)
+  , CommercialInvoiceValue(..)
+  , OrderItems(..)
+  , PackingList(..)
+  , PackingListMessage(..)
+  , PackingListOther(..)
+  , MessageBody(..)
+  , MessageHeader(..)
+  , MessageDocument(..)
+  , MessageLocation(..)
+  , CommercialInvoice(..)
+  , AdditionalValue(..)
+  , AdditionalValueCurrency(..)
+  , InsuranceValue(..)
+  , InsuranceValueCurrency(..)
+  , ShippingValue(..)
+  , ShippingValueCurrency(..)
+  , OrderShipTo(..)
+  , OrderShipFrom(..)
+  , Company(..)
+  , ShipFromCompany(..)
+  , CreateOrderOptions(..)
+  , Server(..)
+  , HoldReason(..)
+  , Hold(..)
+  , DiscountCode(..)
+  , Affiliate(..)
+  , Referrer(..)
+  , ForceAddress(..)
+  , ForceDuplicate(..)
+  , SameDay(..)
+  , ProcessAfterDate(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -624,9 +660,18 @@ instance ToJSON RateOptions where
                                       ,"warehouseArea"       .= rateOptionWarehouseArea
                                       ,"channelName"         .= rateOptionChannelName]
 
-newtype CanSplit = CanSplit
-  { unCanSplit :: Integer
-  } deriving (Eq, Show, ToJSON)
+-- newtype CanSplit = CanSplit
+--   { unCanSplit :: Integer
+--   } deriving (Eq, Show, ToJSON)
+
+data CanSplit
+  = CanSplit
+  | CanNotSplit
+  deriving (Eq, Show)
+
+instance ToJSON CanSplit where
+  toJSON CanSplit    = Number 1
+  toJSON CanNotSplit = Number 0
 
 data RateOrder = RateOrder
   { rateOrderShipTo :: ShipTo
@@ -976,6 +1021,15 @@ data ServiceLevelCode
   | InternationalPremium
   deriving (Eq, Show)
 
+instance ToJSON ServiceLevelCode where
+  toJSON DomesticGround        = String "GD"
+  toJSON DomesticTwoDay        = String "2D"
+  toJSON DomesticOneDay        = String "1D"
+  toJSON InternationalEconomy  = String "E-INTL"
+  toJSON InternationalStandard = String "INTL"
+  toJSON InternationalPlus     = String "PL-INTL"
+  toJSON InternationalPremium  = String "PM-INTL"
+
 instance FromJSON ServiceLevelCode where
   parseJSON = withText "ServiceLevelCode" parse
     where
@@ -1040,7 +1094,7 @@ instance FromJSON Carrier where
 
 newtype CarrierCode = CarrierCode
   { unCarrierCode :: Text
-  } deriving (Eq, Show, FromJSON)
+  } deriving (Eq, Show, FromJSON, ToJSON)
 
 newtype CarrierName = CarrierName
   { unCarrierName :: Text
@@ -2769,7 +2823,7 @@ newtype ItemStatus = ItemStatus
 
 newtype CommerceName = CommerceName
   { unCommerceName :: Text
-  } deriving (Eq, Show, FromJSON)
+  } deriving (Eq, Show, FromJSON, ToJSON)
 
 type TransactionId = ExternalId
 
@@ -5333,3 +5387,313 @@ instance ToJSON IsPackagedReadyToShip where
 newtype CountryOfOrigin = CountryOfOrigin
   { unCountryOfOrigin :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
+
+----------------------------------------------------------------
+-- Order Endpoint https://www.shipwire.com/w/developers/order --
+----------------------------------------------------------------
+
+-- | POST /api/v3/orders
+data CreateOrderRequest
+type instance ShipwireReturn CreateOrderRequest = CreateOrderResponse
+
+newtype CreateOrderResponse = CreateOrderResponse
+  { cror :: Object
+  } deriving (Eq, Show, FromJSON)
+
+data CreateOrder = CreateOrder
+  { coExternalId        :: Maybe ExternalId
+  , coOrderNo           :: Maybe OrderNo
+  , coProcessAfterDate  :: Maybe ProcessAfterDate
+  , coCommerceName      :: Maybe CommerceName
+  , coOptions           :: Maybe CreateOrderOptions
+  , coShipFrom          :: Maybe OrderShipFrom
+  , coShipTo            :: OrderShipTo
+  , coCommercialInvoice :: Maybe CommercialInvoice
+  , coPackingList       :: Maybe PackingList
+  , coOrderItems        :: OrderItems
+  } deriving (Eq, Show)
+
+instance ToJSON CreateOrder where
+  toJSON CreateOrder {..} = omitNulls ["externalId"        .= coExternalId
+                                      ,"orderNo"           .= coOrderNo
+                                      ,"processAfterDate"  .= coProcessAfterDate
+                                      ,"commerceName"      .= coCommerceName
+                                      ,"options"           .= coOptions
+                                      ,"shipFrom"          .= coShipFrom
+                                      ,"shipTo"            .= coShipTo
+                                      ,"commercialInvoice" .= coCommercialInvoice
+                                      ,"packingList"       .= coPackingList
+                                      ,"items"             .= coOrderItems]
+
+data OrderItem = OrderItem
+  { oiCommercialInvoiceValue         :: Maybe CommercialInvoiceValue
+  , oiCommercialInvoiceValueCurrency :: Maybe CommercialInvoiceValueCurrency
+  , oiQuantity                       :: Quantity
+  , oiSku                            :: SKU
+  } deriving (Eq, Show)
+
+instance ToJSON OrderItem where
+  toJSON OrderItem {..} = omitNulls ["commercialInvoiceValue"         .= oiCommercialInvoiceValue
+                                    ,"commercialInvoiceValueCurrency" .= oiCommercialInvoiceValueCurrency
+                                    ,"quantity"                       .= oiQuantity
+                                    ,"sku"                            .= oiSku]
+
+newtype CommercialInvoiceValueCurrency = CommercialInvoiceValueCurrency
+  { unCommercialInvoiceValueCurrency :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype CommercialInvoiceValue = CommercialInvoiceValue
+  { unCommercialInvoiceValue :: Double
+  } deriving (Eq, Show, ToJSON)
+
+newtype OrderItems = OrderItems
+  { unOrderItems :: [OrderItem]
+  } deriving (Eq, Show, ToJSON)
+
+data PackingList = PackingList
+  { plMessage1 :: Maybe PackingListMessage
+  , plMessage2 :: Maybe PackingListMessage
+  , plMessage3 :: Maybe PackingListMessage
+  , plOther    :: Maybe PackingListOther
+  } deriving (Eq, Show)
+
+instance ToJSON PackingList where
+  toJSON PackingList {..} = omitNulls ["message1" .= plMessage1
+                                      ,"message2" .= plMessage2
+                                      ,"message3" .= plMessage3
+                                      ,"other"    .= plOther]
+
+data PackingListOther = PackingListOther
+  { ploBody     :: MessageBody
+  , ploHeader   :: MessageHeader
+  , ploDocument :: Maybe MessageDocument
+  , ploLocation :: Maybe MessageLocation
+  } deriving (Eq, Show)
+
+instance ToJSON PackingListOther where
+  toJSON PackingListOther {..} = omitNulls ["body"     .= ploBody
+                                           ,"header"   .= ploHeader
+                                           ,"document" .= ploDocument
+                                           ,"location" .= ploLocation]
+
+data PackingListMessage = PackingListMessage
+  { plmBody     :: MessageBody
+  , plmHeader   :: MessageHeader
+  , plmDocument :: Maybe MessageDocument
+  , plmLocation :: Maybe MessageLocation
+  } deriving (Eq, Show)
+
+instance ToJSON PackingListMessage where
+  toJSON PackingListMessage {..} = omitNulls ["body"     .= plmBody
+                                             ,"header"   .= plmHeader
+                                             ,"document" .= plmDocument
+                                             ,"location" .= plmLocation]
+
+newtype MessageLocation = MessageLocation
+  { unMessageLocation :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype MessageDocument = MessageDocument
+  { unMessageDocument :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype MessageHeader = MessageHeader
+  { unMessageHeader :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype MessageBody = MessageBody
+  { unMessageBody :: Text
+  } deriving (Eq, Show, ToJSON)
+
+data CommercialInvoice = CommercialInvoice
+  { ciAdditionalValue         :: AdditionalValue
+  , ciAdditionalValueCurrency :: AdditionalValueCurrency
+  , ciInsuranceValue          :: InsuranceValue
+  , ciInsuranceValueCurrency  :: InsuranceValueCurrency
+  , ciShippingValue           :: ShippingValue
+  , ciShippingValueCurrency   :: ShippingValueCurrency
+  } deriving (Eq, Show)
+
+instance ToJSON CommercialInvoice where
+  toJSON CommercialInvoice {..} = object ["additionalValue"         .= ciAdditionalValue
+                                         ,"additionalValueCurrency" .= ciAdditionalValueCurrency
+                                         ,"insuranceValue"          .= ciInsuranceValue
+                                         ,"insuranceValueCurrency"  .= ciInsuranceValueCurrency
+                                         ,"shippingValue"           .= ciShippingValue
+                                         ,"shippingValueCurrency"   .= ciShippingValueCurrency]
+
+newtype ShippingValueCurrency = ShippingValueCurrency
+  { unShippingValueCurrency :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype ShippingValue = ShippingValue
+  { unShippingValue :: Centi
+  } deriving (Eq, Show, ToJSON)
+
+newtype InsuranceValueCurrency = InsuranceValueCurrency
+  { unInsuranceValueCurrency :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype InsuranceValue = InsuranceValue
+  { unInsuranceValue :: Centi
+  } deriving (Eq, Show, ToJSON)
+
+newtype AdditionalValueCurrency = AdditionalValueCurrency
+  { unAdditionalValueCurrency :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype AdditionalValue = AdditionalValue
+  { unAdditionalValue :: Centi
+  } deriving (Eq, Show, ToJSON)
+
+data OrderShipTo = OrderShipTo
+  { ostEmail        :: Email
+  , ostName         :: Name
+  , ostCompany      :: Company
+  , ostAddress1     :: AddressLine
+  , ostAddress2     :: AddressLine
+  , ostAddress3     :: AddressLine
+  , ostCity         :: City
+  , ostState        :: State
+  , ostPostalCode   :: PostalCode
+  , ostCountry      :: Country
+  , ostPhone        :: Phone
+  , ostIsCommercial :: IsCommercial
+  , ostIsPoBox      :: IsPoBox
+  } deriving (Eq, Show)
+
+instance ToJSON OrderShipTo where
+  toJSON OrderShipTo {..} = object ["email"        .= ostEmail
+                                   ,"name"         .= ostName
+                                   ,"company"      .= ostCompany
+                                   ,"address1"     .= ostAddress1
+                                   ,"address2"     .= ostAddress2
+                                   ,"address3"     .= ostAddress3
+                                   ,"city"         .= ostCity
+                                   ,"state"        .= ostState
+                                   ,"postalCode"   .= ostPostalCode
+                                   ,"country"      .= ostCountry
+                                   ,"phone"        .= ostPhone
+                                   ,"isCommercial" .= ostIsCommercial
+                                   ,"isPoBox"      .= ostIsPoBox]
+
+newtype OrderShipFrom = OrderShipFrom
+  { osfCompany :: ShipFromCompany
+  } deriving (Eq, Show, ToJSON)
+
+newtype ShipFromCompany = ShipFromCompany
+  { unShipFromCompany :: Text
+  } deriving (Eq, Show)
+
+instance ToJSON ShipFromCompany where
+  toJSON (ShipFromCompany x) = object ["company" .= x]
+
+newtype Company = Company
+  { unCompany :: Text
+  } deriving (Eq, Show, ToJSON)
+
+data CreateOrderOptions = CreateOrderOptions
+  { cooWarehouseId         :: Maybe WarehouseId
+  , cooWarehouseExternalId :: Maybe WarehouseExternalId
+  , cooWarehouseRegion     :: Maybe WarehouseRegion
+  , cooWarehouseArea       :: Maybe WarehouseArea
+  , cooServiceLevelCode    :: ServiceLevelCode
+  , cooCarrierCode         :: Maybe CarrierCode
+  , cooSameDay             :: SameDay
+  , cooForceDuplicate      :: ForceDuplicate
+  , cooForceAddress        :: ForceAddress
+  , cooChannelName         :: Maybe ChannelName
+  , cooReferrer            :: Maybe Referrer
+  , cooAffiliate           :: Maybe Affiliate
+  , cooCurrency            :: Currency
+  , cooCanSplit            :: CanSplit
+  , cooNote                :: Note
+  , cooDiscountCode        :: DiscountCode
+  , cooHold                :: Hold
+  , cooHoldReason          :: HoldReason
+  , cooServer              :: Server
+  } deriving (Eq, Show)
+
+instance ToJSON CreateOrderOptions where
+  toJSON CreateOrderOptions {..} = omitNulls ["warehouseId"         .= cooWarehouseId
+                                             ,"warehouseExternalId" .= cooWarehouseExternalId
+                                             ,"warehouseRegion"     .= cooWarehouseRegion
+                                             ,"warehouseArea"       .= cooWarehouseArea
+                                             ,"serviceLevelCode"    .= cooServiceLevelCode
+                                             ,"carrierCode"         .= cooCarrierCode
+                                             ,"sameDay"             .= cooSameDay
+                                             ,"forceDuplicate"      .= cooForceDuplicate
+                                             ,"forceAddress"        .= cooForceAddress
+                                             ,"channelName"         .= cooChannelName
+                                             ,"referrer"            .= cooReferrer
+                                             ,"affiliate"           .= cooAffiliate
+                                             ,"currency"            .= cooCurrency
+                                             ,"canSplit"            .= cooCanSplit
+                                             ,"note"                .= cooNote
+                                             ,"discountCode"        .= cooDiscountCode
+                                             ,"hold"                .= cooHold
+                                             ,"holdReason"          .= cooHoldReason
+                                             ,"server"              .= cooServer]
+
+newtype Server = Server
+  { unServer :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype HoldReason = HoldReason
+  { unHoldReason :: Text
+  } deriving (Eq, Show, ToJSON)
+
+data Hold
+  = Hold
+  | DontHold
+  deriving (Eq, Show)
+
+instance ToJSON Hold where
+  toJSON Hold     = Number 1
+  toJSON DontHold = Number 0
+
+newtype DiscountCode = DiscountCode
+  { unDiscountCode :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype Affiliate = Affiliate
+  { unAffiliate :: Text
+  } deriving (Eq, Show, ToJSON)
+
+newtype Referrer = Referrer
+  { unReferrer :: Text
+  } deriving (Eq, Show, ToJSON)
+
+data ForceAddress
+  = ForceAddress
+  | DontForceAddress
+  deriving (Eq, Show)
+
+instance ToJSON ForceAddress where
+  toJSON ForceAddress     = Number 1
+  toJSON DontForceAddress = Number 0
+
+data ForceDuplicate
+  = ForceDuplicate
+  | DontForceDuplicate
+  deriving (Eq, Show)
+
+instance ToJSON ForceDuplicate where
+  toJSON ForceDuplicate     = Number 1
+  toJSON DontForceDuplicate = Number 0
+
+data SameDay
+  = SameDay
+  | NotSameDay
+  deriving (Eq, Show)
+
+instance ToJSON SameDay where
+  toJSON SameDay    = Number 1
+  toJSON NotSameDay = Number 0
+
+newtype ProcessAfterDate = ProcessAfterDate
+  { unProcessAfterDate :: UTCTime
+  } deriving (Eq, Show)
+
+instance ToJSON ProcessAfterDate where
+  toJSON (ProcessAfterDate x) = object ["processAfterDate" .= utcToShipwire x]

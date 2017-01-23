@@ -748,6 +748,34 @@ exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
                           )
                         ]
 
+exampleOrder :: CreateOrder
+exampleOrder =
+  CreateOrder
+    Nothing
+    (Just $ OrderNo "testorder6")
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    (OrderShipTo
+      (Email "test@example.com")
+      (Name "Test Person")
+      (Company "Best Company")
+      (AddressLine "First line")
+      (AddressLine "Second line 25")
+      (AddressLine "")
+      (City "Best city")
+      (State "WA")
+      (PostalCode "100100")
+      (Country "US")
+      (Phone "6315613729")
+      NotCommercial
+      NotPoBox
+    )
+    Nothing
+    Nothing
+    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest3")])
+
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
@@ -1100,3 +1128,10 @@ main = do
             status@Status {..} = miiStatus
         result `shouldSatisfy` isRight
         status `shouldBe` Status "deprecated"
+
+    describe "create an order" $ do
+      it "creates an order" $ do
+        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct        
+        result <- shipwire config $ createOrder exampleOrder
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        result `shouldSatisfy` isRight
