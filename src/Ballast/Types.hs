@@ -2164,10 +2164,10 @@ instance FromJSON ItemResourceInstructionsRecipients where
 
 data ItemResourceInstructionsRecipientsResource = ItemResourceInstructionsRecipientsResource
   { irirrItems    :: ItemResourceInstructionsRecipientsResourceItems
-  , irirrNext     :: Maybe Next
-  , irirrOffset   :: Offset
-  , irirrPrevious :: Maybe Previous
-  , irirrTotal    :: Total
+  , irirrNext     :: Maybe ResponseNext
+  , irirrOffset   :: ResponseOffset
+  , irirrPrevious :: Maybe ResponsePrevious
+  , irirrTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceInstructionsRecipientsResource where
@@ -2419,10 +2419,10 @@ instance FromJSON ItemResourceLabels where
 
 data ItemResourceLabelsResource = ItemResourceLabelsResource
   { irlrItems    :: ItemResourceLabelsResourceItems
-  , irlrNext     :: Maybe Next
-  , irlrOffset   :: Offset
-  , irlrPrevious :: Maybe Previous
-  , irlrTotal    :: Total
+  , irlrNext     :: Maybe ResponseNext
+  , irlrOffset   :: ResponseOffset
+  , irlrPrevious :: Maybe ResponsePrevious
+  , irlrTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceLabelsResource where
@@ -2489,10 +2489,10 @@ instance FromJSON ItemResourceShipments where
 
 data ItemResourceShipmentsResource = ItemResourceShipmentsResource
   { irsrItems    :: ItemResourceShipmentsResourceItems
-  , irsrNext     :: Maybe Next
-  , irsrOffset   :: Offset
-  , irsrPrevious :: Maybe Previous
-  , irsrTotal    :: Total
+  , irsrNext     :: Maybe ResponseNext
+  , irsrOffset   :: ResponseOffset
+  , irsrPrevious :: Maybe ResponsePrevious
+  , irsrTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceShipmentsResource where
@@ -2573,10 +2573,10 @@ instance FromJSON ItemResourceTrackings where
 
 data ItemResourceTrackingsResource = ItemResourceTrackingsResource
   { irtrItems    :: ItemResourceTrackingsResourceItems
-  , irtrNext     :: Maybe Next
-  , irtrOffset   :: Offset
-  , irtrPrevious :: Maybe Previous
-  , irtrTotal    :: Total
+  , irtrNext     :: Maybe ResponseNext
+  , irtrOffset   :: ResponseOffset
+  , irtrPrevious :: Maybe ResponsePrevious
+  , irtrTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceTrackingsResource where
@@ -2665,10 +2665,10 @@ instance FromJSON ItemResourceItems where
 
 data ItemResourceItemsResource = ItemResourceItemsResource
   { irirItems    :: ItemResourceItemsResourceItems
-  , irirNext     :: Maybe Next
-  , irirOffset   :: Offset
-  , irirPrevious :: Maybe Previous
-  , irirTotal    :: Total
+  , irirNext     :: Maybe ResponseNext
+  , irirOffset   :: ResponseOffset
+  , irirPrevious :: Maybe ResponsePrevious
+  , irirTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceItemsResource where
@@ -2753,10 +2753,10 @@ instance FromJSON ItemResourceHolds where
 
 data ItemResourceHoldsResource = ItemResourceHoldsResource
   { irhrItems    :: ItemResourceHoldsResourceItems
-  , irhrNext     :: Maybe Next
-  , irhrOffset   :: Offset
-  , irhrPrevious :: Maybe Previous
-  , irhrTotal    :: Total
+  , irhrNext     :: Maybe ResponseNext
+  , irhrOffset   :: ResponseOffset
+  , irhrPrevious :: Maybe ResponsePrevious
+  , irhrTotal    :: ResponseTotal
   } deriving (Eq, Show)
 
 instance FromJSON ItemResourceHoldsResource where
@@ -4196,10 +4196,10 @@ instance FromJSON GetProductsResponse where
                 <*> o .:? "errors"
 
 data GetProductsResponseResource = GetProductsResponseResource
-  { gprrPrevious :: Maybe Previous
-  , gprrNext     :: Maybe Next
-  , gprrTotal    :: Total
-  , gprrOffset   :: Offset
+  { gprrPrevious :: Maybe ResponsePrevious
+  , gprrNext     :: Maybe ResponseNext
+  , gprrTotal    :: ResponseTotal
+  , gprrOffset   :: ResponseOffset
   , gprrItems    :: GetProductsResponseResourceItems
   } deriving (Eq, Show)
 
@@ -4388,10 +4388,10 @@ instance FromJSON VirtualKitResponseContent where
                 <*> o .:? "resource"
 
 data VirtualKitContentResource = VirtualKitContentResource
-  { vkcrOffset   :: Offset
-  , vkcrTotal    :: Total
-  , vkcrPrevious :: Maybe Previous
-  , vkcrNext     :: Maybe Next
+  { vkcrOffset   :: ResponseOffset
+  , vkcrTotal    :: ResponseTotal
+  , vkcrPrevious :: Maybe ResponsePrevious
+  , vkcrNext     :: Maybe ResponseNext
   , vkcrItems    :: VirtualKitContentResourceItems
   } deriving (Eq, Show)
 
@@ -5022,11 +5022,11 @@ instance FromJSON AlternateNamesResponse where
                 <*> o .:? "resource"
 
 data AlternateNamesResponseResource = AlternateNamesResponseResource
-  { anrPrevious :: Maybe Previous
-  , anrNext     :: Maybe Next
-  , anrTotal    :: Total
+  { anrPrevious :: Maybe ResponsePrevious
+  , anrNext     :: Maybe ResponseNext
+  , anrTotal    :: ResponseTotal
   , anrItems    :: AlternateNamesResponseResourceItems
-  , anrOffset   :: Offset
+  , anrOffset   :: ResponseOffset
   } deriving (Eq, Show)
 
 instance FromJSON AlternateNamesResponseResource where
@@ -5110,13 +5110,13 @@ instance FromJSON EnqueuedDimensions where
                 <*> o .:? "resource"
 
 data EnqueuedDimensionsResource = EnqueuedDimensionsResource
-  { edrPrevious :: Maybe Previous
-  , edrNext     :: Maybe Next
-  , edrTotal    :: Total
+  { edrPrevious :: Maybe ResponsePrevious
+  , edrNext     :: Maybe ResponseNext
+  , edrTotal    :: ResponseTotal
   -- No idea what edrItems are supposed to be.
   -- There is nothing in the API docs and no model schema either.
   , edrItems    :: Maybe Array
-  , edrOffset   :: Offset
+  , edrOffset   :: ResponseOffset
   } deriving (Eq, Show)
 
 instance FromJSON EnqueuedDimensionsResource where
