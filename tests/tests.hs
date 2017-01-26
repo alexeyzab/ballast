@@ -761,8 +761,8 @@ exampleOrder =
       (Name "Test Person")
       (Company "Best Company")
       (AddressLine "First line")
-      (AddressLine "Second line 25")
-      (AddressLine "")
+      (Just $ AddressLine "Second line 25")
+      (Just $ AddressLine "")
       (City "Best city")
       (State "WA")
       (PostalCode "100100")
@@ -773,7 +773,7 @@ exampleOrder =
     )
     Nothing
     Nothing
-    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest3")])
+    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest4")])
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -1134,3 +1134,15 @@ main = do
         result <- shipwire config $ createOrder exampleOrder
         _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         result `shouldSatisfy` isRight
+        let Right GetOrdersResponse {..} = result
+        gorWarnings `shouldBe` Nothing
+        gorErrors `shouldBe` Nothing
+
+    describe "get orders" $ do
+      it "gets all the orders" $ do
+        result <- shipwire config $ getOrders -&- ExpandOrdersParam [OrdersExpandAll]
+                                              -&- OrderStatusParam [OrderCanceled]
+        result `shouldSatisfy` isRight
+        let Right GetOrdersResponse {..} = result
+        gorWarnings `shouldBe` Nothing
+        gorErrors `shouldBe` Nothing

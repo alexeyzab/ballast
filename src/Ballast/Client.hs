@@ -201,6 +201,15 @@ retireProducts ptr = request
     url = "/products/retire"
     params = [Body (encode ptr)]
 
+-- | Get an itemized list of orders.
+-- https://www.shipwire.com/w/developers/order/#panel-shipwire0
+getOrders :: ShipwireRequest GetOrdersRequest TupleBS8 BSL.ByteString
+getOrders = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = "/orders"
+    params = []
+
 -- | Create a new order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire2
 createOrder :: CreateOrder -> ShipwireRequest CreateOrderRequest TupleBS8 BSL.ByteString
