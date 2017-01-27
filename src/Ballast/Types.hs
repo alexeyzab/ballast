@@ -171,14 +171,14 @@ module Ballast.Types
   , UpdatedAfter(..)
   , ReceivingStatusParams(..)
   , ReceivingStatusParam(..)
-  , statusParamToTx
+  , statusParamToBS8
   , OrderNoParam(..)
   , OrderIdParam(..)
   , ExternalIdParam(..)
   , TransactionIdParam(..)
   , ExpandReceivingsParam(..)
   , ExpandReceivings(..)
-  , expandReceivingsToTx
+  , expandReceivingsToBS8
   , CommerceNameParam(..)
   , CreateReceivingResponse
   , GetReceivingsResponse
@@ -420,7 +420,7 @@ module Ballast.Types
   , KitResponseContent
   , ExpandProductsParam(..)
   , ExpandProducts(..)
-  , expandProductsToTx
+  , expandProductsToBS8
   , ClassificationParam(..)
   , classificationToBS
   , DescriptionParam(..)
@@ -2072,19 +2072,19 @@ data ReceivingStatusParam = StatusProcessed
   | StatusTracked
   deriving (Eq, Show)
 
-statusParamToTx :: ReceivingStatusParam -> Text
-statusParamToTx StatusProcessed = "processed"
-statusParamToTx StatusCanceled  = "canceled"
-statusParamToTx StatusCompleted = "completed"
-statusParamToTx StatusDelivered = "delivered"
-statusParamToTx StatusReturned  = "returned"
-statusParamToTx StatusSubmitted = "submitted"
-statusParamToTx StatusHeld      = "held"
-statusParamToTx StatusTracked   = "tracked"
+statusParamToBS8 :: ReceivingStatusParam -> BS8.ByteString
+statusParamToBS8 StatusProcessed = "processed"
+statusParamToBS8 StatusCanceled  = "canceled"
+statusParamToBS8 StatusCompleted = "completed"
+statusParamToBS8 StatusDelivered = "delivered"
+statusParamToBS8 StatusReturned  = "returned"
+statusParamToBS8 StatusSubmitted = "submitted"
+statusParamToBS8 StatusHeld      = "held"
+statusParamToBS8 StatusTracked   = "tracked"
 
 instance ToShipwireParam ReceivingStatusParams where
   toShipwireParam (ReceivingStatusParams xs) =
-    (Query ("status", TE.encodeUtf8 (T.intercalate "," (map statusParamToTx xs))) :)
+    (Query ("status", (BS8.intercalate "," (map statusParamToBS8 xs))) :)
 
 newtype OrderNoParam = OrderNoParam
   { orderNoParam :: [Text]
@@ -2131,18 +2131,18 @@ data ExpandReceivings = ExpandHolds
   | ExpandAll
   deriving (Eq, Show)
 
-expandReceivingsToTx :: ExpandReceivings -> Text
-expandReceivingsToTx ExpandHolds                  = "holds"
-expandReceivingsToTx ExpandInstructionsRecipients = "instructionsRecipients"
-expandReceivingsToTx ExpandItems                  = "items"
-expandReceivingsToTx ExpandShipments              = "shipments"
-expandReceivingsToTx ExpandLabels                 = "labels"
-expandReceivingsToTx ExpandTrackings              = "trackings"
-expandReceivingsToTx ExpandAll                    = "all"
+expandReceivingsToBS8 :: ExpandReceivings -> BS8.ByteString
+expandReceivingsToBS8 ExpandHolds                  = "holds"
+expandReceivingsToBS8 ExpandInstructionsRecipients = "instructionsRecipients"
+expandReceivingsToBS8 ExpandItems                  = "items"
+expandReceivingsToBS8 ExpandShipments              = "shipments"
+expandReceivingsToBS8 ExpandLabels                 = "labels"
+expandReceivingsToBS8 ExpandTrackings              = "trackings"
+expandReceivingsToBS8 ExpandAll                    = "all"
 
 instance ToShipwireParam ExpandReceivingsParam where
   toShipwireParam (ExpandReceivingsParam xs) =
-    (Query ("expand", TE.encodeUtf8 (T.intercalate "," (map expandReceivingsToTx xs))) :)
+    (Query ("expand", (BS8.intercalate "," (map expandReceivingsToBS8 xs))) :)
 
 newtype CommerceNameParam = CommerceNameParam
   { commerceNameParam :: [Text]
@@ -4257,24 +4257,24 @@ data ExpandProducts = ProductsExpandAll
   | ExpandVirtualKitContent
   deriving (Eq, Show)
 
-expandProductsToTx :: ExpandProducts -> Text
-expandProductsToTx ProductsExpandAll        = "all"
-expandProductsToTx ExpandAlternateNames     = "alternateNames"
-expandProductsToTx ExpandMasterCase         = "masterCase"
-expandProductsToTx ExpandEnqueuedDimensions = "enqueuedDimensions"
-expandProductsToTx ExpandFlags              = "flags"
-expandProductsToTx ExpandDimensions         = "dimensions"
-expandProductsToTx ExpandTechnicalData      = "technicalData"
-expandProductsToTx ExpandInnerPack          = "innerPack"
-expandProductsToTx ExpandPallet             = "pallet"
-expandProductsToTx ExpandValues             = "values"
-expandProductsToTx ExpandKitContent         = "kitContent"
-expandProductsToTx ExpandInclusionRules     = "inclusionRules"
-expandProductsToTx ExpandVirtualKitContent  = "virtualKitContent"
+expandProductsToBS8 :: ExpandProducts -> BS8.ByteString
+expandProductsToBS8 ProductsExpandAll        = "all"
+expandProductsToBS8 ExpandAlternateNames     = "alternateNames"
+expandProductsToBS8 ExpandMasterCase         = "masterCase"
+expandProductsToBS8 ExpandEnqueuedDimensions = "enqueuedDimensions"
+expandProductsToBS8 ExpandFlags              = "flags"
+expandProductsToBS8 ExpandDimensions         = "dimensions"
+expandProductsToBS8 ExpandTechnicalData      = "technicalData"
+expandProductsToBS8 ExpandInnerPack          = "innerPack"
+expandProductsToBS8 ExpandPallet             = "pallet"
+expandProductsToBS8 ExpandValues             = "values"
+expandProductsToBS8 ExpandKitContent         = "kitContent"
+expandProductsToBS8 ExpandInclusionRules     = "inclusionRules"
+expandProductsToBS8 ExpandVirtualKitContent  = "virtualKitContent"
 
 instance ToShipwireParam ExpandProductsParam where
   toShipwireParam (ExpandProductsParam xs) =
-    (Query ("expand", TE.encodeUtf8 (T.intercalate "," (map expandProductsToTx xs))) :)
+    (Query ("expand", (BS8.intercalate "," (map expandProductsToBS8 xs))) :)
 
 data GetProductsResponse = GetProductsResponse
   { gprStatus           :: ResponseStatus
