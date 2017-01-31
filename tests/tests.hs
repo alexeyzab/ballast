@@ -8,7 +8,7 @@ import           Ballast.Types
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
-import           Data.Time.Clock (UTCTime)
+import           Data.Time.Clock (UTCTime, getCurrentTime, utctDayTime)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 
@@ -16,7 +16,7 @@ mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
 exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "HspecTest4"), Quantity 5)]
+exampleItems = [ItemInfo ((SKU "HspecTest7"), Quantity 5)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -46,7 +46,7 @@ exampleCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest4") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest7") (Quantity 5)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -74,7 +74,7 @@ exampleBadCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest") (Quantity 0)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest7") (Quantity 0)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -102,7 +102,7 @@ exampleModifiedReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest4") (Quantity 3)])
+    (ReceivingItems [ReceivingItem (SKU "HspecTest7") (Quantity 5)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -256,12 +256,12 @@ exampleCreateProduct productId =
                           ),
                         CpwMarketingInsert $ MarketingInsert
                           Nothing
-                          (SKU "HspecTestInsert2")
+                          (SKU "HspecTestInsert3")
                           Nothing
                           (MarketingInsertClassification)
                           (Description "Hspec test marketing insert2")
                           (InclusionRuleType "CUSTOM")
-                          (Just $ MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI22")])
+                          (Just $ MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI3")])
                           (MarketingInsertDimensions
                             (MarketingInsertLength 0.1)
                             (MarketingInsertWidth 0.1)
@@ -292,7 +292,7 @@ exampleCreateProduct productId =
                           ),
                         CpwBaseProduct $ BaseProduct
                           Nothing
-                          (SKU "HspecTest2")
+                          (SKU "HspecTest7")
                           Nothing
                           (BaseProductClassification)
                           (Description "Hspec test product2")
@@ -308,7 +308,7 @@ exampleCreateProduct productId =
                             (Just $ WholesaleCurrency "USD")
                             (Just $ RetailCurrency "USD")
                           )
-                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt2")])
+                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt7")])
                           (BaseProductDimensions
                             (BaseProductLength 10)
                             (BaseProductWidth 10)
@@ -339,9 +339,9 @@ exampleCreateProduct productId =
                           )
                           (BaseProductInnerPack
                             (IndividualItemsPerCase 2)
-                            (Just $ ExternalId "narp222")
-                            (SKU "singleInner22")
-                            (Description "InnerDec2")
+                            (Just $ ExternalId "narp3")
+                            (SKU "singleInner3")
+                            (Description "InnerDec3")
                             (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -362,9 +362,9 @@ exampleCreateProduct productId =
                           )
                           (BaseProductMasterCase
                             (IndividualItemsPerCase 10)
-                            (Just $ ExternalId "narp33")
-                            (SKU "singleMaster23")
-                            (Description "masterdesc3")
+                            (Just $ ExternalId "narp4")
+                            (SKU "singleMaster4")
+                            (Description "masterdesc4")
                             (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -383,9 +383,9 @@ exampleCreateProduct productId =
                           )
                           (BaseProductPallet
                             (IndividualItemsPerCase 1000)
-                            (Just $ ExternalId "narp42")
-                            (SKU "singlePallet22")
-                            (Description "palletdesc2")
+                            (Just $ ExternalId "narp5")
+                            (SKU "singlePallet5")
+                            (Description "palletdesc5")
                             (Values
                                 (CostValue 1)
                                 (WholesaleValue 2)
@@ -411,8 +411,8 @@ exampleModifyProducts productId =
   [ CpwBaseProduct $
     BaseProduct
       (Just $ Id productId)
-      (SKU "HspecTest4")
-      (Just $ ExternalId "hspectest4")
+      (SKU "HspecTest7")
+      (Just $ ExternalId "hspectest77")
       (BaseProductClassification)
       (Description "Modified description")
       (Just $ HsCode "010612")
@@ -426,7 +426,7 @@ exampleModifyProducts productId =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt4")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt7")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -453,9 +453,9 @@ exampleModifyProducts productId =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp6")
-         (SKU "singleInner4")
-         (Description "InnerDesc4")
+         (Just $ ExternalId "narp999")
+         (SKU "singleInner6")
+         (Description "InnerDesc6")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -471,9 +471,9 @@ exampleModifyProducts productId =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp7")
-         (SKU "singleMaster5")
-         (Description "masterdesc5")
+         (Just $ ExternalId "narp9")
+         (SKU "singleMaster7")
+         (Description "masterdesc7")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -489,9 +489,9 @@ exampleModifyProducts productId =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp8")
-         (SKU "singlePallet4")
-         (Description "palletdesc4")
+         (Just $ ExternalId "narp10")
+         (SKU "singlePallet6")
+         (Description "palletdesc6")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -512,8 +512,8 @@ exampleModifyProduct productId =
   CpwBaseProduct $
     BaseProduct
       (Just $ Id productId)
-      (SKU "HspecTest4")
-      (Just $ ExternalId "hspectest4")
+      (SKU "HspecTest7")
+      (Just $ ExternalId "hspectest77")
       (BaseProductClassification)
       (Description "Modified description")
       (Just $ HsCode "010612")
@@ -527,7 +527,7 @@ exampleModifyProduct productId =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt4")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt7")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -554,9 +554,9 @@ exampleModifyProduct productId =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp6")
-         (SKU "singleInner4")
-         (Description "InnerDesc4")
+         (Just $ ExternalId "narp999")
+         (SKU "singleInner77")
+         (Description "InnerDesc7")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -572,9 +572,9 @@ exampleModifyProduct productId =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp7")
-         (SKU "singleMaster5")
-         (Description "masterdesc5")
+         (Just $ ExternalId "narp10")
+         (SKU "singleMaster8")
+         (Description "masterdesc8")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -590,9 +590,9 @@ exampleModifyProduct productId =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp8")
-         (SKU "singlePallet4")
-         (Description "palletdesc4")
+         (Just $ ExternalId "narp11")
+         (SKU "singlePallet7")
+         (Description "palletdesc7")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -612,10 +612,10 @@ exampleCreateBaseProduct =
   [ CpwBaseProduct $
     BaseProduct
       Nothing
-      (SKU "HspecTest4")
-      (Just $ ExternalId "hspectest4")
+      (SKU "HspecTest7")
+      (Just $ ExternalId "hspectest9")
       (BaseProductClassification)
-      (Description "Hspec test product4")
+      (Description "Hspec test product5")
       (Just $ HsCode "010612")
       (Just $ CountryOfOrigin "US")
       (Category "TOYS_SPORTS_HOBBIES")
@@ -627,7 +627,7 @@ exampleCreateBaseProduct =
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt5")])
+      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt66")])
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
@@ -654,9 +654,9 @@ exampleCreateBaseProduct =
          HasPallet)
       (BaseProductInnerPack
          (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp6")
-         (SKU "singleInner4")
-         (Description "InnerDesc4")
+         (Just $ ExternalId "narp111")
+         (SKU "singleInner77")
+         (Description "InnerDesc77")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -672,9 +672,9 @@ exampleCreateBaseProduct =
          (BaseProductInnerPackFlags NotPackagedReadyToShip))
       (BaseProductMasterCase
          (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp7")
-         (SKU "singleMaster5")
-         (Description "masterdesc5")
+         (Just $ ExternalId "narp1010")
+         (SKU "singleMaster88")
+         (Description "masterdesc88")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -690,9 +690,9 @@ exampleCreateBaseProduct =
          (BaseProductMasterCaseFlags PackagedReadyToShip))
       (BaseProductPallet
          (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp8")
-         (SKU "singlePallet4")
-         (Description "palletdesc4")
+         (Just $ ExternalId "narp102")
+         (SKU "singlePallet77")
+         (Description "palletdesc77")
          (Values
             (CostValue 1)
             (WholesaleValue 2)
@@ -747,11 +747,11 @@ exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
                           )
                         ]
 
-exampleOrder :: CreateOrder
-exampleOrder =
+exampleOrder :: T.Text -> CreateOrder
+exampleOrder r =
   CreateOrder
     Nothing
-    (Just $ OrderNo "testorder6")
+    (Just $ OrderNo (T.concat ["testorder", r]))
     Nothing
     Nothing
     Nothing
@@ -765,7 +765,7 @@ exampleOrder =
       (Just $ AddressLine "")
       (City "Best city")
       (State "WA")
-      (PostalCode "100100")
+      (Just $ PostalCode "100100")
       (Country "US")
       (Phone "6315613729")
       NotCommercial
@@ -773,7 +773,7 @@ exampleOrder =
     )
     Nothing
     Nothing
-    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest4")])
+    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest6")])
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -807,6 +807,28 @@ createMarketingInsertHelper conf cp = do
       pwMarketingInsert@(PwMarketingInsert x) = gprriResource
       productId = unId $ mirId $ unwrapMarketingInsert pwMarketingInsert
   return (marketingInsert, productId)
+
+createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Integer)
+createOrderHelper conf co = do
+  order <- shipwire conf $ createOrder co
+  exampleOrder <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
+  let Right GetOrdersResponse {..} = exampleOrder
+      GetOrdersResponseResource {..} = gorResource
+      GetOrdersResponseResourceItems {..} = gorrItems
+      GetOrdersResponseResourceItem {..} = head $ gorriItems
+      GetOrdersResponseResourceItemResource {..} = gorriResource
+      (Id orderId) = gorrirId
+  return (order, orderId)
+
+getOrderNo :: CreateOrder -> [T.Text]
+getOrderNo co = (unOrderNo $ fromJust $ coOrderNo co) : []
+
+getCurrentTimeInSeconds :: IO T.Text
+getCurrentTimeInSeconds = do
+  x <- getCurrentTime
+  let prec = show $ utctDayTime x
+      result = T.pack $ takeWhile (/= '.') . reverse $ prec
+  return result
 
 -- | This function unwraps the wrappers for each type of product and gets all of those products' ids
 -- It helps retire the products to clean up after the tests.
@@ -897,7 +919,7 @@ main = do
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
         (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest3")
+        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest5")
         _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
         result `shouldSatisfy` isRight
         let Right StockResponse {..} = result
@@ -1130,9 +1152,11 @@ main = do
 
     describe "create an order" $ do
       it "creates an order" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct        
-        result <- shipwire config $ createOrder exampleOrder
+        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getCurrentTimeInSeconds
+        (result, orderId) <- createOrderHelper config $ exampleOrder randomPart
         _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
         result `shouldSatisfy` isRight
         let Right GetOrdersResponse {..} = result
         gorWarnings `shouldBe` Nothing
@@ -1140,9 +1164,26 @@ main = do
 
     describe "get orders" $ do
       it "gets all the orders" $ do
-        result <- shipwire config $ getOrders -&- ExpandOrdersParam [OrdersExpandAll]
-                                              -&- OrderStatusParam [OrderCanceled]
+        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getCurrentTimeInSeconds
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
+        result <- shipwire config $ getOrders
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
         result `shouldSatisfy` isRight
         let Right GetOrdersResponse {..} = result
         gorWarnings `shouldBe` Nothing
         gorErrors `shouldBe` Nothing
+
+    describe "cancel an order" $ do
+      it "cancels an order" $ do
+        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getCurrentTimeInSeconds
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
+        result <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        result `shouldSatisfy` isRight
+        let Right SimpleResponse {..} = result
+        warnings `shouldBe` Nothing
+        errors `shouldBe` Nothing
+        message `shouldBe` (ResponseMessage "Order cancelled")

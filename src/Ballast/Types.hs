@@ -643,6 +643,9 @@ module Ballast.Types
   , OrderStatusParam(..)
   , OrderStatus(..)
   , ReferrerParam(..)
+  , CancelOrderRequest
+  , CancelOrderResponse
+  , IdWrapper(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -3398,7 +3401,7 @@ data ModifyProductsResponse = ModifyProductsResponse
   , mprMessage          :: ResponseMessage
   , mprResource         :: GetProductsResponseResource
   , mprWarnings         :: Maybe ResponseWarnings
-  , mprErrors           :: Maybe ResponseErrors
+  , mprErrors           :: Maybe ProductError
   } deriving (Eq, Show)
 
 instance FromJSON ModifyProductsResponse where
@@ -5518,6 +5521,20 @@ instance ShipwireHasParam CreateOrderRequest ExpandOrdersParam
 
 type CreateOrderResponse = GetOrdersResponse
 
+-- | POST /api/v3/orders/{id}/cancel or /api/v3/orders/E{externalId}/cancel
+data CancelOrderRequest
+type instance ShipwireReturn CancelOrderRequest = CancelOrderResponse
+
+type CancelOrderResponse = SimpleResponse
+
+data IdWrapper = WrappedId Id
+  | WrappedExternalId ExternalId
+  deriving (Eq, Show)
+
+instance ToJSON IdWrapper where
+  toJSON (WrappedId x) = toJSON x
+  toJSON (WrappedExternalId x) = toJSON x
+
 newtype OrderStatusParam = OrderStatusParam
   { unStatusParam :: [OrderStatus]
   } deriving (Eq, Show)
@@ -6618,7 +6635,7 @@ data OrderShipTo = OrderShipTo
   , ostAddress3     :: Maybe AddressLine
   , ostCity         :: City
   , ostState        :: State
-  , ostPostalCode   :: PostalCode
+  , ostPostalCode   :: Maybe PostalCode
   , ostCountry      :: Country
   , ostPhone        :: Phone
   , ostIsCommercial :: IsCommercial
@@ -6644,19 +6661,19 @@ instance FromJSON OrderShipTo where
   parseJSON = withObject "OrderShpTo" parse
     where
       parse o = OrderShipTo
-                <$> o .: "email"
-                <*> o .: "name"
-                <*> o .: "company"
-                <*> o .: "address1"
-                <*> o .: "address2"
-                <*> o .: "address3"
-                <*> o .: "city"
-                <*> o .: "state"
-                <*> o .: "postalCode"
-                <*> o .: "country"
-                <*> o .: "phone"
-                <*> o .: "isCommercial"
-                <*> o .: "isPoBox"
+                <$> o .:  "email"
+                <*> o .:  "name"
+                <*> o .:  "company"
+                <*> o .:  "address1"
+                <*> o .:  "address2"
+                <*> o .:  "address3"
+                <*> o .:  "city"
+                <*> o .:  "state"
+                <*> o .:? "postalCode"
+                <*> o .:  "country"
+                <*> o .:  "phone"
+                <*> o .:  "isCommercial"
+                <*> o .:  "isPoBox"
 
 newtype OrderShipFrom = OrderShipFrom
   { osfCompany :: Maybe ShipFromCompany
