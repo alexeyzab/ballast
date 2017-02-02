@@ -646,6 +646,12 @@ module Ballast.Types
   , CancelOrderRequest
   , CancelOrderResponse
   , IdWrapper(..)
+  , GetOrderTrackingsRequest
+  , GetOrderTrackingsResponse(..)
+  , GetOrderTrackingsResponseResource(..)
+  , GetOrderTrackingsResponseResourceItems(..)
+  , GetOrderTrackingsResponseResourceItem(..)
+  , GetOrderTrackingsResponseResourceItemResource(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -5526,6 +5532,110 @@ data CancelOrderRequest
 type instance ShipwireReturn CancelOrderRequest = CancelOrderResponse
 
 type CancelOrderResponse = SimpleResponse
+
+-- | GET /api/v3/orders/{id}/trackings or /api/v3/orders/E{externalId}/trackings
+data GetOrderTrackingsRequest
+type instance ShipwireReturn GetOrderTrackingsRequest = GetOrderTrackingsResponse
+
+data GetOrderTrackingsResponse = GetOrderTrackingsResponse
+  { gotrMessage          :: ResponseMessage
+  , gotrResource         :: GetOrderTrackingsResponseResource
+  , gotrResourceLocation :: ResponseResourceLocation
+  , gotrStatus           :: ResponseStatus
+  , gotrWarnings         :: Maybe ResponseWarnings
+  , gotrErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponse where
+  parseJSON = withObject "GetOrderTrackingsResponse" parse
+    where
+      parse o = GetOrderTrackingsResponse
+                <$> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "status"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+data GetOrderTrackingsResponseResource = GetOrderTrackingsResponseResource
+  { gotrrItems    :: GetOrderTrackingsResponseResourceItems
+  , gotrrNext     :: Maybe ResponseNext
+  , gotrrOffset   :: ResponseOffset
+  , gotrrPrevious :: Maybe ResponsePrevious
+  , gotrrTotal    :: ResponseTotal
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResource where
+  parseJSON = withObject "GetOrderTrackingsResponseResource" parse
+    where
+      parse o = GetOrderTrackingsResponseResource
+                <$> o .:  "items"
+                <*> o .:? "next"
+                <*> o .:  "offset"
+                <*> o .:? "previous"
+                <*> o .:  "total"
+
+newtype GetOrderTrackingsResponseResourceItems = GetOrderTrackingsResponseResourceItems
+  { gotrriItems :: [GetOrderTrackingsResponseResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data GetOrderTrackingsResponseResourceItem = GetOrderTrackingsResponseResourceItem
+  { gotrriResource         :: GetOrderTrackingsResponseResourceItemResource
+  , gotrriResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResourceItem where
+  parseJSON = withObject "GetOrderTrackingsResponseResourceItem" parse
+    where
+      parse o = GetOrderTrackingsResponseResourceItem
+                <$> o .: "resource"
+                <*> o .: "resourceLocation"
+
+data GetOrderTrackingsResponseResourceItemResource = GetOrderTrackingsResponseResourceItemResource
+  { gotrrirId                  :: Id
+  , gotrrirOrderId             :: OrderId
+  , gottrirOrderExternalId     :: OrderExternalId
+  , gotrrirTracking            :: Tracking
+  , gotrrirCarrier             :: CarrierName
+  , gotrrirUrl                 :: URL
+  , gotrrirSummary             :: Summary
+  , gotrrirSummaryDate         :: SummaryDate
+  , gotrrirLabelCreatedDate    :: LabelCreatedDate
+  , gotrrirTrackedDate         :: TrackedDate
+  , gotrrirFirstScanDate       :: FirstScanDate
+  , gotrrirFirstScanRegion     :: FirstScanRegion
+  , gotrrirFirstScanPostalCode :: FirstScanPostalCode
+  , gotrrirFirstScanCountry    :: FirstScanCountry
+  , gotrrirDeliveredDate       :: DeliveredDate
+  , gotrrirDeliveryCity        :: DeliveryCity
+  , gotrrirDeliveryRegion      :: DeliveryRegion
+  , gotrrirDeliveryPostalCode  :: DeliveryPostalCode
+  , gotrrirDeliveryCountry     :: DeliveryCountry
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResourceItemResource where
+  parseJSON = withObject "GetOrderTrackingsResponseResourceItemResource" parse
+    where
+      parse o = GetOrderTrackingsResponseResourceItemResource
+                <$> o .: "id"
+                <*> o .: "orderId"
+                <*> o .: "orderExternalId"
+                <*> o .: "tracking"
+                <*> o .: "carrier"
+                <*> o .: "url"
+                <*> o .: "summary"
+                <*> o .: "summaryDate"
+                <*> o .: "labelCreatedDate"
+                <*> o .: "trackedDate"
+                <*> o .: "firstScanDate"
+                <*> o .: "firstScanRegion"
+                <*> o .: "firstScanPostalCode"
+                <*> o .: "firstScanCountry"
+                <*> o .: "deliveredDate"
+                <*> o .: "deliveryCity"
+                <*> o .: "deliveryRegion"
+                <*> o .: "deliveryPostalCode"
+                <*> o .: "deliveryCountry"
 
 data IdWrapper = WrappedId Id
   | WrappedExternalId ExternalId

@@ -773,7 +773,7 @@ exampleOrder r =
     )
     Nothing
     Nothing
-    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest6")])
+    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest7")])
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -811,8 +811,8 @@ createMarketingInsertHelper conf cp = do
 createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Integer)
 createOrderHelper conf co = do
   order <- shipwire conf $ createOrder co
-  exampleOrder <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
-  let Right GetOrdersResponse {..} = exampleOrder
+  exampleOrd <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
+  let Right GetOrdersResponse {..} = exampleOrd
       GetOrdersResponseResource {..} = gorResource
       GetOrdersResponseResourceItems {..} = gorrItems
       GetOrdersResponseResourceItem {..} = head $ gorriItems
@@ -1187,3 +1187,17 @@ main = do
         warnings `shouldBe` Nothing
         errors `shouldBe` Nothing
         message `shouldBe` (ResponseMessage "Order cancelled")
+
+    describe "get tracking information for this order" $ do
+      it "gets tracking information for this order" $ do
+        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getCurrentTimeInSeconds
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
+        result <- shipwire config $ getOrderTrackings $ WrappedId $ Id orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
+        result `shouldSatisfy` isRight
+        let Right GetOrderTrackingsResponse {..} = result
+        gotrWarnings `shouldBe` Nothing
+        gotrErrors `shouldBe` Nothing
+
