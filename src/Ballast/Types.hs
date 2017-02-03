@@ -267,8 +267,8 @@ module Ballast.Types
   , CreateReceiving(..)
   , OrderNo(..)
   , ReceivingOptions(..)
-  , WarehouseId
-  , WarehouseExternalId
+  , WarehouseId(..)
+  , WarehouseExternalId(..)
   , ReceivingArrangement(..)
   , Contact(..)
   , Phone(..)
@@ -927,18 +927,22 @@ instance FromJSON GroupBy where
       parse "warehouse" = pure GroupByWarehouse
       parse o           = fail $ "Unexpected GroupBy: " <> show o
 
-data WarehouseArea =
-  WarehouseAreaUS
-  deriving (Eq, Show)
+-- data WarehouseArea =
+--   WarehouseAreaUS
+--   deriving (Eq, Show)
 
-instance ToJSON WarehouseArea where
-  toJSON WarehouseAreaUS = String "US"
+-- instance ToJSON WarehouseArea where
+--   toJSON WarehouseAreaUS = String "US"
 
-instance FromJSON WarehouseArea where
-  parseJSON = withText "WarehouseArea" parse
-    where
-      parse "US" = pure WarehouseAreaUS
-      parse o    = fail $ "Unexpected WarehouseArea: " <> show o
+-- instance FromJSON WarehouseArea where
+--   parseJSON = withText "WarehouseArea" parse
+--     where
+--       parse "US" = pure WarehouseAreaUS
+--       parse o    = fail $ "Unexpected WarehouseArea: " <> show o
+
+newtype WarehouseArea = WarehouseArea
+  { unWarehouseArea :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 -- defaultRateResponse :: IO RateResponse
 -- defaultRateResponse = do
@@ -2503,7 +2507,7 @@ instance FromJSON ItemResourceOptions where
                 <*> o .:? "resourceLocation"
 
 data ItemResourceOptionsResource = ItemResourceOptionsResource
-  { irorWarehouseExternalid :: Maybe WarehouseExternalId
+  { irorWarehouseExternalId :: Maybe WarehouseExternalId
   , irorWarehouseId         :: WarehouseId
   , irorWarehouseRegion     :: WarehouseRegion
   } deriving (Eq, Show)
@@ -2975,9 +2979,17 @@ data ReceivingOptions = ReceivingOptions
   , ropWarehouseRegion     :: Maybe WarehouseRegion
   } deriving (Eq, Show)
 
-type WarehouseId = Id
+-- type WarehouseId = Id
 
-type WarehouseExternalId = ExternalId
+newtype WarehouseId = WarehouseId
+  { unWarehouseId :: Integer
+  } deriving (Eq, Show, ToJSON, FromJSON)
+
+-- type WarehouseExternalId = ExternalId
+
+newtype WarehouseExternalId = WarehouseExternalId
+  { unWarehouseExternalId :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 instance ToJSON ReceivingOptions where
   toJSON ReceivingOptions {..} = omitNulls ["warehouseId"         .= ropWarehouseId
@@ -6809,18 +6821,18 @@ data CreateOrderOptions = CreateOrderOptions
   , cooServiceLevelCode    :: ServiceLevelCode
   , cooCarrierCode         :: Maybe CarrierCode
   , cooSameDay             :: SameDay
-  , cooForceDuplicate      :: ForceDuplicate
-  , cooForceAddress        :: ForceAddress
+  , cooForceDuplicate      :: Maybe ForceDuplicate
+  , cooForceAddress        :: Maybe ForceAddress
   , cooChannelName         :: Maybe ChannelName
   , cooReferrer            :: Maybe Referrer
   , cooAffiliate           :: Maybe Affiliate
   , cooCurrency            :: Currency
-  , cooCanSplit            :: CanSplit
-  , cooNote                :: Note
-  , cooDiscountCode        :: DiscountCode
-  , cooHold                :: Hold
-  , cooHoldReason          :: HoldReason
-  , cooServer              :: Server
+  , cooCanSplit            :: Maybe CanSplit
+  , cooNote                :: Maybe Note
+  , cooDiscountCode        :: Maybe DiscountCode
+  , cooHold                :: Maybe Hold
+  , cooHoldReason          :: Maybe HoldReason
+  , cooServer              :: Maybe Server
   } deriving (Eq, Show)
 
 instance ToJSON CreateOrderOptions where
@@ -6879,14 +6891,14 @@ data ForceAddress
   deriving (Eq, Show)
 
 instance ToJSON ForceAddress where
-  toJSON ForceAddress     = Number 1
-  toJSON DontForceAddress = Number 0
+  toJSON ForceAddress     = Number 0
+  toJSON DontForceAddress = Number 1
 
 instance FromJSON ForceAddress where
   parseJSON = withScientific "ForceAddress" parse
     where
-      parse 1 = pure ForceAddress
-      parse 0 = pure DontForceAddress
+      parse 0 = pure ForceAddress
+      parse 1 = pure DontForceAddress
       parse o = fail $ "Unexpected ForceAddress: " <> show o
 
 data ForceDuplicate
@@ -6895,14 +6907,14 @@ data ForceDuplicate
   deriving (Eq, Show)
 
 instance ToJSON ForceDuplicate where
-  toJSON ForceDuplicate     = Number 1
-  toJSON DontForceDuplicate = Number 0
+  toJSON ForceDuplicate     = Number 0
+  toJSON DontForceDuplicate = Number 1
 
 instance FromJSON ForceDuplicate where
   parseJSON = withScientific "ForceDuplicate" parse
     where
-      parse 1 = pure ForceDuplicate
-      parse 0 = pure DontForceDuplicate
+      parse 0 = pure ForceDuplicate
+      parse 1 = pure DontForceDuplicate
       parse o = fail $ "Unexpected ForceDuplicate: " <> show o
 
 data SameDay
