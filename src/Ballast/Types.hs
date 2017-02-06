@@ -267,8 +267,8 @@ module Ballast.Types
   , CreateReceiving(..)
   , OrderNo(..)
   , ReceivingOptions(..)
-  , WarehouseId
-  , WarehouseExternalId
+  , WarehouseId(..)
+  , WarehouseExternalId(..)
   , ReceivingArrangement(..)
   , Contact(..)
   , Phone(..)
@@ -643,6 +643,15 @@ module Ballast.Types
   , OrderStatusParam(..)
   , OrderStatus(..)
   , ReferrerParam(..)
+  , CancelOrderRequest
+  , CancelOrderResponse
+  , IdWrapper(..)
+  , GetOrderTrackingsRequest
+  , GetOrderTrackingsResponse(..)
+  , GetOrderTrackingsResponseResource(..)
+  , GetOrderTrackingsResponseResourceItems(..)
+  , GetOrderTrackingsResponseResourceItem(..)
+  , GetOrderTrackingsResponseResourceItemResource(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -918,18 +927,22 @@ instance FromJSON GroupBy where
       parse "warehouse" = pure GroupByWarehouse
       parse o           = fail $ "Unexpected GroupBy: " <> show o
 
-data WarehouseArea =
-  WarehouseAreaUS
-  deriving (Eq, Show)
+-- data WarehouseArea =
+--   WarehouseAreaUS
+--   deriving (Eq, Show)
 
-instance ToJSON WarehouseArea where
-  toJSON WarehouseAreaUS = String "US"
+-- instance ToJSON WarehouseArea where
+--   toJSON WarehouseAreaUS = String "US"
 
-instance FromJSON WarehouseArea where
-  parseJSON = withText "WarehouseArea" parse
-    where
-      parse "US" = pure WarehouseAreaUS
-      parse o    = fail $ "Unexpected WarehouseArea: " <> show o
+-- instance FromJSON WarehouseArea where
+--   parseJSON = withText "WarehouseArea" parse
+--     where
+--       parse "US" = pure WarehouseAreaUS
+--       parse o    = fail $ "Unexpected WarehouseArea: " <> show o
+
+newtype WarehouseArea = WarehouseArea
+  { unWarehouseArea :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 -- defaultRateResponse :: IO RateResponse
 -- defaultRateResponse = do
@@ -2494,7 +2507,7 @@ instance FromJSON ItemResourceOptions where
                 <*> o .:? "resourceLocation"
 
 data ItemResourceOptionsResource = ItemResourceOptionsResource
-  { irorWarehouseExternalid :: Maybe WarehouseExternalId
+  { irorWarehouseExternalId :: Maybe WarehouseExternalId
   , irorWarehouseId         :: WarehouseId
   , irorWarehouseRegion     :: WarehouseRegion
   } deriving (Eq, Show)
@@ -2966,9 +2979,17 @@ data ReceivingOptions = ReceivingOptions
   , ropWarehouseRegion     :: Maybe WarehouseRegion
   } deriving (Eq, Show)
 
-type WarehouseId = Id
+-- type WarehouseId = Id
 
-type WarehouseExternalId = ExternalId
+newtype WarehouseId = WarehouseId
+  { unWarehouseId :: Integer
+  } deriving (Eq, Show, ToJSON, FromJSON)
+
+-- type WarehouseExternalId = ExternalId
+
+newtype WarehouseExternalId = WarehouseExternalId
+  { unWarehouseExternalId :: Text
+  } deriving (Eq, Show, ToJSON, FromJSON)
 
 instance ToJSON ReceivingOptions where
   toJSON ReceivingOptions {..} = omitNulls ["warehouseId"         .= ropWarehouseId
@@ -3398,7 +3419,7 @@ data ModifyProductsResponse = ModifyProductsResponse
   , mprMessage          :: ResponseMessage
   , mprResource         :: GetProductsResponseResource
   , mprWarnings         :: Maybe ResponseWarnings
-  , mprErrors           :: Maybe ResponseErrors
+  , mprErrors           :: Maybe ProductError
   } deriving (Eq, Show)
 
 instance FromJSON ModifyProductsResponse where
@@ -5518,6 +5539,124 @@ instance ShipwireHasParam CreateOrderRequest ExpandOrdersParam
 
 type CreateOrderResponse = GetOrdersResponse
 
+-- | POST /api/v3/orders/{id}/cancel or /api/v3/orders/E{externalId}/cancel
+data CancelOrderRequest
+type instance ShipwireReturn CancelOrderRequest = CancelOrderResponse
+
+type CancelOrderResponse = SimpleResponse
+
+-- | GET /api/v3/orders/{id}/trackings or /api/v3/orders/E{externalId}/trackings
+data GetOrderTrackingsRequest
+type instance ShipwireReturn GetOrderTrackingsRequest = GetOrderTrackingsResponse
+
+data GetOrderTrackingsResponse = GetOrderTrackingsResponse
+  { gotrMessage          :: ResponseMessage
+  , gotrResource         :: GetOrderTrackingsResponseResource
+  , gotrResourceLocation :: ResponseResourceLocation
+  , gotrStatus           :: ResponseStatus
+  , gotrWarnings         :: Maybe ResponseWarnings
+  , gotrErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponse where
+  parseJSON = withObject "GetOrderTrackingsResponse" parse
+    where
+      parse o = GetOrderTrackingsResponse
+                <$> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:  "resourceLocation"
+                <*> o .:  "status"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+data GetOrderTrackingsResponseResource = GetOrderTrackingsResponseResource
+  { gotrrItems    :: GetOrderTrackingsResponseResourceItems
+  , gotrrNext     :: Maybe ResponseNext
+  , gotrrOffset   :: ResponseOffset
+  , gotrrPrevious :: Maybe ResponsePrevious
+  , gotrrTotal    :: ResponseTotal
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResource where
+  parseJSON = withObject "GetOrderTrackingsResponseResource" parse
+    where
+      parse o = GetOrderTrackingsResponseResource
+                <$> o .:  "items"
+                <*> o .:? "next"
+                <*> o .:  "offset"
+                <*> o .:? "previous"
+                <*> o .:  "total"
+
+newtype GetOrderTrackingsResponseResourceItems = GetOrderTrackingsResponseResourceItems
+  { gotrriItems :: [GetOrderTrackingsResponseResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data GetOrderTrackingsResponseResourceItem = GetOrderTrackingsResponseResourceItem
+  { gotrriResource         :: GetOrderTrackingsResponseResourceItemResource
+  , gotrriResourceLocation :: ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResourceItem where
+  parseJSON = withObject "GetOrderTrackingsResponseResourceItem" parse
+    where
+      parse o = GetOrderTrackingsResponseResourceItem
+                <$> o .: "resource"
+                <*> o .: "resourceLocation"
+
+data GetOrderTrackingsResponseResourceItemResource = GetOrderTrackingsResponseResourceItemResource
+  { gotrrirId                  :: Id
+  , gotrrirOrderId             :: OrderId
+  , gottrirOrderExternalId     :: OrderExternalId
+  , gotrrirTracking            :: Tracking
+  , gotrrirCarrier             :: CarrierName
+  , gotrrirUrl                 :: URL
+  , gotrrirSummary             :: Summary
+  , gotrrirSummaryDate         :: SummaryDate
+  , gotrrirLabelCreatedDate    :: LabelCreatedDate
+  , gotrrirTrackedDate         :: TrackedDate
+  , gotrrirFirstScanDate       :: FirstScanDate
+  , gotrrirFirstScanRegion     :: FirstScanRegion
+  , gotrrirFirstScanPostalCode :: FirstScanPostalCode
+  , gotrrirFirstScanCountry    :: FirstScanCountry
+  , gotrrirDeliveredDate       :: DeliveredDate
+  , gotrrirDeliveryCity        :: DeliveryCity
+  , gotrrirDeliveryRegion      :: DeliveryRegion
+  , gotrrirDeliveryPostalCode  :: DeliveryPostalCode
+  , gotrrirDeliveryCountry     :: DeliveryCountry
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderTrackingsResponseResourceItemResource where
+  parseJSON = withObject "GetOrderTrackingsResponseResourceItemResource" parse
+    where
+      parse o = GetOrderTrackingsResponseResourceItemResource
+                <$> o .: "id"
+                <*> o .: "orderId"
+                <*> o .: "orderExternalId"
+                <*> o .: "tracking"
+                <*> o .: "carrier"
+                <*> o .: "url"
+                <*> o .: "summary"
+                <*> o .: "summaryDate"
+                <*> o .: "labelCreatedDate"
+                <*> o .: "trackedDate"
+                <*> o .: "firstScanDate"
+                <*> o .: "firstScanRegion"
+                <*> o .: "firstScanPostalCode"
+                <*> o .: "firstScanCountry"
+                <*> o .: "deliveredDate"
+                <*> o .: "deliveryCity"
+                <*> o .: "deliveryRegion"
+                <*> o .: "deliveryPostalCode"
+                <*> o .: "deliveryCountry"
+
+data IdWrapper = WrappedId Id
+  | WrappedExternalId ExternalId
+  deriving (Eq, Show)
+
+instance ToJSON IdWrapper where
+  toJSON (WrappedId x) = toJSON x
+  toJSON (WrappedExternalId x) = toJSON x
+
 newtype OrderStatusParam = OrderStatusParam
   { unStatusParam :: [OrderStatus]
   } deriving (Eq, Show)
@@ -6618,7 +6757,7 @@ data OrderShipTo = OrderShipTo
   , ostAddress3     :: Maybe AddressLine
   , ostCity         :: City
   , ostState        :: State
-  , ostPostalCode   :: PostalCode
+  , ostPostalCode   :: Maybe PostalCode
   , ostCountry      :: Country
   , ostPhone        :: Phone
   , ostIsCommercial :: IsCommercial
@@ -6644,19 +6783,19 @@ instance FromJSON OrderShipTo where
   parseJSON = withObject "OrderShpTo" parse
     where
       parse o = OrderShipTo
-                <$> o .: "email"
-                <*> o .: "name"
-                <*> o .: "company"
-                <*> o .: "address1"
-                <*> o .: "address2"
-                <*> o .: "address3"
-                <*> o .: "city"
-                <*> o .: "state"
-                <*> o .: "postalCode"
-                <*> o .: "country"
-                <*> o .: "phone"
-                <*> o .: "isCommercial"
-                <*> o .: "isPoBox"
+                <$> o .:  "email"
+                <*> o .:  "name"
+                <*> o .:  "company"
+                <*> o .:  "address1"
+                <*> o .:  "address2"
+                <*> o .:  "address3"
+                <*> o .:  "city"
+                <*> o .:  "state"
+                <*> o .:? "postalCode"
+                <*> o .:  "country"
+                <*> o .:  "phone"
+                <*> o .:  "isCommercial"
+                <*> o .:  "isPoBox"
 
 newtype OrderShipFrom = OrderShipFrom
   { osfCompany :: Maybe ShipFromCompany
@@ -6682,18 +6821,18 @@ data CreateOrderOptions = CreateOrderOptions
   , cooServiceLevelCode    :: ServiceLevelCode
   , cooCarrierCode         :: Maybe CarrierCode
   , cooSameDay             :: SameDay
-  , cooForceDuplicate      :: ForceDuplicate
-  , cooForceAddress        :: ForceAddress
+  , cooForceDuplicate      :: Maybe ForceDuplicate
+  , cooForceAddress        :: Maybe ForceAddress
   , cooChannelName         :: Maybe ChannelName
   , cooReferrer            :: Maybe Referrer
   , cooAffiliate           :: Maybe Affiliate
   , cooCurrency            :: Currency
-  , cooCanSplit            :: CanSplit
-  , cooNote                :: Note
-  , cooDiscountCode        :: DiscountCode
-  , cooHold                :: Hold
-  , cooHoldReason          :: HoldReason
-  , cooServer              :: Server
+  , cooCanSplit            :: Maybe CanSplit
+  , cooNote                :: Maybe Note
+  , cooDiscountCode        :: Maybe DiscountCode
+  , cooHold                :: Maybe Hold
+  , cooHoldReason          :: Maybe HoldReason
+  , cooServer              :: Maybe Server
   } deriving (Eq, Show)
 
 instance ToJSON CreateOrderOptions where
@@ -6752,14 +6891,14 @@ data ForceAddress
   deriving (Eq, Show)
 
 instance ToJSON ForceAddress where
-  toJSON ForceAddress     = Number 1
-  toJSON DontForceAddress = Number 0
+  toJSON ForceAddress     = Number 0
+  toJSON DontForceAddress = Number 1
 
 instance FromJSON ForceAddress where
   parseJSON = withScientific "ForceAddress" parse
     where
-      parse 1 = pure ForceAddress
-      parse 0 = pure DontForceAddress
+      parse 0 = pure ForceAddress
+      parse 1 = pure DontForceAddress
       parse o = fail $ "Unexpected ForceAddress: " <> show o
 
 data ForceDuplicate
@@ -6768,14 +6907,14 @@ data ForceDuplicate
   deriving (Eq, Show)
 
 instance ToJSON ForceDuplicate where
-  toJSON ForceDuplicate     = Number 1
-  toJSON DontForceDuplicate = Number 0
+  toJSON ForceDuplicate     = Number 0
+  toJSON DontForceDuplicate = Number 1
 
 instance FromJSON ForceDuplicate where
   parseJSON = withScientific "ForceDuplicate" parse
     where
-      parse 1 = pure ForceDuplicate
-      parse 0 = pure DontForceDuplicate
+      parse 0 = pure ForceDuplicate
+      parse 1 = pure DontForceDuplicate
       parse o = fail $ "Unexpected ForceDuplicate: " <> show o
 
 data SameDay

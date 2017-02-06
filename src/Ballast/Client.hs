@@ -219,6 +219,28 @@ createOrder co = request
     url = "/orders"
     params = [Body (encode co)]
 
+-- | Cancel this order.
+-- https://www.shipwire.com/w/developers/order/#panel-shipwire4
+cancelOrder :: IdWrapper -> ShipwireRequest CancelOrderRequest TupleBS8 BSL.ByteString
+cancelOrder idw = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = case idw of
+      (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x, "/cancel"]
+      (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x, "/cancel"]
+    params = []
+
+-- | Get tracking information for this order.
+-- https://www.shipwire.com/w/developers/order/#panel-shipwire7
+getOrderTrackings :: IdWrapper -> ShipwireRequest GetOrderTrackingsRequest TupleBS8 BSL.ByteString
+getOrderTrackings idwr = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = case idwr of
+      (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x, "/trackings"]
+      (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x, "/trackings"]
+    params = []
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
