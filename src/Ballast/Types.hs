@@ -725,16 +725,26 @@ instance ToJSON GetRate where
                                ,"order"   .= rateOrder]
 
 data RateOptions = RateOptions
-  { rateOptionCurrency            :: Currency
-  , rateOptionGroupBy             :: GroupBy
-  , rateOptionWarehouseId         :: Maybe WarehouseId
-  , rateOptionWarehouseExternalId :: Maybe WarehouseExternalId
-  , rateOptionWarehouseRegion     :: Maybe WarehouseRegion
-  , rateOptionIgnoreUnknownSkus   :: Maybe IgnoreUnknownSkus
-  , rateOptionCanSplit            :: CanSplit
-  , rateOptionWarehouseArea       :: WarehouseArea
-  , rateOptionChannelName         :: Maybe ChannelName
+  { rateOptionCurrency              :: Currency
+  , rateOptionGroupBy               :: GroupBy
+  , rateOptionWarehouseId           :: Maybe WarehouseId
+  , rateOptionWarehouseExternalId   :: Maybe WarehouseExternalId
+  , rateOptionWarehouseRegion       :: Maybe WarehouseRegion
+  , rateOptionIgnoreUnknownSkus     :: Maybe IgnoreUnknownSkus
+  , rateOptionCanSplit              :: CanSplit
+  , rateOptionWarehouseArea         :: WarehouseArea
+  , rateOptionChannelName           :: Maybe ChannelName
+  , rateOptionExpectedShipDate      :: Maybe ExpectedShipDate
+  , rateOptionHighAccuracyEstimates :: Maybe HighAccuracyEstimates
   } deriving (Eq, Show)
+
+data HighAccuracyEstimates = HighAccuracyEstimates
+  | NoHighAccuracyEstimates
+  deriving (Eq, Show)
+
+instance ToJSON HighAccuracyEstimates where
+  toJSON HighAccuracyEstimates   = Number 1
+  toJSON NoHighAccuracyEstimates = Number 0
 
 data IgnoreUnknownSkus = IgnoreUnknownSkus
   | DontIgnoreUnknownSkus
@@ -745,15 +755,17 @@ instance ToJSON IgnoreUnknownSkus where
   toJSON DontIgnoreUnknownSkus = Number 0
 
 instance ToJSON RateOptions where
-  toJSON RateOptions {..} = omitNulls ["currency"            .= rateOptionCurrency
-                                      ,"groupBy"             .= rateOptionGroupBy
-                                      ,"warehouseId"         .= rateOptionWarehouseId
-                                      ,"warehouseExternalId" .= rateOptionWarehouseExternalId
-                                      ,"warehouseRegion"     .= rateOptionWarehouseRegion
-                                      ,"ignoreUnknownSkus"   .= rateOptionIgnoreUnknownSkus
-                                      ,"canSplit"            .= rateOptionCanSplit
-                                      ,"warehouseArea"       .= rateOptionWarehouseArea
-                                      ,"channelName"         .= rateOptionChannelName]
+  toJSON RateOptions {..} = omitNulls ["currency"              .= rateOptionCurrency
+                                      ,"groupBy"               .= rateOptionGroupBy
+                                      ,"warehouseId"           .= rateOptionWarehouseId
+                                      ,"warehouseExternalId"   .= rateOptionWarehouseExternalId
+                                      ,"warehouseRegion"       .= rateOptionWarehouseRegion
+                                      ,"ignoreUnknownSkus"     .= rateOptionIgnoreUnknownSkus
+                                      ,"canSplit"              .= rateOptionCanSplit
+                                      ,"warehouseArea"         .= rateOptionWarehouseArea
+                                      ,"channelName"           .= rateOptionChannelName
+                                      ,"expectedShipDate"      .= rateOptionExpectedShipDate
+                                      ,"highAccuracyEstimates" .= rateOptionHighAccuracyEstimates]
 
 -- newtype CanSplit = CanSplit
 --   { unCanSplit :: Integer
@@ -1188,6 +1200,9 @@ newtype WarehouseName = WarehouseName
 newtype ExpectedShipDate = ExpectedShipDate
   { unExpectedShipDate :: UTCTime
   } deriving (Eq, Show, FromJSON)
+
+instance ToJSON ExpectedShipDate where
+  toJSON (ExpectedShipDate x) = object ["expectedShipDate" .= utcToShipwire x]
 
 type ExpectedDeliveryDateMin = ExpectedShipDate
 
