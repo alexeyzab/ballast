@@ -177,7 +177,7 @@ modifyProducts mpr = request
 -- | Modify a product.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire3
 modifyProduct :: CreateProductsWrapper -> Id -> ShipwireRequest ModifyProductRequest TupleBS8 BSL.ByteString
-modifyProduct mpr productId= request
+modifyProduct mpr productId = request
   where
     request = mkShipwireRequest NHTM.methodPut url params
     url = T.append "/products/" $ T.pack . show $ unId productId
