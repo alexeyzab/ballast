@@ -36,7 +36,7 @@ exampleCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 155000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -64,7 +64,7 @@ exampleBadCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 100000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -92,7 +92,7 @@ exampleModifiedReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 100000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -272,8 +272,8 @@ exampleCreateProduct productId =
                             ShouldNotFold
                           )
                           (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
-                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
+                            (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
                             (Just $ InsertWhenWorthValue 5)
                             (Just $ InsertWhenQuantity 5)
                             (Just $ InsertWhenWorthCurrency "USD")
@@ -727,8 +727,8 @@ exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
                             ShouldNotFold
                           )
                           (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
-                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
+                            (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
                             (Just $ InsertWhenWorthValue 5)
                             (Just $ InsertWhenQuantity 5)
                             (Just $ InsertWhenWorthCurrency "USD")
