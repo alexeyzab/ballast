@@ -8,15 +8,16 @@ import           Ballast.Types
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
-import           Data.Time.Clock (UTCTime, getCurrentTime, utctDayTime)
+import           Data.Time (Day(..), secondsToDiffTime)
+import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDayTime)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 
 mkGetRate :: RateOptions -> RateOrder -> GetRate
 mkGetRate ropts rord = GetRate ropts rord
 
-exampleItems :: Items
-exampleItems = [ItemInfo ((SKU "HspecTest8"), Quantity 5)]
+exampleItems :: SKU -> Items
+exampleItems productSku = [ItemInfo ((productSku), Quantity 5)]
 
 exampleShipTo :: ShipTo
 exampleShipTo =
@@ -31,12 +32,12 @@ exampleShipTo =
     Commercial
     NotPoBox
 
-exampleCreateReceiving :: CreateReceiving
-exampleCreateReceiving =
+exampleCreateReceiving :: SKU -> CreateReceiving
+exampleCreateReceiving productSku =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 155000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -46,7 +47,7 @@ exampleCreateReceiving =
        [ReceivingShipment Nothing Nothing Nothing Nothing $ Type "box"])
     Nothing
     Nothing
-    (ReceivingItems [ReceivingItem (SKU "HspecTest8") (Quantity 5)])
+    (ReceivingItems [ReceivingItem (productSku) (Quantity 5)])
     (ReceivingShipFrom
        Nothing
        (Name "Stephen Alexander")
@@ -64,7 +65,7 @@ exampleBadCreateReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 100000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -92,7 +93,7 @@ exampleModifiedReceiving =
   CreateReceiving
     Nothing
     Nothing
-    (Just $ ExpectedDate $ (read "2016-11-19 18:28:52 UTC" :: UTCTime))
+    (Just $ ExpectedDate $ UTCTime (ModifiedJulianDay 100000) (secondsToDiffTime 10))
     (ReceivingOptions Nothing Nothing $ Just $ WarehouseRegion "TEST 1")
     (ReceivingArrangement
        ArrangementTypeNone
@@ -116,7 +117,7 @@ exampleModifiedReceiving =
     Nothing
 
 -- | Takes a product id as an integer and inserts it in the right spot.
-exampleCreateProduct :: Integer -> [CreateProductsWrapper]
+exampleCreateProduct :: ProductId -> [CreateProductsWrapper]
 exampleCreateProduct productId =
                        [CpwVirtualKit $ VirtualKit
                           Nothing
@@ -125,7 +126,7 @@ exampleCreateProduct productId =
                           (Description "This is a virtual kit test")
                           (VirtualKitContent
                             [(VirtualKitContentObject
-                              (Just $ ProductId productId)
+                              (Just $ productId)
                               Nothing
                               (Quantity 5)
                             )
@@ -137,7 +138,7 @@ exampleCreateProduct productId =
                           Nothing
                           (KitClassification)
                           (Description "This is a kit test")
-                          (BatteryConfiguration "HASLOOSEBATTERY")
+                          (HasLooseBatteryConfiguration)
                           (Just $ HsCode "010612")
                           (Just $ CountryOfOrigin "US")
                           (KitValues
@@ -154,7 +155,7 @@ exampleCreateProduct productId =
                           -- product and get back that product's id.
                           (KitContent
                             [KitContentObject
-                              (Just $ ProductId productId)
+                              (Just $ productId)
                               Nothing
                               (Quantity 5)
                             ]
@@ -175,85 +176,10 @@ exampleCreateProduct productId =
                               (Just $ CapacityUnit "WATTHOUR")
                             )
                           )
-                          (KitFlags
-                            NotPackagedReadyToShip
-                            NotFragile
-                            NotDangerous
-                            NotPerishable
-                            NotMedia
-                            NotAdult
-                            Liquid
-                            HasBattery
-                            HasInnerPack
-                            HasMasterCase
-                            HasPallet
-                          )
-                          (KitInnerPack
-                           (IndividualItemsPerCase 2)
-                           (SKU "KitInnerPack")
-                           (Description "This is a test for kit inner pack")
-                           (KitValues
-                             (CostValue 1)
-                             (WholesaleValue 2)
-                             (RetailValue 4)
-                             (Just $ CostCurrency "USD")
-                             (Just $ WholesaleCurrency "USD")
-                             (Just $ RetailCurrency "USD")
-                           )
-                           (KitDimensions
-                             (KitLength 2)
-                             (KitWidth 2)
-                             (KitHeight 2)
-                             (KitWeight 2)
-                           )
-                           (KitInnerPackFlags
-                             NotPackagedReadyToShip
-                           )
-                          )
-                          (KitMasterCase
-                            (IndividualItemsPerCase 10)
-                            (SKU "KitMasterCase")
-                            (Description "This is a test for kit master case")
-                            (KitValues
-                              (CostValue 1)
-                              (WholesaleValue 2)
-                              (RetailValue 4)
-                              (Just $ CostCurrency "USD")
-                              (Just $ WholesaleCurrency "USD")
-                              (Just $ RetailCurrency "USD")
-                            )
-                            (KitDimensions
-                              (KitLength 4)
-                              (KitWidth 4)
-                              (KitHeight 4)
-                              (KitWeight 4)
-                            )
-                            (KitMasterCaseFlags
-                              NotPackagedReadyToShip
-                            )
-                          )
-                          (KitPallet
-                            (IndividualItemsPerCase 1000)
-                            (SKU "KitPallet")
-                            (Description "A pallet for hspec kit")
-                            (KitValues
-                              (CostValue 1)
-                              (WholesaleValue 2)
-                              (RetailValue 4)
-                              (Just $ CostCurrency "USD")
-                              (Just $ WholesaleCurrency "USD")
-                              (Just $ RetailCurrency "USD")
-                            )
-                            (KitDimensions
-                              (KitLength 8)
-                              (KitWidth 8)
-                              (KitHeight 8)
-                              (KitWeight 8)
-                            )
-                            (KitPalletFlags
-                              NotPackagedReadyToShip
-                            )
-                          ),
+                          (Nothing)
+                          (Nothing)
+                          (Nothing)
+                          (Nothing),
                         CpwMarketingInsert $ MarketingInsert
                           Nothing
                           (SKU "HspecTestInsert3")
@@ -268,12 +194,10 @@ exampleCreateProduct productId =
                             (MarketingInsertHeight 0.1)
                             (MarketingInsertWeight 0.2)
                           )
-                          (MarketingInsertFlags
-                            ShouldNotFold
-                          )
+                          (Nothing)
                           (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
-                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
+                            (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
                             (Just $ InsertWhenWorthValue 5)
                             (Just $ InsertWhenQuantity 5)
                             (Just $ InsertWhenWorthCurrency "USD")
@@ -292,420 +216,142 @@ exampleCreateProduct productId =
                           ),
                         CpwBaseProduct $ BaseProduct
                           Nothing
-                          (SKU "HspecTest8")
+                          (SKU "HspecTest9")
                           Nothing
                           (BaseProductClassification)
                           (Description "Hspec test product2")
-                          (Just $ HsCode "010612")
-                          (Just $ CountryOfOrigin "US")
+                          (Nothing)
+                          (Nothing)
                           (Category "TOYS_SPORTS_HOBBIES")
-                          (BatteryConfiguration "ISBATTERY")
+                          (NoBatteryConfiguration)
                           (Values
                             (CostValue 1)
-                            (WholesaleValue 2)
+                            (Nothing)
                             (RetailValue 4)
                             (Just $ CostCurrency "USD")
                             (Just $ WholesaleCurrency "USD")
                             (Just $ RetailCurrency "USD")
                           )
-                          (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt7")])
+                          (Nothing)
                           (BaseProductDimensions
                             (BaseProductLength 10)
                             (BaseProductWidth 10)
                             (BaseProductHeight 10)
                             (BaseProductWeight 10)
                           )
-                          (BaseProductTechnicalData
-                            (BaseProductTechnicalDataBattery
-                                (Just $ BatteryType "ALKALINE")
-                                (Just $ BatteryWeight 3)
-                                (Just $ NumberOfBatteries 5)
-                                (Just $ Capacity 6)
-                                (Just $ NumberOfCells 7)
-                                (Just $ CapacityUnit "WATTHOUR")
-                            )
-                          )
-                          (BaseProductFlags
-                            PackagedReadyToShip
-                            Fragile
-                            NotDangerous
-                            NotPerishable
-                            NotMedia
-                            NotAdult
-                            NotLiquid
-                            HasInnerPack
-                            HasMasterCase
-                            HasPallet
-                          )
-                          (BaseProductInnerPack
-                            (IndividualItemsPerCase 2)
-                            (Just $ ExternalId "narp3")
-                            (SKU "singleInner3")
-                            (Description "InnerDec3")
-                            (Values
-                                (CostValue 1)
-                                (WholesaleValue 2)
-                                (RetailValue 4)
-                                (Just $ CostCurrency "USD")
-                                (Just $ WholesaleCurrency "USD")
-                                (Just $ RetailCurrency "USD")
-                            )
-                            (BaseProductDimensions
-                                (BaseProductLength 20)
-                                (BaseProductWidth 20)
-                                (BaseProductHeight 20)
-                                (BaseProductWeight 20)
-                            )
-                            (BaseProductInnerPackFlags
-                                NotPackagedReadyToShip
-                            )
-                          )
-                          (BaseProductMasterCase
-                            (IndividualItemsPerCase 10)
-                            (Just $ ExternalId "narp4")
-                            (SKU "singleMaster4")
-                            (Description "masterdesc4")
-                            (Values
-                                (CostValue 1)
-                                (WholesaleValue 2)
-                                (RetailValue 4)
-                                (Just $ CostCurrency "USD")
-                                (Just $ WholesaleCurrency "USD")
-                                (Just $ RetailCurrency "USD")
-                            )
-                            (BaseProductDimensions
-                                (BaseProductLength 30)
-                                (BaseProductWidth 30)
-                                (BaseProductHeight 30)
-                                (BaseProductWeight 30)
-                            )
-                            (BaseProductMasterCaseFlags PackagedReadyToShip)
-                          )
-                          (BaseProductPallet
-                            (IndividualItemsPerCase 1000)
-                            (Just $ ExternalId "narp5")
-                            (SKU "singlePallet5")
-                            (Description "palletdesc5")
-                            (Values
-                                (CostValue 1)
-                                (WholesaleValue 2)
-                                (RetailValue 4)
-                                (Just $ CostCurrency "USD")
-                                (Just $ WholesaleCurrency "USD")
-                                (Just $ RetailCurrency "USD")
-                            )
-                            (BaseProductDimensions
-                                (BaseProductLength 40)
-                                (BaseProductWidth 40)
-                                (BaseProductHeight 40)
-                                (BaseProductWeight 40)
-                            )
-                            (BaseProductPalletFlags
-                                NotPackagedReadyToShip
-                            )
-                          )
+                          (Nothing)
+                          (Nothing)
+                          (Nothing)
+                          (Nothing)
+                          (Nothing)
                         ]
 
-exampleModifyProducts :: Integer -> [CreateProductsWrapper]
-exampleModifyProducts productId =
+exampleModifyProducts :: Id -> SKU -> [CreateProductsWrapper]
+exampleModifyProducts i sku =
   [ CpwBaseProduct $
     BaseProduct
-      (Just $ Id productId)
-      (SKU "HspecTest8")
-      (Just $ ExternalId "hspectest88")
+      (Just i)
+      (sku)
+      (Nothing)
       (BaseProductClassification)
       (Description "Modified description")
-      (Just $ HsCode "010612")
-      (Just $ CountryOfOrigin "US")
+      (Nothing)
+      (Nothing)
       (Category "TOYS_SPORTS_HOBBIES")
-      (BatteryConfiguration "ISBATTERY")
+      (NoBatteryConfiguration)
       (Values
          (CostValue 1)
-         (WholesaleValue 2)
+         (Nothing)
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt7")])
+      (Nothing)
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (BaseProductTechnicalData
-         (BaseProductTechnicalDataBattery
-            (Just $ BatteryType "ALKALINE")
-            (Just $ BatteryWeight 3)
-            (Just $ NumberOfBatteries 5)
-            (Just $ Capacity 6)
-            (Just $ NumberOfCells 7)
-            (Just $ CapacityUnit "WATTHOUR")))
-      (BaseProductFlags
-         PackagedReadyToShip
-         Fragile
-         NotDangerous
-         NotPerishable
-         NotMedia
-         NotAdult
-         NotLiquid
-         HasInnerPack
-         HasMasterCase
-         HasPallet)
-      (BaseProductInnerPack
-         (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp101010")
-         (SKU "singleInner6")
-         (Description "InnerDesc6")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 20)
-            (BaseProductWidth 20)
-            (BaseProductHeight 20)
-            (BaseProductWeight 20))
-         (BaseProductInnerPackFlags NotPackagedReadyToShip))
-      (BaseProductMasterCase
-         (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp11")
-         (SKU "singleMaster7")
-         (Description "masterdesc7")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 30)
-            (BaseProductWidth 30)
-            (BaseProductHeight 30)
-            (BaseProductWeight 30))
-         (BaseProductMasterCaseFlags PackagedReadyToShip))
-      (BaseProductPallet
-         (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp10")
-         (SKU "singlePallet6")
-         (Description "palletdesc6")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 40)
-            (BaseProductWidth 40)
-            (BaseProductHeight 40)
-            (BaseProductWeight 40))
-         (BaseProductPalletFlags NotPackagedReadyToShip))
+      (Nothing)
+      (Nothing)
+      (Nothing)
+      (Nothing)
+      (Nothing)
   ]
 
-exampleModifyProduct :: Integer -> CreateProductsWrapper
-exampleModifyProduct productId =
+exampleModifyProduct :: Id -> SKU -> CreateProductsWrapper
+exampleModifyProduct prId prSku =
   CpwBaseProduct $
     BaseProduct
-      (Just $ Id productId)
-      (SKU "HspecTest8")
-      (Just $ ExternalId "hspectest88")
+      (Just prId)
+      (prSku)
+      (Nothing)
       (BaseProductClassification)
       (Description "Modified description")
-      (Just $ HsCode "010612")
-      (Just $ CountryOfOrigin "US")
+      (Nothing)
+      (Nothing)
       (Category "TOYS_SPORTS_HOBBIES")
-      (BatteryConfiguration "ISBATTERY")
+      (NoBatteryConfiguration)
       (Values
          (CostValue 1)
-         (WholesaleValue 2)
+         (Nothing)
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt8")])
+      (Nothing)
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (BaseProductTechnicalData
-         (BaseProductTechnicalDataBattery
-            (Just $ BatteryType "ALKALINE")
-            (Just $ BatteryWeight 3)
-            (Just $ NumberOfBatteries 5)
-            (Just $ Capacity 6)
-            (Just $ NumberOfCells 7)
-            (Just $ CapacityUnit "WATTHOUR")))
-      (BaseProductFlags
-         PackagedReadyToShip
-         Fragile
-         NotDangerous
-         NotPerishable
-         NotMedia
-         NotAdult
-         NotLiquid
-         HasInnerPack
-         HasMasterCase
-         HasPallet)
-      (BaseProductInnerPack
-         (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp111010")
-         (SKU "singleInner88")
-         (Description "InnerDesc7")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 20)
-            (BaseProductWidth 20)
-            (BaseProductHeight 20)
-            (BaseProductWeight 20))
-         (BaseProductInnerPackFlags NotPackagedReadyToShip))
-      (BaseProductMasterCase
-         (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp12")
-         (SKU "singleMaster8")
-         (Description "masterdesc8")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 30)
-            (BaseProductWidth 30)
-            (BaseProductHeight 30)
-            (BaseProductWeight 30))
-         (BaseProductMasterCaseFlags PackagedReadyToShip))
-      (BaseProductPallet
-         (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp11")
-         (SKU "singlePallet7")
-         (Description "palletdesc7")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 40)
-            (BaseProductWidth 40)
-            (BaseProductHeight 40)
-            (BaseProductWeight 40))
-         (BaseProductPalletFlags NotPackagedReadyToShip))
+      (Nothing)
+      (Nothing)
+      (Nothing)
+      (Nothing)
+      (Nothing)
 
-exampleCreateBaseProduct :: [CreateProductsWrapper]
-exampleCreateBaseProduct =
+exampleCreateBaseProduct :: T.Text -> [CreateProductsWrapper]
+exampleCreateBaseProduct randomSecond =
   [ CpwBaseProduct $
     BaseProduct
       Nothing
-      (SKU "HspecTest8")
-      (Just $ ExternalId "hspectest10")
+      (SKU $ "HspecTest" <> randomSecond)
+      (Just $ ExternalId $ "hspectest" <> randomSecond)
       (BaseProductClassification)
       (Description "Hspec test product5")
       (Just $ HsCode "010612")
       (Just $ CountryOfOrigin "US")
       (Category "TOYS_SPORTS_HOBBIES")
-      (BatteryConfiguration "ISBATTERY")
+      (NoBatteryConfiguration)
       (Values
          (CostValue 1)
-         (WholesaleValue 2)
+         (Nothing)
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (BaseProductAlternateNames [BaseProductAlternateName (Name "HspecAlt77")])
+      (Nothing)
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (BaseProductTechnicalData
-         (BaseProductTechnicalDataBattery
-            (Just $ BatteryType "ALKALINE")
-            (Just $ BatteryWeight 3)
-            (Just $ NumberOfBatteries 5)
-            (Just $ Capacity 6)
-            (Just $ NumberOfCells 7)
-            (Just $ CapacityUnit "WATTHOUR")))
-      (BaseProductFlags
-         PackagedReadyToShip
-         Fragile
-         NotDangerous
-         NotPerishable
-         NotMedia
-         NotAdult
-         NotLiquid
-         HasInnerPack
-         HasMasterCase
-         HasPallet)
-      (BaseProductInnerPack
-         (IndividualItemsPerCase 2)
-         (Just $ ExternalId "narp222")
-         (SKU "singleInner99")
-         (Description "InnerDesc88")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 20)
-            (BaseProductWidth 20)
-            (BaseProductHeight 20)
-            (BaseProductWeight 20))
-         (BaseProductInnerPackFlags NotPackagedReadyToShip))
-      (BaseProductMasterCase
-         (IndividualItemsPerCase 10)
-         (Just $ ExternalId "narp1111")
-         (SKU "singleMaster99")
-         (Description "masterdesc99")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 30)
-            (BaseProductWidth 30)
-            (BaseProductHeight 30)
-            (BaseProductWeight 30))
-         (BaseProductMasterCaseFlags PackagedReadyToShip))
-      (BaseProductPallet
-         (IndividualItemsPerCase 1000)
-         (Just $ ExternalId "narp113")
-         (SKU "singlePallet88")
-         (Description "palletdesc88")
-         (Values
-            (CostValue 1)
-            (WholesaleValue 2)
-            (RetailValue 4)
-            (Just $ CostCurrency "USD")
-            (Just $ WholesaleCurrency "USD")
-            (Just $ RetailCurrency "USD"))
-         (BaseProductDimensions
-            (BaseProductLength 40)
-            (BaseProductWidth 40)
-            (BaseProductHeight 40)
-            (BaseProductWeight 40))
-         (BaseProductPalletFlags NotPackagedReadyToShip))
+      (Nothing)
+      (Just $ BaseProductFlags
+        (PackagedReadyToShip)
+        (NotFragile)
+        (NotDangerous)
+        (NotPerishable)
+        (NotMedia)
+        (NotAdult)
+        (NotLiquid)
+        (NoInnerPack)
+        (NoMasterCase)
+        (NoPallet))
+      (Nothing)
+      (Nothing)
+      (Nothing)
   ]
 
 exampleCreateMarketingInsert :: [CreateProductsWrapper]
@@ -723,12 +369,10 @@ exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
                             (MarketingInsertHeight 0.1)
                             (MarketingInsertWeight 0.2)
                           )
-                          (MarketingInsertFlags
-                            ShouldNotFold
-                          )
+                          (Nothing)
                           (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
-                            (Just $ InsertBeforeDate $ (read "3011-11-19 18:28:52 UTC" :: UTCTime))
+                            (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
+                            (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
                             (Just $ InsertWhenWorthValue 5)
                             (Just $ InsertWhenQuantity 5)
                             (Just $ InsertWhenWorthCurrency "USD")
@@ -747,11 +391,11 @@ exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
                           )
                         ]
 
-exampleOrder :: T.Text -> CreateOrder
-exampleOrder r =
+exampleOrder :: T.Text -> SKU -> CreateOrder
+exampleOrder randomPart productSku =
   CreateOrder
     Nothing
-    (Just $ OrderNo (T.concat ["testorder", r]))
+    (Just $ OrderNo (T.concat ["testorder", randomPart]))
     Nothing
     Nothing
     (Just $ CreateOrderOptions
@@ -774,7 +418,7 @@ exampleOrder r =
       (Nothing)
       (Nothing)
       (Nothing)
-    )  
+    )
     Nothing
     (OrderShipTo
       (Email "test@example.com")
@@ -793,7 +437,7 @@ exampleOrder r =
     )
     Nothing
     Nothing
-    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (SKU "HspecTest8")])
+    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (productSku)])
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -806,7 +450,7 @@ createReceivingHelper conf cr = do
       receivingId = T.pack $ show $ unId rirId
   return (receiving, ReceivingId receivingId)
 
-createBaseProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
+createBaseProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id, SKU)
 createBaseProductHelper conf cp = do
   baseProduct <- shipwire conf $ createProduct cp
   let Right GetProductsResponse {..} = baseProduct
@@ -814,10 +458,11 @@ createBaseProductHelper conf cp = do
       GetProductsResponseResourceItems {..} = gprrItems
       GetProductsResponseResourceItem {..} = last gprriItems
       pwBaseProduct@(PwBaseProduct x) = gprriResource
-      productId = unId $ bprId $ unwrapBaseProduct pwBaseProduct
-  return (baseProduct, productId)
+      productId = bprId $ unwrapBaseProduct pwBaseProduct
+      productSku = bprSku $ unwrapBaseProduct pwBaseProduct
+  return (baseProduct, productId, productSku)
 
-createMarketingInsertHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Integer)
+createMarketingInsertHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id)
 createMarketingInsertHelper conf cp = do
   marketingInsert <- shipwire conf $ createProduct cp
   let Right GetProductsResponse {..} = marketingInsert
@@ -825,10 +470,10 @@ createMarketingInsertHelper conf cp = do
       GetProductsResponseResourceItems {..} = gprrItems
       GetProductsResponseResourceItem {..} = last gprriItems
       pwMarketingInsert@(PwMarketingInsert x) = gprriResource
-      productId = unId $ mirId $ unwrapMarketingInsert pwMarketingInsert
+      productId = mirId $ unwrapMarketingInsert pwMarketingInsert
   return (marketingInsert, productId)
 
-createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Integer)
+createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Id)
 createOrderHelper conf co = do
   order <- shipwire conf $ createOrder co
   exampleOrd <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
@@ -837,8 +482,8 @@ createOrderHelper conf co = do
       GetOrdersResponseResourceItems {..} = gorrItems
       GetOrdersResponseResourceItem {..} = head $ gorriItems
       GetOrdersResponseResourceItemResource {..} = gorriResource
-      (Id orderId) = gorrirId
-  return (order, orderId)
+      proId = gorrirId
+  return (order, proId)
 
 getOrderNo :: CreateOrder -> [T.Text]
 getOrderNo co = (unOrderNo $ fromJust $ coOrderNo co) : []
@@ -893,6 +538,27 @@ getAllReceivingsIds rr = do
       ids = map (unId . rirId . receivingsItemResource) $ unReceivingsItems receivingsItems
   return ids
 
+-- dumpStuff = do
+--   t <- getCurrentTimeInSeconds
+--   let result = encode $ exampleOrder t
+--   return result
+
+tryStuff = do
+  let t = "123" :: T.Text
+  config <- sandboxEnvConfig
+  randomPart <- getTimestamp
+  -- (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+  (result, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+  return result
+
+-- seeStuff = do
+--   config <- sandboxEnvConfig
+--   (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+--   randomPart <- getCurrentTimeInSeconds
+--   (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
+--   result <- shipwire config $ getOrderTrackings $ WrappedId $ Id orderId
+--   return result
+
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
 unwrapBaseProduct (PwBaseProduct x) = x
 unwrapBaseProduct _ = error "Bad input"
@@ -923,24 +589,27 @@ unwrapPwVirtualKit (_:xs) = unwrapPwVirtualKit xs
 
 main :: IO ()
 main = do
+
   config <- sandboxEnvConfig
   hspec $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) CanSplit (WarehouseArea "US") Nothing) (RateOrder exampleShipTo exampleItems)
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) CanSplit (WarehouseArea "US") Nothing Nothing Nothing) (RateOrder exampleShipTo (exampleItems productSku))
         result <- shipwire config $ createRateRequest getRt
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right RateResponse {..} = result
         rateResponseWarnings `shouldBe` Nothing
         rateResponseErrors `shouldBe` Nothing
 
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getTimestamp
+        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ getStockInfo -&- (SKU "HspecTest5")
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right StockResponse {..} = result
         stockResponseWarnings `shouldBe` Nothing
@@ -948,31 +617,34 @@ main = do
 
     describe "get receivings" $ do
       it "gets an itemized list of receivings with optional args" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (ReceivingStatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
-                                                  -&- (UpdatedAfter $ (read "2017-11-19 18:28:52 UTC" :: UTCTime))
+                                                  -&- (UpdatedAfter $ (UTCTime (ModifiedJulianDay 88000) (secondsToDiffTime 10)))
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
 
     describe "create a new receiving" $ do
       it "creates a new receiving with optional args" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (receiving, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (receiving, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         receiving `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right ReceivingsResponse {..} = receiving
         receivingsResponseErrors `shouldBe` Nothing
         receivingsResponseWarnings `shouldBe` Nothing
 
       it "doesn't create a receiving with bad JSON" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getTimestamp
+        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ createReceiving exampleBadCreateReceiving
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right ReceivingsResponse {..} = result
         receivingsResponseErrors `shouldBe`
           Just
@@ -986,20 +658,22 @@ main = do
 
     describe "get information about a receiving" $ do
       it "gets info about a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right ReceivingResponse {..} = result
         receivingResponseErrors `shouldBe` Nothing
         receivingResponseWarnings `shouldBe` Nothing
 
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
         let Right ReceivingsResponse {..} = result
@@ -1007,7 +681,7 @@ main = do
         receivingsResponseWarnings `shouldBe` Nothing
         modifiedReceiving <- shipwire config $ getReceiving receivingId
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right ReceivingResponse {..} = modifiedReceiving
             ReceivingsItemResource {..} = receivingResponseResource
             ItemResourceShipFrom {..} = rirShipFrom
@@ -1016,143 +690,156 @@ main = do
 
     describe "cancel a receiving" $ do
       it "cancels a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Receiving was cancelled")
 
     describe "cancel shipping labels" $ do
       it "cancels shipping labels on a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ cancelReceivingLabels receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Labels cancelled")
 
     describe "get list of holds for a receiving" $ do
       it "gets a list of holds for a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingHolds receivingId -&- IncludeCleared
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingHoldsResponse {..} = result
         grhrWarnings `shouldBe` Nothing
         grhrErrors `shouldBe` Nothing
 
     describe "get email recipients and instructions for a receiving" $ do
       it "gets email recipients and instructions for a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingInstructionsRecipients receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingInstructionsRecipientsResponse {..} = result
         grirrWarnings `shouldBe` Nothing
         grirrErrors `shouldBe` Nothing
 
     describe "get contents of a receiving" $ do
       it "gets contents of a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingItems receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingItemsResponse {..} = result
         grirWarnings `shouldBe` Nothing
         grirErrors `shouldBe` Nothing
 
     describe "get shipping dimension and container information" $ do
       it "gets shipping dimension and container infromation" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingShipments receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingShipmentsResponse {..} = result
         grsrWarnings `shouldBe` Nothing
         grsrErrors `shouldBe` Nothing
 
     describe "get tracking information for a receiving" $ do
       it "gets tracking information for a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingTrackings receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingTrackingsResponse {..} = result
         grtrWarnings `shouldBe` Nothing
         grtrErrors `shouldBe` Nothing
 
     describe "get labels information for a receiving" $ do
       it "gets labels information for a receiving" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        (_, receivingId) <- createReceivingHelper config exampleCreateReceiving
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ getReceivingLabels receivingId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetReceivingLabelsResponse {..} = result
         grlrWarnings `shouldBe` Nothing
         grlrErrors `shouldBe` Nothing
 
     describe "get an itemized list of products" $ do
       it "gets an itemized list of products" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getTimestamp
+        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetProductsResponse {..} = result
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
     describe "create a product" $ do
       it "creates all possible product classifications" $ do
-        (prd, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+        randomPart <- getTimestamp
+        (prd, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         prd `shouldSatisfy` isRight
         let response@(Right GetProductsResponse {..}) = prd
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
     describe "modify products" $ do
       it "modifies several previously created products" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ modifyProducts (exampleModifyProducts productId)
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        result <- shipwire config $ modifyProducts $ exampleModifyProducts productId productSku
         result `shouldSatisfy` isRight
         let Right ModifyProductsResponse {..} = result
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         mprWarnings `shouldBe` Nothing
         mprErrors `shouldBe` Nothing
 
     describe "modify a product" $ do
       it "modifies a single product" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ modifyProduct (exampleModifyProduct productId) (Id productId)
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        result <- shipwire config $ modifyProduct (exampleModifyProduct productId productSku) productId
         result `shouldSatisfy` isRight
         let Right ModifyProductsResponse {..} = result
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         mprWarnings `shouldBe` Nothing
         mprErrors `shouldBe` Nothing
 
     describe "get a product" $ do
       it "gets information about a single product" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-        result <- shipwire config $ getProduct $ Id productId
+        randomPart <- getTimestamp
+        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        result <- shipwire config $ getProduct productId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right GetProductResponse {..} = result
         gpreStatus `shouldNotBe` (ResponseStatus 404)
         gpreWarnings `shouldBe` Nothing
@@ -1160,8 +847,9 @@ main = do
 
     describe "retire a product" $ do
       it "retires a product" $ do
+        randomPart <- getTimestamp
         (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
-        result <- shipwire config $ retireProducts $ ProductsToRetire [ProductId anotherProductId]
+        result <- shipwire config $ retireProducts $ ProductsToRetire [anotherProductId]
         let Right RetireProductsResponse {..} = result
             MoreInfo {..} = fromJust $ rprMoreInfo
             MoreInfoItems {..} = last miItems
@@ -1172,11 +860,11 @@ main = do
 
     describe "create an order" $ do
       it "creates an order" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         randomPart <- getTimestamp
-        (result, orderId) <- createOrderHelper config $ exampleOrder randomPart
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
-        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (result, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
+        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GetOrdersResponse {..} = result
         gorWarnings `shouldBe` Nothing
@@ -1184,12 +872,12 @@ main = do
 
     describe "get orders" $ do
       it "gets all the orders" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         randomPart <- getTimestamp
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
         result <- shipwire config $ getOrders
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
-        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
+        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GetOrdersResponse {..} = result
         gorWarnings `shouldBe` Nothing
@@ -1197,11 +885,11 @@ main = do
 
     describe "cancel an order" $ do
       it "cancels an order" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         randomPart <- getTimestamp
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
-        result <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
+        result <- shipwire config $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right SimpleResponse {..} = result
         warnings `shouldBe` Nothing
@@ -1210,14 +898,13 @@ main = do
 
     describe "get tracking information for this order" $ do
       it "gets tracking information for this order" $ do
-        (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
         randomPart <- getTimestamp
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
-        result <- shipwire config $ getOrderTrackings $ WrappedId $ Id orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [ProductId productId]
-        _ <- shipwire config $ cancelOrder $ WrappedId $ Id orderId
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
+        result <- shipwire config $ getOrderTrackings $ WrappedId $ orderId
+        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GetOrderTrackingsResponse {..} = result
         gotrWarnings `shouldBe` Nothing
         gotrErrors `shouldBe` Nothing
-
