@@ -3449,7 +3449,7 @@ instance FromJSON ModifyProductsResponse where
                 <*> o .:? "errors"
 
 newtype ProductsToRetire = ProductsToRetire
-  { rpIds :: [ProductId]
+  { rpIds :: [Id]
   } deriving (Eq, Show)
 
 instance ToJSON ProductsToRetire where
@@ -3572,10 +3572,10 @@ data Kit = Kit
   , kContent              :: KitContent
   , kDimensions           :: KitDimensions
   , kTechnicalData        :: Maybe KitTechnicalData
-  , kFlags                :: KitFlags
-  , kInnerPack            :: KitInnerPack
-  , kMasterCase           :: KitMasterCase
-  , kPallet               :: KitPallet
+  , kFlags                :: Maybe KitFlags
+  , kInnerPack            :: Maybe KitInnerPack
+  , kMasterCase           :: Maybe KitMasterCase
+  , kPallet               :: Maybe KitPallet
   } deriving (Eq, Show)
 
 instance ToJSON Kit where
@@ -3798,7 +3798,7 @@ data MarketingInsert = MarketingInsert
   , miInclusionRuleType :: InclusionRuleType
   , miAlternateNames    :: Maybe MarketingInsertAlternateNames
   , miDimensions        :: MarketingInsertDimensions
-  , miFlags             :: MarketingInsertFlags
+  , miFlags             :: Maybe MarketingInsertFlags
   , miInclusionRules    :: Maybe MarketingInsertInclusionRules
   , miMasterCase        :: MarketingInsertMasterCase
   } deriving (Eq, Show)
@@ -3981,13 +3981,13 @@ data BaseProduct = BaseProduct
   , bpCategory             :: Category
   , bpBatteryConfiguration :: BatteryConfiguration
   , bpValues               :: Values
-  , bpAlternateNames       :: BaseProductAlternateNames
+  , bpAlternateNames       :: Maybe BaseProductAlternateNames
   , bpDimensions           :: BaseProductDimensions
-  , bpTechnicalData        :: BaseProductTechnicalData
-  , bpFlags                :: BaseProductFlags
-  , bpInnerPack            :: BaseProductInnerPack
-  , bpMasterCase           :: BaseProductMasterCase
-  , bpPallet               :: BaseProductPallet
+  , bpTechnicalData        :: Maybe BaseProductTechnicalData
+  , bpFlags                :: Maybe BaseProductFlags
+  , bpInnerPack            :: Maybe BaseProductInnerPack
+  , bpMasterCase           :: Maybe BaseProductMasterCase
+  , bpPallet               :: Maybe BaseProductPallet
   } deriving (Eq, Show)
 
 instance ToJSON BaseProduct where
@@ -5294,9 +5294,23 @@ instance FromJSON Classification where
       parse "kit"             = pure KitClassification
       parse o                 = fail $ "Unexpected Classification: " <> show o
 
-newtype BatteryConfiguration = BatteryConfiguration
-  { unBatteryConfiguration :: Text
-  } deriving (Eq, Show, ToJSON, FromJSON)
+data BatteryConfiguration = NoBatteryConfiguration
+  | IsBatteryConfiguration
+  | HasLooseBatteryConfiguration
+  deriving (Eq, Show)
+
+instance ToJSON BatteryConfiguration where
+  toJSON NoBatteryConfiguration       = String "NOBATTERY"
+  toJSON IsBatteryConfiguration       = String "ISBATTERY"
+  toJSON HasLooseBatteryConfiguration = String "HASLOOSEBATTERY"
+
+instance FromJSON BatteryConfiguration where
+  parseJSON = withText "BatteryConfiguration" parse
+    where
+      parse "NOBATTERY"       = pure NoBatteryConfiguration
+      parse "ISBATTERY"       = pure IsBatteryConfiguration
+      parse "HASLOOSEBATTERY" = pure HasLooseBatteryConfiguration
+      parse o                 = fail $ "Unexpected BatteryConfiguration: " <> show o
 
 data BaseProductResponseMasterCase = BaseProductResponseMasterCase
   { mcResourceLocation :: Maybe ResponseResourceLocation
@@ -5417,7 +5431,7 @@ data ValuesResource = ValuesResource
 
 data Values = Values
   { vCostValue         :: CostValue
-  , vWholesaleValue    :: WholesaleValue
+  , vWholesaleValue    :: Maybe WholesaleValue
   , vRetailValue       :: RetailValue
   , vCostCurrency      :: Maybe CostCurrency
   , vWholesaleCurrency :: Maybe WholesaleCurrency
