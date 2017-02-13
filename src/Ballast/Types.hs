@@ -652,6 +652,12 @@ module Ballast.Types
   , GetOrderTrackingsResponseResourceItems(..)
   , GetOrderTrackingsResponseResourceItem(..)
   , GetOrderTrackingsResponseResourceItemResource(..)
+  , ValidateAddressRequest
+  , ValidateAddressResponse(..)
+  , ValidateAddressResponseResource
+  , AddressToValidate
+  , ValidateAddressWarnings(..)
+  , WarningObject(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -4319,7 +4325,7 @@ data GetProductsResponse = GetProductsResponse
   , gprResource         :: GetProductsResponseResource
   , gprWarnings         :: Maybe ResponseWarnings
   -- , gprErrors           :: Maybe ResponseErrors
-  , gprErrors      :: Maybe ProductError
+  , gprErrors           :: Maybe ProductError
   } deriving (Eq, Show)
 
 instance FromJSON GetProductsResponse where
@@ -6778,9 +6784,9 @@ newtype AdditionalValue = AdditionalValue
   } deriving (Eq, Show, ToJSON, FromJSON)
 
 data OrderShipTo = OrderShipTo
-  { ostEmail        :: Email
+  { ostEmail        :: Maybe Email
   , ostName         :: Name
-  , ostCompany      :: Company
+  , ostCompany      :: Maybe Company
   , ostAddress1     :: AddressLine
   , ostAddress2     :: Maybe AddressLine
   , ostAddress3     :: Maybe AddressLine
@@ -6790,41 +6796,41 @@ data OrderShipTo = OrderShipTo
   , ostCountry      :: Country
   , ostPhone        :: Phone
   , ostIsCommercial :: IsCommercial
-  , ostIsPoBox      :: IsPoBox
+  , ostIsPoBox      :: Maybe IsPoBox
   } deriving (Eq, Show)
 
 instance ToJSON OrderShipTo where
-  toJSON OrderShipTo {..} = object ["email"        .= ostEmail
-                                   ,"name"         .= ostName
-                                   ,"company"      .= ostCompany
-                                   ,"address1"     .= ostAddress1
-                                   ,"address2"     .= ostAddress2
-                                   ,"address3"     .= ostAddress3
-                                   ,"city"         .= ostCity
-                                   ,"state"        .= ostState
-                                   ,"postalCode"   .= ostPostalCode
-                                   ,"country"      .= ostCountry
-                                   ,"phone"        .= ostPhone
-                                   ,"isCommercial" .= ostIsCommercial
-                                   ,"isPoBox"      .= ostIsPoBox]
+  toJSON OrderShipTo {..} = omitNulls ["email"        .= ostEmail
+                                      ,"name"         .= ostName
+                                      ,"company"      .= ostCompany
+                                      ,"address1"     .= ostAddress1
+                                      ,"address2"     .= ostAddress2
+                                      ,"address3"     .= ostAddress3
+                                      ,"city"         .= ostCity
+                                      ,"state"        .= ostState
+                                      ,"postalCode"   .= ostPostalCode
+                                      ,"country"      .= ostCountry
+                                      ,"phone"        .= ostPhone
+                                      ,"isCommercial" .= ostIsCommercial
+                                      ,"isPoBox"      .= ostIsPoBox]
 
 instance FromJSON OrderShipTo where
   parseJSON = withObject "OrderShpTo" parse
     where
       parse o = OrderShipTo
-                <$> o .:  "email"
+                <$> o .:? "email"
                 <*> o .:  "name"
-                <*> o .:  "company"
+                <*> o .:? "company"
                 <*> o .:  "address1"
-                <*> o .:  "address2"
-                <*> o .:  "address3"
+                <*> o .:? "address2"
+                <*> o .:? "address3"
                 <*> o .:  "city"
                 <*> o .:  "state"
                 <*> o .:? "postalCode"
                 <*> o .:  "country"
                 <*> o .:  "phone"
                 <*> o .:  "isCommercial"
-                <*> o .:  "isPoBox"
+                <*> o .:? "isPoBox"
 
 newtype OrderShipFrom = OrderShipFrom
   { osfCompany :: Maybe ShipFromCompany
@@ -6967,3 +6973,137 @@ newtype ProcessAfterDate = ProcessAfterDate
 
 instance ToJSON ProcessAfterDate where
   toJSON (ProcessAfterDate x) = object ["processAfterDate" .= utcToShipwire x]
+
+-- Address Validation Endpoint https://www.shipwire.com/w/developers/address-validation --
+
+-- | POST /api/v3.1/addressValidation
+data ValidateAddressRequest
+type instance ShipwireReturn ValidateAddressRequest = ValidateAddressResponse
+
+type AddressToValidate = OrderShipTo
+
+data ValidateAddressResponse = ValidateAddressResponse
+  { varStatus           :: ResponseStatus
+  , varMessage          :: ResponseMessage
+  , varResource         :: ValidateAddressResponseResource
+  , varResourceLocation :: Maybe ResponseResourceLocation
+  , varWarnings         :: Maybe ValidateAddressWarnings
+  , varErrors           :: Maybe Object
+  } deriving (Eq, Show)
+
+instance FromJSON ValidateAddressResponse where
+  parseJSON = withObject "ValidateAddressResponse" parse
+    where
+      parse o = ValidateAddressResponse
+                <$> o .:  "status"
+                <*> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:? "resourceLocation"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+type ValidateAddressResponseResource = OrderShipTo
+
+newtype ValidateAddressErrors = ValidateAddressErrors
+  { vaeErrorObject :: ErrorObject
+  } deriving (Eq, Show)
+
+instance FromJSON ValidateAddressErrors where
+  parseJSON = withObject "ValidateAddressErrors" parse
+    where
+      parse o = ValidateAddressErrors
+                <$> o .: "0"
+
+data ErrorObject = ErrorObject
+  { eoEmail        :: Maybe InnerErrorObject
+  , eoName         :: Maybe InnerErrorObject
+  , eoCompany      :: Maybe InnerErrorObject
+  , eoAddress1     :: Maybe InnerErrorObject
+  , eoAddress2     :: Maybe InnerErrorObject
+  , eoAddress3     :: Maybe InnerErrorObject
+  , eoCity         :: Maybe InnerErrorObject
+  , eoState        :: Maybe InnerErrorObject
+  , eoPostalCode   :: Maybe InnerErrorObject
+  , eoCountry      :: Maybe InnerErrorObject
+  , eoPhone        :: Maybe InnerErrorObject
+  , eoIsCommercial :: Maybe InnerErrorObject
+  , eoIsPoBox      :: Maybe InnerErrorObject
+  } deriving (Eq, Show)
+
+instance FromJSON ErrorObject where
+  parseJSON = withObject "ErrorObject" parse
+    where
+      parse o = ErrorObject
+                <$> o .:? "email"
+                <*> o .:? "name"
+                <*> o .:? "company"
+                <*> o .:? "address1"
+                <*> o .:? "address2"
+                <*> o .:? "address3"
+                <*> o .:? "city"
+                <*> o .:? "state"
+                <*> o .:? "postalCode"
+                <*> o .:? "country"
+                <*> o .:? "phone"
+                <*> o .:? "isCommercial"
+                <*> o .:? "isPoBox"
+
+newtype InnerErrorObject = InnerErrorObject
+  { ieoRules :: InnerErrorObjectRules
+  } deriving (Eq, Show, FromJSON)
+
+newtype InnerErrorObjectRules = InnerErrorObjectRules
+  { ieorObject :: Object
+  } deriving (Eq, Show, FromJSON)
+
+newtype ValidateAddressWarnings = ValidateAddressWarnings
+  { vawWarningObject :: WarningObject
+  } deriving (Eq, Show)
+
+instance FromJSON ValidateAddressWarnings where
+  parseJSON = withObject "ValidateAddressWarnings" parse
+    where
+      parse o = ValidateAddressWarnings
+                <$> o .: "0"
+
+data WarningObject = WarningObject
+  { woEmail        :: Maybe InnerWarningObject
+  , woName         :: Maybe InnerWarningObject
+  , woCompany      :: Maybe InnerWarningObject
+  , woAddress1     :: Maybe InnerWarningObject
+  , woAddress2     :: Maybe InnerWarningObject
+  , woAddress3     :: Maybe InnerWarningObject
+  , woCity         :: Maybe InnerWarningObject
+  , woState        :: Maybe InnerWarningObject
+  , woPostalCode   :: Maybe InnerWarningObject
+  , woCountry      :: Maybe InnerWarningObject
+  , woPhone        :: Maybe InnerWarningObject
+  , woIsCommercial :: Maybe InnerWarningObject
+  , woIsPoBox      :: Maybe InnerWarningObject
+  } deriving (Eq, Show)
+
+instance FromJSON WarningObject where
+  parseJSON = withObject "WarningObject" parse
+    where
+      parse o = WarningObject
+                <$> o .:? "email"
+                <*> o .:? "name"
+                <*> o .:? "company"
+                <*> o .:? "address1"
+                <*> o .:? "address2"
+                <*> o .:? "address3"
+                <*> o .:? "city"
+                <*> o .:? "state"
+                <*> o .:? "postalCode"
+                <*> o .:? "country"
+                <*> o .:? "phone"
+                <*> o .:? "isCommercial"
+                <*> o .:? "isPoBox"
+
+newtype InnerWarningObject = InnerWarningObject
+  { iwoRules :: InnerWarningObjectRules
+  } deriving (Eq, Show, FromJSON)
+
+newtype InnerWarningObjectRules = InnerWarningObjectRules
+ { iworObject :: Object
+ } deriving (Eq, Show, FromJSON)

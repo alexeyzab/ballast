@@ -241,6 +241,15 @@ getOrderTrackings idwr = request
       (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x, "/trackings"]
     params = []
 
+-- | Validate Address
+-- https://www.shipwire.com/w/developers/address-validation
+validateAddress :: AddressToValidate -> ShipwireRequest ValidateAddressRequest TupleBS8 BSL.ByteString
+validateAddress atv = request
+  where
+    request = mkShipwireRequest NHTM.methodPost url params
+    url = ".1/addressValidation"
+    params = [Body (encode atv)]
+
 -- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
 
 shipwire' :: (FromJSON (ShipwireReturn a))
