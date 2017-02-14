@@ -421,9 +421,9 @@ exampleOrder randomPart productSku =
     )
     Nothing
     (OrderShipTo
-      (Email "test@example.com")
+      (Just $ Email "test@example.com")
       (Name "Test Person")
-      (Company "Best Company")
+      (Just $ Company "Best Company")
       (AddressLine "First line")
       (Just $ AddressLine "Second line 25")
       (Just $ AddressLine "")
@@ -432,12 +432,28 @@ exampleOrder randomPart productSku =
       (Just $ PostalCode "100100")
       (Country "US")
       (Phone "6315613729")
-      NotCommercial
-      NotPoBox
+      (NotCommercial)
+      (Just $ NotPoBox)
     )
     Nothing
     Nothing
     (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (productSku)])
+
+exampleAddress :: AddressToValidate
+exampleAddress = OrderShipTo
+                  (Just $ Email "test@example.com")
+                  (Name "Test Person")
+                  (Just $ Company "My Company")
+                  (AddressLine "3351 Michelson Dr STE 100")
+                  (Nothing)
+                  (Nothing)
+                  (City "Irvine")
+                  (State "CA")
+                  (Just $ PostalCode "92612-0697")
+                  (Country "US")
+                  (Phone "8885551212")
+                  (Commercial)
+                  (Nothing)
 
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
@@ -908,3 +924,12 @@ main = do
         let Right GetOrderTrackingsResponse {..} = result
         gotrWarnings `shouldBe` Nothing
         gotrErrors `shouldBe` Nothing
+
+    describe "validate address" $ do
+      it "validates an address" $ do
+        result <- shipwire config $ validateAddress exampleAddress
+        result `shouldSatisfy` isRight
+        let Right ValidateAddressResponse {..} = result
+        varMessage `shouldBe` (ResponseMessage "The address provided is valid")
+        varWarnings `shouldBe` Nothing
+        varErrors `shouldBe` Nothing
