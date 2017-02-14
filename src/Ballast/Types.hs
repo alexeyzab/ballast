@@ -6974,7 +6974,9 @@ newtype ProcessAfterDate = ProcessAfterDate
 instance ToJSON ProcessAfterDate where
   toJSON (ProcessAfterDate x) = object ["processAfterDate" .= utcToShipwire x]
 
+------------------------------------------------------------------------------------------
 -- Address Validation Endpoint https://www.shipwire.com/w/developers/address-validation --
+------------------------------------------------------------------------------------------
 
 -- | POST /api/v3.1/addressValidation
 data ValidateAddressRequest
