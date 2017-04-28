@@ -473,7 +473,7 @@ createBaseProductHelper conf cp = do
       GetProductsResponseResource {..} = gprResource
       GetProductsResponseResourceItems {..} = gprrItems
       GetProductsResponseResourceItem {..} = last gprriItems
-      pwBaseProduct@(PwBaseProduct x) = gprriResource
+      pwBaseProduct@(PwBaseProduct _) = gprriResource
       productId = bprId $ unwrapBaseProduct pwBaseProduct
       productSku = bprSku $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId, productSku)
@@ -485,7 +485,7 @@ createMarketingInsertHelper conf cp = do
       GetProductsResponseResource {..} = gprResource
       GetProductsResponseResourceItems {..} = gprrItems
       GetProductsResponseResourceItem {..} = last gprriItems
-      pwMarketingInsert@(PwMarketingInsert x) = gprriResource
+      pwMarketingInsert@(PwMarketingInsert _) = gprriResource
       productId = mirId $ unwrapMarketingInsert pwMarketingInsert
   return (marketingInsert, productId)
 
@@ -559,13 +559,13 @@ getAllReceivingsIds rr = do
 --   let result = encode $ exampleOrder t
 --   return result
 
-tryStuff = do
-  let t = "123" :: T.Text
-  config <- sandboxEnvConfig
-  randomPart <- getTimestamp
-  -- (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
-  (result, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-  return result
+-- tryStuff = do
+--   let t = "123" :: T.Text
+--   config <- sandboxEnvConfig
+--   randomPart <- getTimestamp
+--   (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
+--   (result, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+--   return result
 
 -- seeStuff = do
 --   config <- sandboxEnvConfig
@@ -822,7 +822,7 @@ main = do
         randomPart <- getTimestamp
         (prd, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         prd `shouldSatisfy` isRight
-        let response@(Right GetProductsResponse {..}) = prd
+        let Right GetProductsResponse {..} = prd
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
@@ -863,7 +863,6 @@ main = do
 
     describe "retire a product" $ do
       it "retires a product" $ do
-        randomPart <- getTimestamp
         (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
         result <- shipwire config $ retireProducts $ ProductsToRetire [anotherProductId]
         let Right RetireProductsResponse {..} = result
@@ -898,6 +897,19 @@ main = do
         let Right GetOrdersResponse {..} = result
         gorWarnings `shouldBe` Nothing
         gorErrors `shouldBe` Nothing
+
+    describe "get an order" $ do
+      it "gets an information about an order" $ do
+        randomPart <- getTimestamp
+        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
+        result <- shipwire config $ getOrder $ WrappedId $ orderId
+        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        result `shouldSatisfy` isRight
+        let Right GetOrderResponse {..} = result
+        goreWarnings `shouldBe` Nothing
+        goreErrors `shouldBe` Nothing
 
     describe "cancel an order" $ do
       it "cancels an order" $ do

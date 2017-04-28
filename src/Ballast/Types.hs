@@ -658,6 +658,19 @@ module Ballast.Types
   , AddressToValidate
   , ValidateAddressWarnings(..)
   , WarningObject(..)
+  , GetOrderRequest
+  , GetOrderResponse(..)
+  , GetOrderResponseResource
+  , ExtendedAttributesResponse(..)
+  , ExtendedAttributesResponseResource(..)
+  , ExtendedAttributesResponseResourceItems(..)
+  , ExtendedAttributesResponseResourceItem(..)
+  , ExtendedAttributesResponseResourceItemResource(..)
+  , ExtendedAttributeValue(..)
+  , FreightSummaryResponse(..)
+  , FreightSummaryResponseResource(..)
+  , MeasurementType(..)
+  , FreightSummaryTotalWeight(..)
   ) where
 
 import           Control.Applicative ((<|>))
@@ -5566,6 +5579,12 @@ instance ShipwireHasParam GetOrdersRequest UpdatedAfter
 instance ShipwireHasParam GetOrdersRequest WarehouseIdParam
 instance ShipwireHasParam GetOrdersRequest WarehouseExternalIdParam
 
+-- | GET /api/v3/orders/{id} or /api/v3/orders/E{externalId}
+data GetOrderRequest
+type instance ShipwireReturn GetOrderRequest = GetOrderResponse
+
+instance ShipwireHasParam GetOrderRequest ExpandOrdersParam
+
 -- | POST /api/v3/orders
 data CreateOrderRequest
 type instance ShipwireReturn CreateOrderRequest = CreateOrderResponse
@@ -5583,6 +5602,28 @@ type CancelOrderResponse = SimpleResponse
 -- | GET /api/v3/orders/{id}/trackings or /api/v3/orders/E{externalId}/trackings
 data GetOrderTrackingsRequest
 type instance ShipwireReturn GetOrderTrackingsRequest = GetOrderTrackingsResponse
+
+data GetOrderResponse = GetOrderResponse
+  { goreMessage          :: ResponseMessage
+  , goreResource         :: GetOrderResponseResource
+  , goreStatus           :: ResponseStatus
+  , goreResourceLocation :: ResponseResourceLocation
+  , goreWarnings         :: Maybe ResponseWarnings
+  , goreErrors           :: Maybe ResponseErrors
+  } deriving (Eq, Show)
+
+instance FromJSON GetOrderResponse where
+  parseJSON = withObject "GetOrderResponse" parse
+    where
+      parse o = GetOrderResponse
+                <$> o .:  "message"
+                <*> o .:  "resource"
+                <*> o .:  "status"
+                <*> o .:  "resourceLocation"
+                <*> o .:? "warnings"
+                <*> o .:? "errors"
+
+type GetOrderResponseResource = GetOrdersResponseResourceItemResource
 
 data GetOrderTrackingsResponse = GetOrderTrackingsResponse
   { gotrMessage          :: ResponseMessage
@@ -5797,31 +5838,33 @@ instance FromJSON GetOrdersResponseResourceItem where
                 <*> o .: "resourceLocation"
 
 data GetOrdersResponseResourceItemResource = GetOrdersResponseResourceItemResource
-  { gorrirExternalId        :: Maybe ExternalId
-  , gorrirOrderNo           :: Maybe OrderNo
-  , gorrirCommerceName      :: Maybe CommerceName
-  , gorrirProcessAfterDate  :: Maybe ProcessAfterDate
-  , gorrirStatus            :: OrderStatus
-  , gorrirLastUpdatedDate   :: LastUpdatedDate
-  , gorrirId                :: Id
-  , gorrirTransactionId     :: TransactionId
-  , gorrirNeedsReview       :: NeedsReview
-  , gorrirHolds             :: GetOrdersHolds
-  , gorrirItems             :: GetOrdersItems
-  , gorrirTrackings         :: GetOrdersTrackings
-  , gorrirReturns           :: GetOrdersReturns
-  , gorrirOptions           :: GetOrdersOptions
-  , gorrirShipFrom          :: OrderShipFromResponse
-  , gorrirShipTo            :: OrderShipToResponse
-  , gorrirCommercialInvoice :: CommercialInvoiceResponse
-  , gorrirPackingList       :: PackingListResponse
-  , gorrirShippingLabel     :: ShippingLabelResponse
-  , gorrirRouting           :: RoutingResponse
-  , gorrirEvents            :: EventsResponse
-  , gorrirPricing           :: PricingResponse
-  , gorrirPricingEstimate   :: PricingEstimateResponse
-  , gorrirShipwireAnywhere  :: ShipwireAnywhereResponse
-  , gorrirSplitOrders       :: SplitOrdersResponse
+  { gorrirExternalId         :: Maybe ExternalId
+  , gorrirOrderNo            :: Maybe OrderNo
+  , gorrirCommerceName       :: Maybe CommerceName
+  , gorrirProcessAfterDate   :: Maybe ProcessAfterDate
+  , gorrirStatus             :: OrderStatus
+  , gorrirLastUpdatedDate    :: LastUpdatedDate
+  , gorrirId                 :: Id
+  , gorrirTransactionId      :: TransactionId
+  , gorrirNeedsReview        :: NeedsReview
+  , gorrirHolds              :: GetOrdersHolds
+  , gorrirItems              :: GetOrdersItems
+  , gorrirTrackings          :: GetOrdersTrackings
+  , gorrirReturns            :: GetOrdersReturns
+  , gorrirOptions            :: GetOrdersOptions
+  , gorrirShipFrom           :: OrderShipFromResponse
+  , gorrirShipTo             :: OrderShipToResponse
+  , gorrirCommercialInvoice  :: CommercialInvoiceResponse
+  , gorrirPackingList        :: PackingListResponse
+  , gorrirShippingLabel      :: ShippingLabelResponse
+  , gorrirRouting            :: RoutingResponse
+  , gorrirEvents             :: EventsResponse
+  , gorrirPricing            :: PricingResponse
+  , gorrirPricingEstimate    :: PricingEstimateResponse
+  , gorrirShipwireAnywhere   :: ShipwireAnywhereResponse
+  , gorrirSplitOrders        :: SplitOrdersResponse
+  , gorrirFreightSummary     :: Maybe FreightSummaryResponse
+  , gorrirExtendedAttributes :: Maybe ExtendedAttributesResponse
   } deriving (Eq, Show)
 
 instance FromJSON GetOrdersResponseResourceItemResource where
@@ -5853,6 +5896,106 @@ instance FromJSON GetOrdersResponseResourceItemResource where
                 <*> o .:  "pricingEstimate"
                 <*> o .:  "shipwireAnywhere"
                 <*> o .:  "splitOrders"
+                <*> o .:? "freightSummary"
+                <*> o .:? "extendedAttributes"
+
+data ExtendedAttributesResponse = ExtendedAttributesResponse
+  { earResource         :: Maybe ExtendedAttributesResponseResource
+  , earResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON ExtendedAttributesResponse where
+  parseJSON = withObject "ExtendedAttributesResponse" parse
+    where
+      parse o = ExtendedAttributesResponse
+                <$> o .:? "resource"
+                <*> o .:? "resourceLocation"
+
+data ExtendedAttributesResponseResource = ExtendedAttributesResponseResource
+  { earrOffset   :: Offset
+  , earrTotal    :: Total
+  , earrPrevious :: Maybe Previous
+  , earrNext     :: Maybe Next
+  , earrItems    :: ExtendedAttributesResponseResourceItems
+  } deriving (Eq, Show)
+
+instance FromJSON ExtendedAttributesResponseResource where
+  parseJSON = withObject "ExtendedAttributesResponseResource" parse
+    where
+      parse o = ExtendedAttributesResponseResource
+                <$> o .:  "offset"
+                <*> o .:  "total"
+                <*> o .:? "previous"
+                <*> o .:? "next"
+                <*> o .:  "items"
+
+newtype ExtendedAttributesResponseResourceItems = ExtendedAttributesResponseResourceItems
+  { earriItems :: [ExtendedAttributesResponseResourceItem]
+  } deriving (Eq, Show, FromJSON)
+
+data ExtendedAttributesResponseResourceItem = ExtendedAttributesResponseResourceItem
+  { earriResource         :: ExtendedAttributesResponseResourceItemResource
+  , earriResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON ExtendedAttributesResponseResourceItem where
+  parseJSON = withObject "ExtendedAttributesResponseResourceItem" parse
+    where
+      parse o = ExtendedAttributesResponseResourceItem
+                <$> o .:  "resource"
+                <*> o .:? "resourceLocation"
+
+data ExtendedAttributesResponseResourceItemResource = ExtendedAttributesResponseResourceItemResource
+  { earrirName  :: Name
+  , earrirValue :: ExtendedAttributeValue
+  , earrirType  :: Type
+  } deriving (Eq, Show)
+
+instance FromJSON ExtendedAttributesResponseResourceItemResource where
+  parseJSON = withObject "ExtendedAttributesResponseResourceItemResource" parse
+    where
+      parse o = ExtendedAttributesResponseResourceItemResource
+                <$> o .: "name"
+                <*> o .: "value"
+                <*> o .: "type"
+
+newtype ExtendedAttributeValue = ExtendedAttributeValue
+  { unExtendedAtttributeValue :: Double
+  } deriving (Eq, Show, FromJSON)
+
+data FreightSummaryResponse = FreightSummaryResponse
+  { fsrResource         :: FreightSummaryResponseResource
+  , fsrResourceLocation :: Maybe ResponseResourceLocation
+  } deriving (Eq, Show)
+
+instance FromJSON FreightSummaryResponse where
+  parseJSON = withObject "FreightSummaryResponse" parse
+    where
+      parse o = FreightSummaryResponse
+                <$> o .:  "resource"
+                <*> o .:? "resourceLocation"
+
+data FreightSummaryResponseResource = FreightSummaryResponseResource
+  { fsrrTotalWeight     :: FreightSummaryTotalWeight
+  , fsrrWeightUnit      :: Maybe WeightUnit
+  , fsrrMeasurementType :: Maybe MeasurementType
+  } deriving (Eq, Show)
+
+instance FromJSON FreightSummaryResponseResource where
+  parseJSON = withObject "FreightSummaryResponseResource" parse
+    where
+      parse o = FreightSummaryResponseResource
+                <$> o .:  "totalWeight"
+                <*> o .:? "weightUnit"
+                <*> o .:? "measurementType"
+
+newtype FreightSummaryTotalWeight = FreightSummaryTotalWeight
+  { unFreightSummaryTotalWeight :: Text
+  } deriving (Eq, Show, FromJSON)
+
+newtype MeasurementType = MeasurementType
+  { unMeasurementType :: Text
+  } deriving (Eq, Show, FromJSON)
 
 data OrderStatus = OrderProcessed
   | OrderCanceled

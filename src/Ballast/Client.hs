@@ -210,6 +210,17 @@ getOrders = request
     url = "/orders"
     params = []
 
+-- | Get information about this order.
+-- https://www.shipwire.com/w/developers/order/#panel-shipwire1
+getOrder :: IdWrapper -> ShipwireRequest GetOrderRequest TupleBS8 BSL.ByteString
+getOrder idw = request
+  where
+    request = mkShipwireRequest NHTM.methodGet url params
+    url = case idw of
+      (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x]
+      (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x]
+    params = []
+
 -- | Create a new order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire2
 createOrder :: CreateOrder -> ShipwireRequest CreateOrderRequest TupleBS8 BSL.ByteString
