@@ -261,8 +261,6 @@ validateAddress atv = request
     url = ".1/addressValidation"
     params = [Body (encode atv)]
 
--- "{\"status\":401,\"message\":\"Please include a valid Authorization header (Basic)\",\"resourceLocation\":null}"
-
 shipwire' :: (FromJSON (ShipwireReturn a))
           => ShipwireConfig
           -> ShipwireRequest a TupleBS8 BSL.ByteString

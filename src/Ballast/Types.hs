@@ -786,10 +786,6 @@ instance ToJSON RateOptions where
                                       ,"expectedShipDate"      .= rateOptionExpectedShipDate
                                       ,"highAccuracyEstimates" .= rateOptionHighAccuracyEstimates]
 
--- newtype CanSplit = CanSplit
---   { unCanSplit :: Integer
---   } deriving (Eq, Show, ToJSON)
-
 data CanSplit
   = CanSplit
   | CanNotSplit
@@ -873,28 +869,6 @@ newtype Quantity = Quantity
   { unQuantity :: Integer
   } deriving (Eq, Show, ToJSON, FromJSON)
 
--- defaultGetRate :: GetRate
--- defaultGetRate = GetRate defaultRateOptions defaultRateOrder
-
--- defaultRateOrder :: RateOrder
--- defaultRateOrder = RateOrder defaultShipTo defaultItems
-
--- defaultItems :: Items
--- defaultItems = [ItemInfo ((SKU "Ballasttest"), Quantity 1)]
-
--- defaultShipTo :: ShipTo
--- defaultShipTo =
---   ShipTo
---     (AddressLine "6501 Railroad Avenue SE")
---     (AddressLine "Room 315")
---     (AddressLine "")
---     (City "Snoqualmie")
---     (PostalCode "85283")
---     (Region "WA")
---     (Country "US")
---     Commercial
---     NotPoBox
-
 newtype AddressLine = AddressLine
   { unAddressLine :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
@@ -914,13 +888,6 @@ newtype Region = Region
 newtype Country = Country
   { unCountry :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
-
--- downcaseHead :: [Char] -> [Char]
--- downcaseHead [] = []
--- downcaseHead (x:xs) = (DC.toLower x) : xs
-
--- defaultRateOptions :: RateOptions
--- defaultRateOptions = RateOptions USD GroupByAll (CanSplit 1) WarehouseAreaUS Nothing
 
 data Currency =
   USD
@@ -958,30 +925,9 @@ instance FromJSON GroupBy where
       parse "warehouse" = pure GroupByWarehouse
       parse o           = fail $ "Unexpected GroupBy: " <> show o
 
--- data WarehouseArea =
---   WarehouseAreaUS
---   deriving (Eq, Show)
-
--- instance ToJSON WarehouseArea where
---   toJSON WarehouseAreaUS = String "US"
-
--- instance FromJSON WarehouseArea where
---   parseJSON = withText "WarehouseArea" parse
---     where
---       parse "US" = pure WarehouseAreaUS
---       parse o    = fail $ "Unexpected WarehouseArea: " <> show o
-
 newtype WarehouseArea = WarehouseArea
   { unWarehouseArea :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
-
--- defaultRateResponse :: IO RateResponse
--- defaultRateResponse = do
---   file <- BSL.readFile "rateresponse.json"
---   let decoded = eitherDecode file
---   case decoded of
---     Right info -> return info
---     Left err -> error err
 
 data RateResponse = RateResponse
   { rateResponseStatus           :: ResponseStatus
@@ -1070,10 +1016,6 @@ instance FromJSON Error where
                 <$> o .: "code"
                 <*> o .: "message"
                 <*> o .: "type"
-
--- newtype ErrorCode = ErrorCode
---   { unErrorCode :: Integer
---   } deriving (Eq, Show, FromJSON)
 
 data ErrorCode = ErrorCodeText Text
   | ErrorCodeInteger Integer
@@ -1739,8 +1681,6 @@ instance FromJSON StockItemResource where
                 <*> o .:  "orderedLastWeek"
                 <*> o .:  "orderedLast4Weeks"
 
--- type ProductId = Id
-
 newtype ProductId = ProductId
   { unProductId :: Integer
   } deriving (Eq, Show, ToJSON, FromJSON)
@@ -1851,12 +1791,6 @@ instance FromJSON IsAlias where
 
 -- | Either production or sandbox API host
 type Host = Text
-
--- baseUrl :: Host
--- baseUrl = "https://api.shipwire.com/api/v3"
-
--- sandboxUrl :: Host
--- sandboxUrl = "https://api.beta.shipwire.com/api/v3"
 
 data ShipwireHost =
     ShipwireProduction
@@ -3013,13 +2947,9 @@ data ReceivingOptions = ReceivingOptions
   , ropWarehouseRegion     :: Maybe WarehouseRegion
   } deriving (Eq, Show)
 
--- type WarehouseId = Id
-
 newtype WarehouseId = WarehouseId
   { unWarehouseId :: Integer
   } deriving (Eq, Show, ToJSON, FromJSON)
-
--- type WarehouseExternalId = ExternalId
 
 newtype WarehouseExternalId = WarehouseExternalId
   { unWarehouseExternalId :: Text
