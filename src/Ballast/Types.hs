@@ -671,6 +671,12 @@ module Ballast.Types
   , FreightSummaryResponseResource(..)
   , MeasurementType(..)
   , FreightSummaryTotalWeight(..)
+  , ErrorObject(..)
+  , ValidateAddressErrors(..)
+  , InnerErrorObject(..)
+  , InnerErrorObjectRules(..)
+  , InnerWarningObject(..)
+  , InnerWarningObjectRules(..)
   ) where
 
 import           Control.Applicative ((<|>))
