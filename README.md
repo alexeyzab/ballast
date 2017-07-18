@@ -1,4 +1,4 @@
-Ballast [![TravisCI](https://travis-ci.org/bitemyapp/ballast.svg)](https://travis-ci.org/bitemyapp/ballast)
+Ballast [![TravisCI](https://travis-ci.org/alexeyzab/ballast.svg)](https://travis-ci.org/alexeyzab/ballast)
 ==========
 
 ![Ship cross-section showing ballast](./ballast.jpg)
