@@ -6741,7 +6741,7 @@ newtype CommercialInvoiceValueCurrency = CommercialInvoiceValueCurrency
   } deriving (Eq, Show, ToJSON)
 
 newtype CommercialInvoiceValue = CommercialInvoiceValue
-  { unCommercialInvoiceValue :: Double
+  { unCommercialInvoiceValue :: Centi
   } deriving (Eq, Show, ToJSON, FromJSON)
 
 newtype OrderItems = OrderItems
