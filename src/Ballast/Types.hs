@@ -28,7 +28,7 @@ module Ballast.Types
   , Currency(..)
   , GroupBy(..)
   , WarehouseArea(..)
-  , RateResponse(..)
+  , GenericResponse(..)
   , ResponseStatus(..)
   , ResponseMessage(..)
   , ResponseWarnings(..)
@@ -102,7 +102,6 @@ module Ballast.Types
   , ShipwireReturn
   , RateRequest
   , StockRequest
-  , StockResponse(..)
   , ParentId(..)
   , ProductIdParam(..)
   , ProductExternalIdParam(..)
@@ -182,7 +181,6 @@ module Ballast.Types
   , CommerceNameParam(..)
   , CreateReceivingResponse
   , GetReceivingsResponse
-  , ReceivingsResponse(..)
   , ReceivingsResource(..)
   , ReceivingsItems(..)
   , ReceivingsItem(..)
@@ -291,7 +289,6 @@ module Ballast.Types
   , Note(..)
   , ReceivingInstructionsRecipient(..)
   , GetReceivingRequest
-  , ReceivingResponse(..)
   , ReceivingId(..)
   , getReceivingId
   , ModifyReceivingRequest
@@ -302,18 +299,12 @@ module Ballast.Types
   , CancelReceivingLabelsRequest
   , CancelReceivingLabelsResponse
   , GetReceivingHoldsRequest
-  , GetReceivingHoldsResponse(..)
   , IncludeClearedParam(..)
   , GetReceivingInstructionsRecipientsRequest
-  , GetReceivingInstructionsRecipientsResponse(..)
   , GetReceivingItemsRequest
-  , GetReceivingItemsResponse(..)
   , GetReceivingShipmentsRequest
-  , GetReceivingShipmentsResponse(..)
   , GetReceivingTrackingsRequest
-  , GetReceivingTrackingsResponse(..)
   , GetReceivingLabelsRequest
-  , GetReceivingLabelsResponse(..)
   , GetProductsRequest
   , GetProductsResponse(..)
   , GetProductsResponseResource(..)
@@ -726,7 +717,7 @@ type family ShipwireReturn a :: *
 ---------------------------------------------------------------
 
 data RateRequest
-type instance ShipwireReturn RateRequest = RateResponse
+type instance ShipwireReturn RateRequest = GenericResponse RateResource
 
 newtype SKU = SKU
   { unSku :: Text
@@ -935,19 +926,19 @@ newtype WarehouseArea = WarehouseArea
   { unWarehouseArea :: Text
   } deriving (Eq, Show, ToJSON, FromJSON)
 
-data RateResponse = RateResponse
-  { rateResponseStatus           :: ResponseStatus
-  , rateResponseMessage          :: ResponseMessage
-  , rateResponseWarnings         :: Maybe ResponseWarnings
-  , rateResponseErrors           :: Maybe ResponseErrors
-  , rateResponseResourceLocation :: Maybe ResponseResourceLocation
-  , rateResponseResource         :: Maybe RateResource
+data GenericResponse a = GenericResponse
+  { genericResponseStatus           :: ResponseStatus
+  , genericResponseMessage          :: ResponseMessage
+  , genericResponseWarnings         :: Maybe ResponseWarnings
+  , genericResponseErrors           :: Maybe ResponseErrors
+  , genericResponseResourceLocation :: Maybe ResponseResourceLocation
+  , genericResponseResource         :: Maybe a
   } deriving (Eq, Show)
 
-instance FromJSON RateResponse where
-  parseJSON = withObject "RateResponse" parse
+instance FromJSON a => FromJSON (GenericResponse a) where
+  parseJSON = withObject "GenericResponse" parse
     where
-      parse o = RateResponse
+      parse o = GenericResponse
                 <$> o .:  "status"
                 <*> o .:  "message"
                 <*> o .:? "warnings"
@@ -1449,7 +1440,7 @@ type Method = NHTM.Method
 -----------------------------------------------------------------
 
 data StockRequest
-type instance ShipwireReturn StockRequest = StockResponse
+type instance ShipwireReturn StockRequest = GenericResponse StockResource
 
 instance ShipwireHasParam StockRequest SKU
 instance ShipwireHasParam StockRequest ParentId
@@ -1471,26 +1462,6 @@ instance ShipwireHasParam StockRequest Total
 instance ShipwireHasParam StockRequest Previous
 instance ShipwireHasParam StockRequest Next
 instance ShipwireHasParam StockRequest Limit
-
-data StockResponse = StockResponse
-  { stockResponseStatus           :: ResponseStatus
-  , stockResponseMessage          :: ResponseMessage
-  , stockResponseWarnings         :: Maybe ResponseWarnings
-  , stockResponseErrors           :: Maybe ResponseErrors
-  , stockResponseResourceLocation :: Maybe ResponseResourceLocation
-  , stockResponseResource         :: StockResource
-  } deriving (Eq, Show)
-
-instance FromJSON StockResponse where
-  parseJSON = withObject "StockResponse" parse
-    where
-      parse o = StockResponse
-                <$> o .:  "status"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-                <*> o .:? "resourceLocation"
-                <*> o .:  "resource"
 
 newtype ParentId = ParentId
   { parentId :: Text
@@ -1957,9 +1928,9 @@ filterQuery xs = [b | Query b <- xs]
 
 -- | GET /api/v3/receivings
 data GetReceivingsRequest
-type instance ShipwireReturn GetReceivingsRequest = GetReceivingsResponse
+type instance ShipwireReturn GetReceivingsRequest = GenericResponse ReceivingsResource
 
-type CreateReceivingResponse = ReceivingsResponse
+type CreateReceivingResponse = GenericResponse ReceivingsResource
 
 instance ShipwireHasParam GetReceivingsRequest ExpandReceivingsParam
 instance ShipwireHasParam GetReceivingsRequest CommerceNameParam
@@ -1974,23 +1945,23 @@ instance ShipwireHasParam GetReceivingsRequest WarehouseExternalIdParam
 
 -- | POST /api/v3/receivings
 data CreateReceivingRequest
-type instance ShipwireReturn CreateReceivingRequest = CreateReceivingResponse
+type instance ShipwireReturn CreateReceivingRequest = GenericResponse ReceivingsResource
 
-type GetReceivingsResponse = ReceivingsResponse
+type GetReceivingsResponse = GenericResponse ReceivingsResource
 
 instance ShipwireHasParam CreateReceivingRequest ExpandReceivingsParam
 
 -- | GET /api/v3/receivings/{id}
 
 data GetReceivingRequest
-type instance ShipwireReturn GetReceivingRequest = ReceivingResponse
+type instance ShipwireReturn GetReceivingRequest = GenericResponse ReceivingResource
 
 instance ShipwireHasParam GetReceivingRequest ExpandReceivingsParam
 
 -- | PUT /api/v3/receivings/{id}
 
 data ModifyReceivingRequest
-type instance ShipwireReturn ModifyReceivingRequest = ReceivingsResponse
+type instance ShipwireReturn ModifyReceivingRequest = GenericResponse ReceivingsResource
 
 instance ShipwireHasParam ModifyReceivingRequest ExpandReceivingsParam
 
@@ -2007,34 +1978,34 @@ type instance ShipwireReturn CancelReceivingLabelsRequest = CancelReceivingLabel
 -- | GET /api/v3/receivings/{id}/holds
 
 data GetReceivingHoldsRequest
-type instance ShipwireReturn GetReceivingHoldsRequest = GetReceivingHoldsResponse
+type instance ShipwireReturn GetReceivingHoldsRequest = GenericResponse ItemResourceHoldsResource
 
 instance ShipwireHasParam GetReceivingHoldsRequest IncludeClearedParam
 
 -- | GET /api/v3/receivings/{id}/instructionsRecipients
 
 data GetReceivingInstructionsRecipientsRequest
-type instance ShipwireReturn GetReceivingInstructionsRecipientsRequest = GetReceivingInstructionsRecipientsResponse
+type instance ShipwireReturn GetReceivingInstructionsRecipientsRequest = GenericResponse ItemResourceInstructionsRecipientsResource
 
 -- | GET /api/v3/receivings/{id}/items
 
 data GetReceivingItemsRequest
-type instance ShipwireReturn GetReceivingItemsRequest = GetReceivingItemsResponse
+type instance ShipwireReturn GetReceivingItemsRequest = GenericResponse ItemResourceItemsResource
 
 -- | GET /api/v3/receivings/{id}/shipments
 
 data GetReceivingShipmentsRequest
-type instance ShipwireReturn GetReceivingShipmentsRequest = GetReceivingShipmentsResponse
+type instance ShipwireReturn GetReceivingShipmentsRequest = GenericResponse ItemResourceShipmentsResource
 
 -- | GET /api/v3/receivings/{id}/trackings
 
 data GetReceivingTrackingsRequest
-type instance ShipwireReturn GetReceivingTrackingsRequest = GetReceivingTrackingsResponse
+type instance ShipwireReturn GetReceivingTrackingsRequest = GenericResponse ItemResourceTrackingsResource
 
 -- | GET /api/v3/receivings/{id}/labels
 
 data GetReceivingLabelsRequest
-type instance ShipwireReturn GetReceivingLabelsRequest = GetReceivingLabelsResponse
+type instance ShipwireReturn GetReceivingLabelsRequest = GenericResponse ItemResourceLabelsResource
 
 -- | ISO 8601 format, ex: "2014-05-30T13:08:29-07:00"
 newtype UpdatedAfter = UpdatedAfter
@@ -2138,26 +2109,6 @@ newtype CommerceNameParam = CommerceNameParam
 instance ToShipwireParam CommerceNameParam where
   toShipwireParam (CommerceNameParam ns) =
     (Query ("commerceName", TE.encodeUtf8 (T.intercalate "," ns)) :)
-
-data ReceivingsResponse = ReceivingsResponse
-  { receivingsResponseResourceLocation :: ResponseResourceLocation
-  , receivingsResponseStatus           :: ResponseStatus
-  , receivingsResponseMessage          :: ResponseMessage
-  , receivingsResponseWarnings         :: Maybe ResponseWarnings
-  , receivingsResponseErrors           :: Maybe ResponseErrors
-  , receivingsResponseResource         :: ReceivingsResource
-  } deriving (Eq, Show)
-
-instance FromJSON ReceivingsResponse where
-  parseJSON = withObject "ReceivingsResponse" parse
-    where
-      parse o = ReceivingsResponse
-                <$> o .:  "resourceLocation"
-                <*> o .:  "status"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-                <*> o .:  "resource"
 
 data ReceivingsResource = ReceivingsResource
   { receivingsResponseNext     :: Maybe ResponseNext
@@ -3132,27 +3083,7 @@ instance ToJSON ReceivingInstructionsRecipient where
                                                          ,"name"  .= rirName
                                                          ,"note"  .= rirNote]
 
-data ReceivingResponse = ReceivingResponse
-  { receivingResponseStatus           :: ResponseStatus
-  , receivingResponseMessage          :: ResponseMessage
-  , receivingResponseWarnings         :: Maybe ResponseWarnings
-  , receivingResponseErrors           :: Maybe ResponseErrors
-  , receivingResponseResourceLocation :: Maybe ResponseResourceLocation
-  , receivingResponseResource         :: ReceivingResource
-  } deriving (Eq, Show)
-
 type ReceivingResource = ReceivingsItemResource
-
-instance FromJSON ReceivingResponse where
-  parseJSON = withObject "GetReceivingResponse" parse
-    where
-      parse o = ReceivingResponse
-                <$> o .:  "status"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-                <*> o .:? "resourceLocation"
-                <*> o .:  "resource"
 
 newtype ReceivingId = ReceivingId
   { unReceivingId :: Text
@@ -3185,26 +3116,6 @@ type CancelReceivingResponse = SimpleResponse
 
 type CancelReceivingLabelsResponse = CancelReceivingResponse
 
-data GetReceivingHoldsResponse = GetReceivingHoldsResponse
-  { grhrStatus           :: ResponseStatus
-  , grhrResourceLocation :: ResponseResourceLocation
-  , grhrResource         :: ItemResourceHoldsResource
-  , grhrMessage          :: ResponseMessage
-  , grhrWarnings         :: Maybe ResponseWarnings
-  , grhrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingHoldsResponse where
-  parseJSON = withObject "GetReceivingHoldsResponse" parse
-    where
-      parse o = GetReceivingHoldsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-
 data IncludeClearedParam
   = IncludeCleared
   | DontIncludeCleared
@@ -3215,106 +3126,6 @@ instance ToShipwireParam IncludeClearedParam where
     (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (1 :: Int)) :)
   toShipwireParam DontIncludeCleared =
     (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (0 :: Int)) :)
-
-data GetReceivingInstructionsRecipientsResponse = GetReceivingInstructionsRecipientsResponse
-  { grirrStatus           :: ResponseStatus
-  , grirrResourceLocation :: ResponseResourceLocation
-  , grirrResource         :: ItemResourceInstructionsRecipientsResource
-  , grirrMessage          :: ResponseMessage
-  , grirrWarnings         :: Maybe ResponseWarnings
-  , grirrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingInstructionsRecipientsResponse where
-  parseJSON = withObject "GetReceivingInstructionsRecipientsResponse" parse
-    where
-      parse o = GetReceivingInstructionsRecipientsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-
-data GetReceivingItemsResponse = GetReceivingItemsResponse
-  { grirStatus           :: ResponseStatus
-  , grirResourceLocation :: ResponseResourceLocation
-  , grirResource         :: ItemResourceItemsResource
-  , grirMessage          :: ResponseMessage
-  , grirWarnings         :: Maybe ResponseWarnings
-  , grirErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingItemsResponse where
-  parseJSON = withObject "GetReceivingItemsResponse" parse
-    where
-      parse o = GetReceivingItemsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-
-data GetReceivingShipmentsResponse = GetReceivingShipmentsResponse
-  { grsrStatus           :: ResponseStatus
-  , grsrResourceLocation :: ResponseResourceLocation
-  , grsrResource         :: ItemResourceShipmentsResource
-  , grsrMessage          :: ResponseMessage
-  , grsrWarnings         :: Maybe ResponseWarnings
-  , grsrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingShipmentsResponse where
-  parseJSON = withObject "GetReceivingShipmentsResponse" parse
-    where
-      parse o = GetReceivingShipmentsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-
-data GetReceivingTrackingsResponse = GetReceivingTrackingsResponse
-  { grtrStatus           :: ResponseStatus
-  , grtrResourceLocation :: ResponseResourceLocation
-  , grtrResource         :: ItemResourceTrackingsResource
-  , grtrMessage          :: ResponseMessage
-  , grtrWarnings         :: Maybe ResponseWarnings
-  , grtrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingTrackingsResponse where
-  parseJSON = withObject "GetReceivingTrackingsResponse" parse
-    where
-      parse o = GetReceivingTrackingsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
-
-data GetReceivingLabelsResponse = GetReceivingLabelsResponse
-  { grlrStatus           :: ResponseStatus
-  , grlrResourceLocation :: ResponseResourceLocation
-  , grlrResource         :: ItemResourceLabelsResource
-  , grlrMessage          :: ResponseMessage
-  , grlrWarnings         :: Maybe ResponseWarnings
-  , grlrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetReceivingLabelsResponse where
-  parseJSON = withObject "GetReceivingLabelsResponse" parse
-    where
-      parse o = GetReceivingLabelsResponse
-                <$> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "resource"
-                <*> o .:  "message"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
 
 -----------------------------------------------------------------------
 -- Product Endpoint -- https://www.shipwire.com/w/developers/product --

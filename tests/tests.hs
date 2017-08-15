@@ -458,8 +458,8 @@ exampleAddress = OrderShipTo
 createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf cr = do
   receiving <- shipwire conf $ createReceiving cr
-  let Right ReceivingsResponse {..} = receiving
-      ReceivingsResource {..} = receivingsResponseResource
+  let Right GenericResponse {..} = receiving
+      Just ReceivingsResource {..} = genericResponseResource
       ReceivingsItems {..} = receivingsResponseItems
       ReceivingsItem {..} = last unReceivingsItems
       ReceivingsItemResource {..} = receivingsItemResource
@@ -547,33 +547,12 @@ getModifiedProductsIds products = do
       allIds                           = baseProductIds <> marketingInsertIds <> kitIds <> virtualKitIds
   return allIds
 
-getAllReceivingsIds :: ReceivingsResponse -> IO [Integer]
+getAllReceivingsIds :: GenericResponse ReceivingsResource -> IO [Integer]
 getAllReceivingsIds rr = do
-  let receivingsResource = receivingsResponseResource rr
+  let (Just receivingsResource) = genericResponseResource rr
       receivingsItems = receivingsResponseItems receivingsResource
       ids = map (unId . rirId . receivingsItemResource) $ unReceivingsItems receivingsItems
   return ids
-
--- dumpStuff = do
---   t <- getCurrentTimeInSeconds
---   let result = encode $ exampleOrder t
---   return result
-
--- tryStuff = do
---   let t = "123" :: T.Text
---   config <- sandboxEnvConfig
---   randomPart <- getTimestamp
---   (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
---   (result, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
---   return result
-
--- seeStuff = do
---   config <- sandboxEnvConfig
---   (_, productId) <- createBaseProductHelper config exampleCreateBaseProduct
---   randomPart <- getCurrentTimeInSeconds
---   (_, orderId) <- createOrderHelper config $ exampleOrder randomPart
---   result <- shipwire config $ getOrderTrackings $ WrappedId $ Id orderId
---   return result
 
 unwrapBaseProduct :: ProductsWrapper -> BaseProductResponseResource
 unwrapBaseProduct (PwBaseProduct x) = x
@@ -616,9 +595,9 @@ main = do
         result <- shipwire config $ createRateRequest getRt
         result `shouldSatisfy` isRight
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right RateResponse {..} = result
-        rateResponseWarnings `shouldBe` Nothing
-        rateResponseErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
@@ -627,9 +606,9 @@ main = do
         result <- shipwire config $ getStockInfo -&- (SKU "HspecTest5")
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
-        let Right StockResponse {..} = result
-        stockResponseWarnings `shouldBe` Nothing
-        stockResponseErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get receivings" $ do
       it "gets an itemized list of receivings with optional args" $ do
@@ -652,17 +631,17 @@ main = do
         receiving `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right ReceivingsResponse {..} = receiving
-        receivingsResponseErrors `shouldBe` Nothing
-        receivingsResponseWarnings `shouldBe` Nothing
+        let Right GenericResponse {..} = receiving
+        genericResponseErrors `shouldBe` Nothing
+        genericResponseWarnings `shouldBe` Nothing
 
       it "doesn't create a receiving with bad JSON" $ do
         randomPart <- getTimestamp
         (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ createReceiving exampleBadCreateReceiving
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right ReceivingsResponse {..} = result
-        receivingsResponseErrors `shouldBe`
+        let Right GenericResponse {..} = result
+        genericResponseErrors `shouldBe`
           Just
             (ResponseErrors
                [ Error
@@ -681,9 +660,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right ReceivingResponse {..} = result
-        receivingResponseErrors `shouldBe` Nothing
-        receivingResponseWarnings `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseErrors `shouldBe` Nothing
+        genericResponseWarnings `shouldBe` Nothing
 
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
@@ -692,14 +671,14 @@ main = do
         (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
         result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
-        let Right ReceivingsResponse {..} = result
-        receivingsResponseErrors `shouldBe` Nothing
-        receivingsResponseWarnings `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseErrors `shouldBe` Nothing
+        genericResponseWarnings `shouldBe` Nothing
         modifiedReceiving <- shipwire config $ getReceiving receivingId
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right ReceivingResponse {..} = modifiedReceiving
-            ReceivingsItemResource {..} = receivingResponseResource
+        let Right GenericResponse {..} = modifiedReceiving
+            Just ReceivingsItemResource {..} = genericResponseResource
             ItemResourceShipFrom {..} = rirShipFrom
             ItemResourceShipFromResource {..} = irsfResource
         irsfrCountry `shouldBe` Just (Country "Modified Country")
@@ -737,9 +716,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingHoldsResponse {..} = result
-        grhrWarnings `shouldBe` Nothing
-        grhrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get email recipients and instructions for a receiving" $ do
       it "gets email recipients and instructions for a receiving" $ do
@@ -750,9 +729,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingInstructionsRecipientsResponse {..} = result
-        grirrWarnings `shouldBe` Nothing
-        grirrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get contents of a receiving" $ do
       it "gets contents of a receiving" $ do
@@ -763,9 +742,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingItemsResponse {..} = result
-        grirWarnings `shouldBe` Nothing
-        grirErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get shipping dimension and container information" $ do
       it "gets shipping dimension and container infromation" $ do
@@ -776,9 +755,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingShipmentsResponse {..} = result
-        grsrWarnings `shouldBe` Nothing
-        grsrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get tracking information for a receiving" $ do
       it "gets tracking information for a receiving" $ do
@@ -789,9 +768,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingTrackingsResponse {..} = result
-        grtrWarnings `shouldBe` Nothing
-        grtrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get labels information for a receiving" $ do
       it "gets labels information for a receiving" $ do
@@ -802,9 +781,9 @@ main = do
         result `shouldSatisfy` isRight
         _ <- shipwire config $ cancelReceiving receivingId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetReceivingLabelsResponse {..} = result
-        grlrWarnings `shouldBe` Nothing
-        grlrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get an itemized list of products" $ do
       it "gets an itemized list of products" $ do
