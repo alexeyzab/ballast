@@ -508,10 +508,8 @@ module Ballast.Types
   , ModifyProductsRequest
   , ModifyProductsResponse(..)
   , GetProductRequest
-  , GetProductResponse(..)
   , GetProductResponseResource(..)
   , ModifyProductRequest
-  , ModifyProductResponse
   , CreateOrderRequest
   , CreateOrderResponse
   , CreateOrder(..)
@@ -3154,41 +3152,19 @@ type CreateProductsResponse = GetProductsResponse
 
 -- | PUT /api/v3/products
 data ModifyProductsRequest
-type instance ShipwireReturn ModifyProductsRequest = ModifyProductsResponse
+type instance ShipwireReturn ModifyProductsRequest = GenericResponse GetProductsResponseResource
 
 -- | PUT /api/v3/products/{id}
 data ModifyProductRequest
-type instance ShipwireReturn ModifyProductRequest = ModifyProductResponse
-
-type ModifyProductResponse = ModifyProductsResponse
+type instance ShipwireReturn ModifyProductRequest = GenericResponse GetProductsResponseResource
 
 -- | GET /api/v3/products/{id}
 data GetProductRequest
-type instance ShipwireReturn GetProductRequest = GetProductResponse
+type instance ShipwireReturn GetProductRequest = GenericResponse GetProductResponseResource
 
 -- | POST /api/v3/products/retire
 data RetireProductsRequest
 type instance ShipwireReturn RetireProductsRequest = RetireProductsResponse
-
-data GetProductResponse = GetProductResponse
-  { gpreStatus           :: ResponseStatus
-  , gpreResourceLocation :: Maybe ResponseResourceLocation
-  , gpreMessage          :: ResponseMessage
-  , gpreResource         :: Maybe GetProductResponseResource
-  , gpreWarnings         :: Maybe ResponseWarnings
-  , gpreErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetProductResponse where
-  parseJSON = withObject "GetProductResponse" parse
-    where
-      parse o = GetProductResponse
-                <$> o .:  "status"
-                <*> o .:? "resourceLocation"
-                <*> o .:  "message"
-                <*> o .:? "resource"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
 
 newtype GetProductResponseResource = GetProductResponseResource
   { gprrProductWrapper :: ProductsWrapper

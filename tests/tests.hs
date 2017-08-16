@@ -812,10 +812,10 @@ main = do
         (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ modifyProducts $ exampleModifyProducts productId productSku
         result `shouldSatisfy` isRight
-        let Right ModifyProductsResponse {..} = result
+        let Right GenericResponse {..} = result
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        mprWarnings `shouldBe` Nothing
-        mprErrors `shouldBe` Nothing
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "modify a product" $ do
       it "modifies a single product" $ do
@@ -823,10 +823,10 @@ main = do
         (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ modifyProduct (exampleModifyProduct productId productSku) productId
         result `shouldSatisfy` isRight
-        let Right ModifyProductsResponse {..} = result
+        let Right GenericResponse {..} = result
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        mprWarnings `shouldBe` Nothing
-        mprErrors `shouldBe` Nothing
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get a product" $ do
       it "gets information about a single product" $ do
@@ -835,10 +835,10 @@ main = do
         result <- shipwire config $ getProduct productId
         result `shouldSatisfy` isRight
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
-        let Right GetProductResponse {..} = result
-        gpreStatus `shouldNotBe` (ResponseStatus 404)
-        gpreWarnings `shouldBe` Nothing
-        gpreErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseStatus `shouldNotBe` (ResponseStatus 404)
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "retire a product" $ do
       it "retires a product" $ do
