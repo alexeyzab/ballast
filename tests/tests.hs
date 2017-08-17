@@ -354,43 +354,6 @@ exampleCreateBaseProduct randomSecond =
       (Nothing)
   ]
 
-exampleCreateMarketingInsert :: [CreateProductsWrapper]
-exampleCreateMarketingInsert = [CpwMarketingInsert $ MarketingInsert
-                          Nothing
-                          (SKU "HspecTestInsert3")
-                          Nothing
-                          (MarketingInsertClassification)
-                          (Description "Hspec test marketing insert3")
-                          (InclusionRuleType "CUSTOM")
-                          (Just $ MarketingInsertAlternateNames [MarketingInsertAlternateName (Name "HspecMI33")])
-                          (MarketingInsertDimensions
-                            (MarketingInsertLength 0.1)
-                            (MarketingInsertWidth 0.1)
-                            (MarketingInsertHeight 0.1)
-                            (MarketingInsertWeight 0.2)
-                          )
-                          (Nothing)
-                          (Just $ MarketingInsertInclusionRules
-                            (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
-                            (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 150000) (secondsToDiffTime 10))
-                            (Just $ InsertWhenWorthValue 5)
-                            (Just $ InsertWhenQuantity 5)
-                            (Just $ InsertWhenWorthCurrency "USD")
-                          )
-                          (MarketingInsertMasterCase
-                            (IndividualItemsPerCase 10)
-                            (SKU "HspecTestMIMCSKU")
-                            Nothing
-                            (Description "Hspec test marketing insert master case2")
-                            (MarketingInsertMasterCaseDimensions
-                              (MarketingInsertMasterCaseDimensionsLength 8)
-                              (MarketingInsertMasterCaseDimensionsWidth 8)
-                              (MarketingInsertMasterCaseDimensionsHeight 8)
-                              (MarketingInsertMasterCaseDimensionsWeight 8)
-                            )
-                          )
-                        ]
-
 exampleOrder :: T.Text -> SKU -> CreateOrder
 exampleOrder randomPart productSku =
   CreateOrder
@@ -842,8 +805,9 @@ main = do
 
     describe "retire a product" $ do
       it "retires a product" $ do
-        (_, anotherProductId) <- createMarketingInsertHelper config exampleCreateMarketingInsert
-        result <- shipwire config $ retireProducts $ ProductsToRetire [anotherProductId]
+        randomPart <- getTimestamp
+        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        result <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right RetireProductsResponse {..} = result
             MoreInfo {..} = fromJust $ rprMoreInfo
             MoreInfoItems {..} = last miItems
