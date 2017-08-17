@@ -128,7 +128,7 @@ exampleCreateProduct productId =
                           (Description "This is a virtual kit test")
                           (VirtualKitContent
                             [(VirtualKitContentObject
-                              (Just $ productId)
+                              (Just productId)
                               Nothing
                               (Quantity 5)
                             )
@@ -157,7 +157,7 @@ exampleCreateProduct productId =
                           -- product and get back that product's id.
                           (KitContent
                             [KitContentObject
-                              (Just $ productId)
+                              (Just productId)
                               Nothing
                               (Quantity 5)
                             ]
@@ -371,8 +371,8 @@ exampleOrder randomPart productSku =
       DomesticOneDay
       Nothing
       NotSameDay
-      (Just $ DontForceDuplicate)
-      (Just $ DontForceAddress)
+      (Just DontForceDuplicate)
+      (Just DontForceAddress)
       Nothing
       Nothing
       Nothing
@@ -397,8 +397,8 @@ exampleOrder randomPart productSku =
       (Just $ PostalCode "100100")
       (Country "US")
       (Phone "6315613729")
-      (NotCommercial)
-      (Just $ NotPoBox)
+      NotCommercial
+      (Just NotPoBox)
     )
     Nothing
     Nothing
