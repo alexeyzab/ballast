@@ -625,9 +625,9 @@ main = do
         (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
         result <- shipwireTest config manager $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
-        let Right GenericResponse {..} = result
-        genericResponseErrors `shouldBe` Nothing
-        genericResponseWarnings `shouldBe` Nothing
+        let Right modifyReceivingResponse = result
+        genericResponseErrors modifyReceivingResponse `shouldBe` Nothing
+        genericResponseWarnings modifyReceivingResponse `shouldBe` Nothing
         modifiedReceiving <- shipwireTest config manager $ getReceiving receivingId
         _ <- shipwireTest config manager $ cancelReceiving receivingId
         _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
