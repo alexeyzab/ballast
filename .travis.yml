@@ -7,11 +7,11 @@ env:
   global:
   - secure: THcnNqboMrUCxN7ilzYXPA6HfObIs0VXOWaUbqkF4MmKXiI3zrQLYn6p8rfydgkvfNwRUXBVwKJMhzQlKdImES4+9e6wNYqVbuuzvyWwH8mAXogEN6MWKqJej5Bh6tVwEBgBcNqYbKd98zzfBOQi5PtAqBZMdmyRVSDMeFa+t4mqjUxzmL/SLeEU0izC4/Z+YLgNkFD1uLJfJNUe50LJmn5JjPnWAcKRNDQ02u9IbgVfm7NQN4jdZqkyKNbJRcvSTkRECplCpKc57pN3WUdIisVPTMiz1Ua+0IlNk96pSRfYwYDfxsKdJe3TfXc7sOJB5QrOyZRz4fofGRs8O34EVPAywfT9KtSez3b0IChS8/LJFIrGlJ69r2at2XGpzIPsf5hBxUECnMJ0VJCjbTJ/fTFB9SPlhvDZaaYSOqHJOSx1d0Rn12GmvfWs71heCwT/Uh3kEvoN7UkH6/pRhCHvnhb2T1UT4oFdiNO4i3JoOve8BRkq2B2hc8NaNvobE7+72iU/dHrMDPWKVLP8ZysUGuchXkj8UpxvW8gs2a22f6EUBigEMcwPY89DRvmUFF9wXUciQ9hqgMAUGkTK6kNjopu16lCKeY+e+zVC9YmaquN6BvqOjq/sF188LWMXR5KBY/lRqmAANN0PRGhFtjpoS25ok2Ehd9y+WMoz5QncOy8=
   matrix:
-  - GHCVER=7.10
+  - GHCVER=8.0.2
 install:
 - export STACK_YAML=stack-$GHCVER.yaml
 - mkdir -p ~/.local/bin
-- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v0.1.4.0/stack-0.1.4.0-x86_64-linux.tar.gz
+- travis_retry curl -L https://github.com/commercialhaskell/stack/releases/download/v1.5.1/stack-1.5.1-linux-x86_64.tar.gz
   | tar -xvzf -
 - mv stack ~/.local/bin
 - export PATH=~/.local/bin:$PATH
