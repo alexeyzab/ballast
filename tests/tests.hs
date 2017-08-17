@@ -493,8 +493,8 @@ createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (
 createOrderHelper conf co = do
   order <- shipwire conf $ createOrder co
   exampleOrd <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
-  let Right GetOrdersResponse {..} = exampleOrd
-      GetOrdersResponseResource {..} = gorResource
+  let Right GenericResponse {..} = exampleOrd
+      Just GetOrdersResponseResource {..} = genericResponseResource
       GetOrdersResponseResourceItems {..} = gorrItems
       GetOrdersResponseResourceItem {..} = head $ gorriItems
       GetOrdersResponseResourceItemResource {..} = gorriResource
@@ -860,9 +860,9 @@ main = do
         _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
-        let Right GetOrdersResponse {..} = result
-        gorWarnings `shouldBe` Nothing
-        gorErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get orders" $ do
       it "gets all the orders" $ do
@@ -873,9 +873,9 @@ main = do
         _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
-        let Right GetOrdersResponse {..} = result
-        gorWarnings `shouldBe` Nothing
-        gorErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "get an order" $ do
       it "gets an information about an order" $ do
@@ -886,9 +886,9 @@ main = do
         _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
-        let Right GetOrderResponse {..} = result
-        goreWarnings `shouldBe` Nothing
-        goreErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "cancel an order" $ do
       it "cancels an order" $ do
@@ -912,9 +912,9 @@ main = do
         _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
         _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
-        let Right GetOrderTrackingsResponse {..} = result
-        gotrWarnings `shouldBe` Nothing
-        gotrErrors `shouldBe` Nothing
+        let Right GenericResponse {..} = result
+        genericResponseWarnings `shouldBe` Nothing
+        genericResponseErrors `shouldBe` Nothing
 
     describe "validate address" $ do
       it "validates an address" $ do

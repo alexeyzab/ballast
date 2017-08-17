@@ -511,7 +511,6 @@ module Ballast.Types
   , GetProductResponseResource(..)
   , ModifyProductRequest
   , CreateOrderRequest
-  , CreateOrderResponse
   , CreateOrder(..)
   , OrderItem(..)
   , CommercialInvoiceValueCurrency(..)
@@ -547,7 +546,6 @@ module Ballast.Types
   , SameDay(..)
   , ProcessAfterDate(..)
   , GetOrdersRequest
-  , GetOrdersResponse(..)
   , GetOrdersResponseResource(..)
   , GetOrdersResponseResourceItems(..)
   , GetOrdersResponseResourceItemResource(..)
@@ -636,7 +634,6 @@ module Ballast.Types
   , CancelOrderResponse
   , IdWrapper(..)
   , GetOrderTrackingsRequest
-  , GetOrderTrackingsResponse(..)
   , GetOrderTrackingsResponseResource(..)
   , GetOrderTrackingsResponseResourceItems(..)
   , GetOrderTrackingsResponseResourceItem(..)
@@ -648,7 +645,6 @@ module Ballast.Types
   , ValidateAddressWarnings(..)
   , WarningObject(..)
   , GetOrderRequest
-  , GetOrderResponse(..)
   , GetOrderResponseResource
   , ExtendedAttributesResponse(..)
   , ExtendedAttributesResponseResource(..)
@@ -5288,7 +5284,7 @@ newtype CountryOfOrigin = CountryOfOrigin
 
 -- | GET /api/v3/orders
 data GetOrdersRequest
-type instance ShipwireReturn GetOrdersRequest = GetOrdersResponse
+type instance ShipwireReturn GetOrdersRequest = GenericResponse GetOrdersResponseResource
 
 instance ShipwireHasParam GetOrdersRequest ExpandOrdersParam
 instance ShipwireHasParam GetOrdersRequest CommerceNameParam
@@ -5304,17 +5300,15 @@ instance ShipwireHasParam GetOrdersRequest WarehouseExternalIdParam
 
 -- | GET /api/v3/orders/{id} or /api/v3/orders/E{externalId}
 data GetOrderRequest
-type instance ShipwireReturn GetOrderRequest = GetOrderResponse
+type instance ShipwireReturn GetOrderRequest = GenericResponse GetOrderResponseResource
 
 instance ShipwireHasParam GetOrderRequest ExpandOrdersParam
 
 -- | POST /api/v3/orders
 data CreateOrderRequest
-type instance ShipwireReturn CreateOrderRequest = CreateOrderResponse
+type instance ShipwireReturn CreateOrderRequest = GenericResponse GetOrdersResponseResource
 
 instance ShipwireHasParam CreateOrderRequest ExpandOrdersParam
-
-type CreateOrderResponse = GetOrdersResponse
 
 -- | POST /api/v3/orders/{id}/cancel or /api/v3/orders/E{externalId}/cancel
 data CancelOrderRequest
@@ -5324,49 +5318,9 @@ type CancelOrderResponse = SimpleResponse
 
 -- | GET /api/v3/orders/{id}/trackings or /api/v3/orders/E{externalId}/trackings
 data GetOrderTrackingsRequest
-type instance ShipwireReturn GetOrderTrackingsRequest = GetOrderTrackingsResponse
-
-data GetOrderResponse = GetOrderResponse
-  { goreMessage          :: ResponseMessage
-  , goreResource         :: GetOrderResponseResource
-  , goreStatus           :: ResponseStatus
-  , goreResourceLocation :: ResponseResourceLocation
-  , goreWarnings         :: Maybe ResponseWarnings
-  , goreErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetOrderResponse where
-  parseJSON = withObject "GetOrderResponse" parse
-    where
-      parse o = GetOrderResponse
-                <$> o .:  "message"
-                <*> o .:  "resource"
-                <*> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
+type instance ShipwireReturn GetOrderTrackingsRequest = GenericResponse GetOrderTrackingsResponseResource
 
 type GetOrderResponseResource = GetOrdersResponseResourceItemResource
-
-data GetOrderTrackingsResponse = GetOrderTrackingsResponse
-  { gotrMessage          :: ResponseMessage
-  , gotrResource         :: GetOrderTrackingsResponseResource
-  , gotrResourceLocation :: ResponseResourceLocation
-  , gotrStatus           :: ResponseStatus
-  , gotrWarnings         :: Maybe ResponseWarnings
-  , gotrErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetOrderTrackingsResponse where
-  parseJSON = withObject "GetOrderTrackingsResponse" parse
-    where
-      parse o = GetOrderTrackingsResponse
-                <$> o .:  "message"
-                <*> o .:  "resource"
-                <*> o .:  "resourceLocation"
-                <*> o .:  "status"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
 
 data GetOrderTrackingsResponseResource = GetOrderTrackingsResponseResource
   { gotrrItems    :: GetOrderTrackingsResponseResourceItems
@@ -5505,26 +5459,6 @@ expandOrdersToBS8 OrdersExpandSplitOrders = "splitOrders"
 instance ToShipwireParam ExpandOrdersParam where
   toShipwireParam (ExpandOrdersParam xs) =
     (Query ("expand", (BS8.intercalate "," (map expandOrdersToBS8 xs))) :)
-
-data GetOrdersResponse = GetOrdersResponse
-  { gorMessage          :: ResponseMessage
-  , gorResource         :: GetOrdersResponseResource
-  , gorStatus           :: ResponseStatus
-  , gorResourceLocation :: ResponseResourceLocation
-  , gorWarnings         :: Maybe ResponseWarnings
-  , gorErrors           :: Maybe ResponseErrors
-  } deriving (Eq, Show)
-
-instance FromJSON GetOrdersResponse where
-  parseJSON = withObject "GetOrdersResponse" parse
-    where
-      parse o = GetOrdersResponse
-                <$> o .:  "message"
-                <*> o .:  "resource"
-                <*> o .:  "status"
-                <*> o .:  "resourceLocation"
-                <*> o .:? "warnings"
-                <*> o .:? "errors"
 
 data GetOrdersResponseResource = GetOrdersResponseResource
   { gorrItems    :: GetOrdersResponseResourceItems
