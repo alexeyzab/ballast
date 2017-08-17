@@ -10,6 +10,8 @@ import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import           Data.Time (Day(..), secondsToDiffTime)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDayTime)
+import           Network.HTTP.Client (Manager, newManager)
+import           Network.HTTP.Client.TLS (tlsManagerSettings)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 
@@ -418,9 +420,9 @@ exampleAddress = OrderShipTo
                   (Commercial)
                   (Nothing)
 
-createReceivingHelper :: ShipwireConfig -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
-createReceivingHelper conf cr = do
-  receiving <- shipwire conf $ createReceiving cr
+createReceivingHelper :: ShipwireConfig -> Manager -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
+createReceivingHelper conf manager cr = do
+  receiving <- shipwireTest conf manager $ createReceiving cr
   let Right GenericResponse {..} = receiving
       Just ReceivingsResource {..} = genericResponseResource
       ReceivingsItems {..} = receivingsResponseItems
@@ -429,9 +431,9 @@ createReceivingHelper conf cr = do
       receivingId = T.pack $ show $ unId rirId
   return (receiving, ReceivingId receivingId)
 
-createBaseProductHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id, SKU)
-createBaseProductHelper conf cp = do
-  baseProduct <- shipwire conf $ createProduct cp
+createBaseProductHelper :: ShipwireConfig -> Manager -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id, SKU)
+createBaseProductHelper conf manager cp = do
+  baseProduct <- shipwireTest conf manager $ createProduct cp
   let Right GetProductsResponse {..} = baseProduct
       GetProductsResponseResource {..} = gprResource
       GetProductsResponseResourceItems {..} = gprrItems
@@ -441,9 +443,9 @@ createBaseProductHelper conf cp = do
       productSku = bprSku $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId, productSku)
 
-createMarketingInsertHelper :: ShipwireConfig -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id)
-createMarketingInsertHelper conf cp = do
-  marketingInsert <- shipwire conf $ createProduct cp
+createMarketingInsertHelper :: ShipwireConfig -> Manager -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id)
+createMarketingInsertHelper conf manager cp = do
+  marketingInsert <- shipwireTest conf manager $ createProduct cp
   let Right GetProductsResponse {..} = marketingInsert
       GetProductsResponseResource {..} = gprResource
       GetProductsResponseResourceItems {..} = gprrItems
@@ -452,10 +454,10 @@ createMarketingInsertHelper conf cp = do
       productId = mirId $ unwrapMarketingInsert pwMarketingInsert
   return (marketingInsert, productId)
 
-createOrderHelper :: ShipwireConfig -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Id)
-createOrderHelper conf co = do
-  order <- shipwire conf $ createOrder co
-  exampleOrd <- shipwire conf $ getOrders -&- (OrderNoParam $ getOrderNo co)
+createOrderHelper :: ShipwireConfig -> Manager -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Id)
+createOrderHelper conf manager co = do
+  order <- shipwireTest conf manager $ createOrder co
+  exampleOrd <- shipwireTest conf manager $ getOrders -&- (OrderNoParam $ getOrderNo co)
   let Right GenericResponse {..} = exampleOrd
       Just GetOrdersResponseResource {..} = genericResponseResource
       GetOrdersResponseResourceItems {..} = gorrItems
@@ -547,17 +549,17 @@ unwrapPwVirtualKit (_:xs) = unwrapPwVirtualKit xs
 
 main :: IO ()
 main = do
-
+  manager <- newManager tlsManagerSettings
   config <- sandboxEnvConfig
-  hspec $ do
+  hspec $ parallel $ do
     describe "get rates" $ do
       it "gets the correct rates" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
         let getRt = mkGetRate (RateOptions USD GroupByAll Nothing Nothing Nothing (Just IgnoreUnknownSkus) CanSplit (WarehouseArea "US") Nothing Nothing Nothing) (RateOrder exampleShipTo (exampleItems productSku))
-        result <- shipwire config $ createRateRequest getRt
+        result <- shipwireTest config manager $ createRateRequest getRt
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -565,9 +567,9 @@ main = do
     describe "get stock info" $ do
       it "gets stock info with optional args" $ do
         randomPart <- getTimestamp
-        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ getStockInfo -&- (SKU "HspecTest5")
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ getStockInfo -&- (SKU "HspecTest5")
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
@@ -576,33 +578,33 @@ main = do
     describe "get receivings" $ do
       it "gets an itemized list of receivings with optional args" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
                                                   -&- (ReceivingStatusParams [StatusCanceled])
                                                   -&- (WarehouseIdParam ["TEST 1"])
                                                   -&- (UpdatedAfter $ (UTCTime (ModifiedJulianDay 88000) (secondsToDiffTime 10)))
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
 
     describe "create a new receiving" $ do
       it "creates a new receiving with optional args" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (receiving, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (receiving, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
         receiving `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = receiving
         genericResponseErrors `shouldBe` Nothing
         genericResponseWarnings `shouldBe` Nothing
 
       it "doesn't create a receiving with bad JSON" $ do
         randomPart <- getTimestamp
-        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ createReceiving exampleBadCreateReceiving
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ createReceiving exampleBadCreateReceiving
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseErrors `shouldBe`
           Just
@@ -617,12 +619,12 @@ main = do
     describe "get information about a receiving" $ do
       it "gets info about a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceiving receivingId -&- (ExpandReceivingsParam [ExpandHolds, ExpandItems])
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseErrors `shouldBe` Nothing
         genericResponseWarnings `shouldBe` Nothing
@@ -630,16 +632,16 @@ main = do
     describe "modify information about a receiving" $ do
       it "modifies info about a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ modifyReceiving receivingId exampleModifiedReceiving
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ modifyReceiving receivingId exampleModifiedReceiving
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseErrors `shouldBe` Nothing
         genericResponseWarnings `shouldBe` Nothing
-        modifiedReceiving <- shipwire config $ getReceiving receivingId
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        modifiedReceiving <- shipwireTest config manager $ getReceiving receivingId
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = modifiedReceiving
             Just ReceivingsItemResource {..} = genericResponseResource
             ItemResourceShipFrom {..} = rirShipFrom
@@ -649,36 +651,36 @@ main = do
     describe "cancel a receiving" $ do
       it "cancels a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ cancelReceiving receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ cancelReceiving receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Receiving was cancelled")
 
     describe "cancel shipping labels" $ do
       it "cancels shipping labels on a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ cancelReceivingLabels receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ cancelReceivingLabels receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right SimpleResponse {..} = result
         message `shouldBe` (ResponseMessage "Labels cancelled")
 
     describe "get list of holds for a receiving" $ do
       it "gets a list of holds for a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingHolds receivingId -&- IncludeCleared
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingHolds receivingId -&- IncludeCleared
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -686,12 +688,12 @@ main = do
     describe "get email recipients and instructions for a receiving" $ do
       it "gets email recipients and instructions for a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingInstructionsRecipients receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingInstructionsRecipients receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -699,12 +701,12 @@ main = do
     describe "get contents of a receiving" $ do
       it "gets contents of a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingItems receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingItems receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -712,12 +714,12 @@ main = do
     describe "get shipping dimension and container information" $ do
       it "gets shipping dimension and container infromation" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingShipments receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingShipments receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -725,12 +727,12 @@ main = do
     describe "get tracking information for a receiving" $ do
       it "gets tracking information for a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingTrackings receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingTrackings receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -738,12 +740,12 @@ main = do
     describe "get labels information for a receiving" $ do
       it "gets labels information for a receiving" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, receivingId) <- createReceivingHelper config $ exampleCreateReceiving productSku
-        result <- shipwire config $ getReceivingLabels receivingId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, receivingId) <- createReceivingHelper config manager $ exampleCreateReceiving productSku
+        result <- shipwireTest config manager $ getReceivingLabels receivingId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ cancelReceiving receivingId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ cancelReceiving receivingId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
@@ -751,10 +753,10 @@ main = do
     describe "get an itemized list of products" $ do
       it "gets an itemized list of products" $ do
         randomPart <- getTimestamp
-        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
+        (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GetProductsResponse {..} = result
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
@@ -762,42 +764,42 @@ main = do
     describe "create a product" $ do
       it "creates all possible product classifications" $ do
         randomPart <- getTimestamp
-        (prd, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (prd, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
         prd `shouldSatisfy` isRight
         let Right GetProductsResponse {..} = prd
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         gprWarnings `shouldBe` Nothing
         gprErrors `shouldBe` Nothing
 
     describe "modify products" $ do
       it "modifies several previously created products" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ modifyProducts $ exampleModifyProducts productId productSku
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ modifyProducts $ exampleModifyProducts productId productSku
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
 
     describe "modify a product" $ do
       it "modifies a single product" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ modifyProduct (exampleModifyProduct productId productSku) productId
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ modifyProduct (exampleModifyProduct productId productSku) productId
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         genericResponseWarnings `shouldBe` Nothing
         genericResponseErrors `shouldBe` Nothing
 
     describe "get a product" $ do
       it "gets information about a single product" $ do
         randomPart <- getTimestamp
-        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        result <- shipwire config $ getProduct productId
+        (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        result <- shipwireTest config manager $ getProduct productId
         result `shouldSatisfy` isRight
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GenericResponse {..} = result
         genericResponseStatus `shouldNotBe` (ResponseStatus 404)
         genericResponseWarnings `shouldBe` Nothing
@@ -819,10 +821,10 @@ main = do
     describe "create an order" $ do
       it "creates an order" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (result, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
-        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (result, orderId) <- createOrderHelper config manager $ exampleOrder randomPart productSku
+        _ <- shipwireTest config manager $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
@@ -831,11 +833,11 @@ main = do
     describe "get orders" $ do
       it "gets all the orders" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
-        result <- shipwire config $ getOrders
-        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config manager $ exampleOrder randomPart productSku
+        result <- shipwireTest config manager $ getOrders
+        _ <- shipwireTest config manager $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
@@ -844,11 +846,11 @@ main = do
     describe "get an order" $ do
       it "gets an information about an order" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
-        result <- shipwire config $ getOrder $ WrappedId $ orderId
-        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config manager $ exampleOrder randomPart productSku
+        result <- shipwireTest config manager $ getOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
@@ -857,10 +859,10 @@ main = do
     describe "cancel an order" $ do
       it "cancels an order" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
-        result <- shipwire config $ cancelOrder $ WrappedId $ orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config manager $ exampleOrder randomPart productSku
+        result <- shipwireTest config manager $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right SimpleResponse {..} = result
         warnings `shouldBe` Nothing
@@ -870,11 +872,11 @@ main = do
     describe "get tracking information for this order" $ do
       it "gets tracking information for this order" $ do
         randomPart <- getTimestamp
-        (_, productId, productSku) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
-        (_, orderId) <- createOrderHelper config $ exampleOrder randomPart productSku
-        result <- shipwire config $ getOrderTrackings $ WrappedId $ orderId
-        _ <- shipwire config $ cancelOrder $ WrappedId $ orderId
-        _ <- shipwire config $ retireProducts $ ProductsToRetire [productId]
+        (_, productId, productSku) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
+        (_, orderId) <- createOrderHelper config manager $ exampleOrder randomPart productSku
+        result <- shipwireTest config manager $ getOrderTrackings $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ cancelOrder $ WrappedId $ orderId
+        _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         result `shouldSatisfy` isRight
         let Right GenericResponse {..} = result
         genericResponseWarnings `shouldBe` Nothing
@@ -882,7 +884,7 @@ main = do
 
     describe "validate address" $ do
       it "validates an address" $ do
-        result <- shipwire config $ validateAddress exampleAddress
+        result <- shipwireTest config manager $ validateAddress exampleAddress
         result `shouldSatisfy` isRight
         let Right ValidateAddressResponse {..} = result
         varMessage `shouldBe` (ResponseMessage "The address provided is valid")

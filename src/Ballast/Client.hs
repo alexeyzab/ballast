@@ -298,3 +298,35 @@ shipwire config request = do
   case result of
     Left s -> return (Left (ShipwireError s response))
     (Right r) -> return (Right r)
+
+shipwireTest ::
+     (FromJSON (ShipwireReturn a))
+  => ShipwireConfig
+  -> Manager
+  -> ShipwireRequest a TupleBS8 BSL.ByteString
+  -> IO (Either ShipwireError (ShipwireReturn a))
+shipwireTest config tlsManager request = do
+  response <- shipwireTest' config request tlsManager
+  let result = eitherDecode $ responseBody response
+  case result of
+    Left s -> return (Left (ShipwireError s response))
+    (Right r) -> return (Right r)
+
+shipwireTest' :: (FromJSON (ShipwireReturn a))
+              => ShipwireConfig
+              -> ShipwireRequest a TupleBS8 BSL.ByteString
+              -> Manager
+              -> IO (Response BSL.ByteString)
+shipwireTest' ShipwireConfig {..} ShipwireRequest {..} manager = do
+  initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
+  let reqBody | rMethod == NHTM.methodGet = mempty
+              | otherwise = filterBody params
+      reqURL  = paramsToByteString $ filterQuery params
+      req = initReq { method = rMethod
+                    , requestBody = RequestBodyLBS reqBody
+                    , queryString = reqURL
+                    }
+      shipwireUser = unUsername email
+      shipwirePass = unPassword pass
+      authorizedRequest = applyBasicAuth shipwireUser shipwirePass req
+  httpLbs authorizedRequest manager
