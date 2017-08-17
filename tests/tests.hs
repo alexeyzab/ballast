@@ -443,17 +443,6 @@ createBaseProductHelper conf manager cp = do
       productSku = bprSku $ unwrapBaseProduct pwBaseProduct
   return (baseProduct, productId, productSku)
 
-createMarketingInsertHelper :: ShipwireConfig -> Manager -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id)
-createMarketingInsertHelper conf manager cp = do
-  marketingInsert <- shipwireTest conf manager $ createProduct cp
-  let Right GetProductsResponse {..} = marketingInsert
-      GetProductsResponseResource {..} = gprResource
-      GetProductsResponseResourceItems {..} = gprrItems
-      GetProductsResponseResourceItem {..} = last gprriItems
-      pwMarketingInsert@(PwMarketingInsert _) = gprriResource
-      productId = mirId $ unwrapMarketingInsert pwMarketingInsert
-  return (marketingInsert, productId)
-
 createOrderHelper :: ShipwireConfig -> Manager -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Id)
 createOrderHelper conf manager co = do
   order <- shipwireTest conf manager $ createOrder co
@@ -754,7 +743,7 @@ main = do
       it "gets an itemized list of products" $ do
         randomPart <- getTimestamp
         (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
-        result <- shipwireTest config manager $ getProducts -&- (ExpandProductsParam [ExpandEnqueuedDimensions])
+        result <- shipwireTest config manager $ getProducts
         result `shouldSatisfy` isRight
         _ <- shipwireTest config manager $ retireProducts $ ProductsToRetire [productId]
         let Right GetProductsResponse {..} = result
@@ -808,7 +797,7 @@ main = do
     describe "retire a product" $ do
       it "retires a product" $ do
         randomPart <- getTimestamp
-        (_, productId, _) <- createBaseProductHelper config $ exampleCreateBaseProduct randomPart
+        (_, productId, _) <- createBaseProductHelper config manager $ exampleCreateBaseProduct randomPart
         result <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right RetireProductsResponse {..} = result
             MoreInfo {..} = fromJust $ rprMoreInfo
