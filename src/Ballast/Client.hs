@@ -299,6 +299,8 @@ shipwire config request = do
     Left s -> return (Left (ShipwireError s response))
     (Right r) -> return (Right r)
 
+-- | This function is only used internally to speed up the test suite.
+-- Instead of creating a new Manager we reuse the same one.
 shipwireTest ::
      (FromJSON (ShipwireReturn a))
   => ShipwireConfig
