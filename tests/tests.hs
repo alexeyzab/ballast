@@ -178,10 +178,10 @@ exampleCreateProduct productId =
                               (Just $ CapacityUnit "WATTHOUR")
                             )
                           )
-                          (Nothing)
-                          (Nothing)
-                          (Nothing)
-                          (Nothing),
+                          Nothing
+                          Nothing
+                          Nothing
+                          Nothing,
                         CpwMarketingInsert $ MarketingInsert
                           Nothing
                           (SKU "HspecTestInsert3")
@@ -196,7 +196,7 @@ exampleCreateProduct productId =
                             (MarketingInsertHeight 0.1)
                             (MarketingInsertWeight 0.2)
                           )
-                          (Nothing)
+                          Nothing
                           (Just $ MarketingInsertInclusionRules
                             (Just $ InsertAfterDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
                             (Just $ InsertBeforeDate $ UTCTime (ModifiedJulianDay 160000) (secondsToDiffTime 10))
@@ -220,32 +220,32 @@ exampleCreateProduct productId =
                           Nothing
                           (SKU "HspecTest9")
                           Nothing
-                          (BaseProductClassification)
+                          BaseProductClassification
                           (Description "Hspec test product2")
-                          (Nothing)
-                          (Nothing)
+                          Nothing
+                          Nothing
                           (Category "TOYS_SPORTS_HOBBIES")
-                          (NoBatteryConfiguration)
+                          NoBatteryConfiguration
                           (Values
                             (CostValue 1)
-                            (Nothing)
+                            Nothing
                             (RetailValue 4)
                             (Just $ CostCurrency "USD")
                             (Just $ WholesaleCurrency "USD")
                             (Just $ RetailCurrency "USD")
                           )
-                          (Nothing)
+                          Nothing
                           (BaseProductDimensions
                             (BaseProductLength 10)
                             (BaseProductWidth 10)
                             (BaseProductHeight 10)
                             (BaseProductWeight 10)
                           )
-                          (Nothing)
-                          (Nothing)
-                          (Nothing)
-                          (Nothing)
-                          (Nothing)
+                          Nothing
+                          Nothing
+                          Nothing
+                          Nothing
+                          Nothing
                         ]
 
 exampleModifyProducts :: Id -> SKU -> [CreateProductsWrapper]
@@ -253,32 +253,32 @@ exampleModifyProducts i sku =
   [ CpwBaseProduct $
     BaseProduct
       (Just i)
-      (sku)
-      (Nothing)
-      (BaseProductClassification)
+      sku
+      Nothing
+      BaseProductClassification
       (Description "Modified description")
-      (Nothing)
-      (Nothing)
+      Nothing
+      Nothing
       (Category "TOYS_SPORTS_HOBBIES")
-      (NoBatteryConfiguration)
+      NoBatteryConfiguration
       (Values
          (CostValue 1)
-         (Nothing)
+         Nothing
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (Nothing)
+      Nothing
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
+      Nothing
+      Nothing
+      Nothing
+      Nothing
+      Nothing
   ]
 
 exampleModifyProduct :: Id -> SKU -> CreateProductsWrapper
@@ -287,31 +287,31 @@ exampleModifyProduct prId prSku =
     BaseProduct
       (Just prId)
       (prSku)
-      (Nothing)
-      (BaseProductClassification)
+      Nothing
+      BaseProductClassification
       (Description "Modified description")
-      (Nothing)
-      (Nothing)
+      Nothing
+      Nothing
       (Category "TOYS_SPORTS_HOBBIES")
-      (NoBatteryConfiguration)
+      NoBatteryConfiguration
       (Values
          (CostValue 1)
-         (Nothing)
+         Nothing
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (Nothing)
+      Nothing
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
+      Nothing
+      Nothing
+      Nothing
+      Nothing
+      Nothing
 
 exampleCreateBaseProduct :: T.Text -> [CreateProductsWrapper]
 exampleCreateBaseProduct randomSecond =
@@ -320,40 +320,40 @@ exampleCreateBaseProduct randomSecond =
       Nothing
       (SKU $ "HspecTest" <> randomSecond)
       (Just $ ExternalId $ "hspectest" <> randomSecond)
-      (BaseProductClassification)
+      BaseProductClassification
       (Description "Hspec test product5")
       (Just $ HsCode "010612")
       (Just $ CountryOfOrigin "US")
       (Category "TOYS_SPORTS_HOBBIES")
-      (NoBatteryConfiguration)
+      NoBatteryConfiguration
       (Values
          (CostValue 1)
-         (Nothing)
+         Nothing
          (RetailValue 4)
          (Just $ CostCurrency "USD")
          (Just $ WholesaleCurrency "USD")
          (Just $ RetailCurrency "USD"))
-      (Nothing)
+      Nothing
       (BaseProductDimensions
          (BaseProductLength 10)
          (BaseProductWidth 10)
          (BaseProductHeight 10)
          (BaseProductWeight 10))
-      (Nothing)
+      Nothing
       (Just $ BaseProductFlags
         (PackagedReadyToShip)
-        (NotFragile)
-        (NotDangerous)
-        (NotPerishable)
-        (NotMedia)
-        (NotAdult)
-        (NotLiquid)
-        (NoInnerPack)
-        (NoMasterCase)
-        (NoPallet))
-      (Nothing)
-      (Nothing)
-      (Nothing)
+        NotFragile
+        NotDangerous
+        NotPerishable
+        NotMedia
+        NotAdult
+        NotLiquid
+        NoInnerPack
+        NoMasterCase
+        NoPallet)
+      Nothing
+      Nothing
+      Nothing
   ]
 
 exampleOrder :: T.Text -> SKU -> CreateOrder
@@ -365,24 +365,24 @@ exampleOrder randomPart productSku =
     Nothing
     (Just $ CreateOrderOptions
       (Just $ WarehouseId 10281)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (DomesticOneDay)
-      (Nothing)
-      (NotSameDay)
+      Nothing
+      Nothing
+      Nothing
+      DomesticOneDay
+      Nothing
+      NotSameDay
       (Just $ DontForceDuplicate)
       (Just $ DontForceAddress)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (USD)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
-      (Nothing)
+      Nothing
+      Nothing
+      Nothing
+      USD
+      Nothing
+      Nothing
+      Nothing
+      Nothing
+      Nothing
+      Nothing
     )
     Nothing
     (OrderShipTo
@@ -410,15 +410,15 @@ exampleAddress = OrderShipTo
                   (Name "Test Person")
                   (Just $ Company "My Company")
                   (AddressLine "3351 Michelson Dr STE 100")
-                  (Nothing)
-                  (Nothing)
+                  Nothing
+                  Nothing
                   (City "Irvine")
                   (State "CA")
                   (Just $ PostalCode "92612-0697")
                   (Country "US")
                   (Phone "8885551212")
-                  (Commercial)
-                  (Nothing)
+                  Commercial
+                  Nothing
 
 createReceivingHelper :: ShipwireConfig -> Manager -> CreateReceiving -> IO (Either ShipwireError (ShipwireReturn CreateReceivingRequest), ReceivingId)
 createReceivingHelper conf manager cr = do
