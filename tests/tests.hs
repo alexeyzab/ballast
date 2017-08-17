@@ -363,46 +363,51 @@ exampleOrder randomPart productSku =
     (Just $ OrderNo (T.concat ["testorder", randomPart]))
     Nothing
     Nothing
-    (Just $ CreateOrderOptions
-      (Just $ WarehouseId 10281)
-      Nothing
-      Nothing
-      Nothing
-      DomesticOneDay
-      Nothing
-      NotSameDay
-      (Just DontForceDuplicate)
-      (Just DontForceAddress)
-      Nothing
-      Nothing
-      Nothing
-      USD
-      Nothing
-      Nothing
-      Nothing
-      Nothing
-      Nothing
-      Nothing
-    )
+    (Just $
+     CreateOrderOptions
+       (Just $ WarehouseId 10281)
+       Nothing
+       Nothing
+       Nothing
+       DomesticOneDay
+       Nothing
+       NotSameDay
+       (Just DontForceDuplicate)
+       (Just DontForceAddress)
+       Nothing
+       Nothing
+       Nothing
+       USD
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing
+       Nothing)
     Nothing
     (OrderShipTo
-      (Just $ Email "test@example.com")
-      (Name "Test Person")
-      (Just $ Company "Best Company")
-      (AddressLine "First line")
-      (Just $ AddressLine "Second line 25")
-      (Just $ AddressLine "")
-      (City "Best city")
-      (State "WA")
-      (Just $ PostalCode "100100")
-      (Country "US")
-      (Phone "6315613729")
-      NotCommercial
-      (Just NotPoBox)
-    )
+       (Just $ Email "test@example.com")
+       (Name "Test Person")
+       (Just $ Company "Best Company")
+       (AddressLine "First line")
+       (Just $ AddressLine "Second line 25")
+       (Just $ AddressLine "")
+       (City "Best city")
+       (State "WA")
+       (Just $ PostalCode "100100")
+       (Country "US")
+       (Phone "6315613729")
+       NotCommercial
+       (Just NotPoBox))
     Nothing
     Nothing
-    (OrderItems [OrderItem (Just $ CommercialInvoiceValue 4.5) (Just $ CommercialInvoiceValueCurrency "USD") (Quantity 5) (productSku)])
+    (OrderItems
+       [ OrderItem
+           (Just $ CommercialInvoiceValue 4.5)
+           (Just $ CommercialInvoiceValueCurrency "USD")
+           (Quantity 5)
+           (productSku)
+       ])
 
 exampleAddress :: AddressToValidate
 exampleAddress = OrderShipTo
