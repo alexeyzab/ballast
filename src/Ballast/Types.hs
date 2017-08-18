@@ -11,6 +11,7 @@ module Ballast.Types
   , mkSku
   , GetRate(..)
   , RateOptions(..)
+  , HighAccuracyEstimates(..)
   , CanSplit(..)
   , RateOrder(..)
   , ShipTo(..)
@@ -748,7 +749,8 @@ data RateOptions = RateOptions
   , rateOptionHighAccuracyEstimates :: Maybe HighAccuracyEstimates
   } deriving (Eq, Show)
 
-data HighAccuracyEstimates = HighAccuracyEstimates
+data HighAccuracyEstimates =
+    HighAccuracyEstimates
   | NoHighAccuracyEstimates
   deriving (Eq, Show)
 
