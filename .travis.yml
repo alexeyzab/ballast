@@ -7,13 +7,14 @@ env:
   global:
   - secure: THcnNqboMrUCxN7ilzYXPA6HfObIs0VXOWaUbqkF4MmKXiI3zrQLYn6p8rfydgkvfNwRUXBVwKJMhzQlKdImES4+9e6wNYqVbuuzvyWwH8mAXogEN6MWKqJej5Bh6tVwEBgBcNqYbKd98zzfBOQi5PtAqBZMdmyRVSDMeFa+t4mqjUxzmL/SLeEU0izC4/Z+YLgNkFD1uLJfJNUe50LJmn5JjPnWAcKRNDQ02u9IbgVfm7NQN4jdZqkyKNbJRcvSTkRECplCpKc57pN3WUdIisVPTMiz1Ua+0IlNk96pSRfYwYDfxsKdJe3TfXc7sOJB5QrOyZRz4fofGRs8O34EVPAywfT9KtSez3b0IChS8/LJFIrGlJ69r2at2XGpzIPsf5hBxUECnMJ0VJCjbTJ/fTFB9SPlhvDZaaYSOqHJOSx1d0Rn12GmvfWs71heCwT/Uh3kEvoN7UkH6/pRhCHvnhb2T1UT4oFdiNO4i3JoOve8BRkq2B2hc8NaNvobE7+72iU/dHrMDPWKVLP8ZysUGuchXkj8UpxvW8gs2a22f6EUBigEMcwPY89DRvmUFF9wXUciQ9hqgMAUGkTK6kNjopu16lCKeY+e+zVC9YmaquN6BvqOjq/sF188LWMXR5KBY/lRqmAANN0PRGhFtjpoS25ok2Ehd9y+WMoz5QncOy8=
   matrix:
-    include:
-      - env: BUILD=stack GHCVER=8.0.2 STACK_YAML=stack.yaml
+  - include:
+    - env: BUILD=stack GHCVER=8.0.2 STACK_YAML=stack.yaml
+  - secure: Tc9dJuDBuzYjsiCPjG0udSlW6sdxJbkqKMsnmH1kUwqEjmXCfXMiqa36mPMk+wvih+iRLPb6Wt18Fu73khBrpq8AAgQrTpdC4r+gTJg5eBDlgA35lijMu1scHhGEkRnojIfvydvj9c2bUvzRPeKyYYzPqpmGgZDtSuued7R2W5ESk6axMdp0Rc+5DE9rYFV9Xrl1Vci/Sct+m70LdAewCrOC1cJuAcUq8CR8FIHRsIyE7AddiCp+uTol+GCC6GLXa79o5P36CZzgHPEo3j+tQzYIu/0uSA2RyWjGv32adEc6ETqkLUPJD+Tq+MfODMiv010vBvADzXsX2WT0dmPiYy2Kb51mjg3kVrWqBoW6zwZqA2bzntv6Jno9MfHWYpQi6GlIPxYFskGoVS+idS3rPgfG1sjomyoRE9216hu/2gurzMxoSAEq10tRgCnwl+sz7U/0im0n+wdMhytkmhC72AEQZnqlEUkOnLhDzR4AyKOS6DJNXnX0MLH0aLVbVE//tSmllRPQ3N2nuOXhuLYXVvNSggOrdoAlzZLtOc7sQOMGvnwbbZQ7TraV8Z7MBdx+MyHLazcT4zS3LKCFIrhkzn54ApnvCp2mD8o37r5KJr0SmkvOZF165W3OaprJ0wJ9IyXQa/HJgB+yLz+hucs8UKhApqK0K9DIjBzpWvj1kpw=
 before_install:
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
-- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-install:
+- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards
+  --strip-components=1 -C ~/.local/bin '*/stack'
 script:
 - stack setup
 - stack update
