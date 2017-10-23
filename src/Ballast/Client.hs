@@ -297,7 +297,7 @@ shipwire config request = do
   let result = eitherDecode $ responseBody response
   case result of
     Left s -> return (Left (ShipwireError s response))
-    (Right r) -> return (Right r)
+    Right r -> return (Right r)
 
 -- | This function is only used internally to speed up the test suite.
 -- Instead of creating a new Manager we reuse the same one.
@@ -312,7 +312,7 @@ shipwireTest config tlsManager request = do
   let result = eitherDecode $ responseBody response
   case result of
     Left s -> return (Left (ShipwireError s response))
-    (Right r) -> return (Right r)
+    Right r -> return (Right r)
 
 shipwireTest' :: (FromJSON (ShipwireReturn a))
               => ShipwireConfig
