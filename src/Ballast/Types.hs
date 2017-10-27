@@ -1774,7 +1774,6 @@ hostUri :: ShipwireHost -> Text
 hostUri ShipwireProduction = "https://api.shipwire.com/api/v3"
 hostUri ShipwireSandbox    = "https://api.beta.shipwire.com/api/v3"
 
--- | Shipwire authenticates through
 data ShipwireConfig = ShipwireConfig
   { host  :: ShipwireHost
   , email :: Username
