@@ -12,6 +12,7 @@ import           Data.Time (Day(..), secondsToDiffTime)
 import           Data.Time.Clock (UTCTime(..), getCurrentTime, utctDayTime)
 import           Network.HTTP.Client (Manager, newManager)
 import           Network.HTTP.Client.TLS (tlsManagerSettings)
+import           Safe (headMay, lastMay)
 import           Test.Hspec
 import           Test.Hspec.Expectations.Contrib (isRight)
 
@@ -318,8 +319,8 @@ exampleCreateBaseProduct randomSecond =
   [ CpwBaseProduct $
     BaseProduct
       Nothing
-      (SKU $ "HspecTest" <> randomSecond)
-      (Just $ ExternalId $ "hspectest" <> randomSecond)
+      (SKU $ "Test" <> randomSecond)
+      (Just $ ExternalId $ "test" <> randomSecond)
       BaseProductClassification
       (Description "Hspec test product5")
       (Just $ HsCode "010612")
@@ -431,10 +432,12 @@ createReceivingHelper conf manager cr = do
   let Right GenericResponse {..} = receiving
       Just ReceivingsResource {..} = genericResponseResource
       ReceivingsItems {..} = receivingsResponseItems
-      ReceivingsItem {..} = last unReceivingsItems
-      ReceivingsItemResource {..} = receivingsItemResource
-      receivingId = T.pack $ show $ unId rirId
-  return (receiving, ReceivingId receivingId)
+  case lastMay unReceivingsItems of
+    Just ReceivingsItem {..} -> do
+      let ReceivingsItemResource {..} = receivingsItemResource
+          receivingId = T.pack $ show $ unId rirId
+      return (receiving, ReceivingId receivingId)
+    Nothing -> fail $ "Couldn't create this receiving, check your Shipwire dashboard"
 
 createBaseProductHelper :: ShipwireConfig -> Manager -> [CreateProductsWrapper] -> IO (Either ShipwireError (ShipwireReturn CreateProductsRequest), Id, SKU)
 createBaseProductHelper conf manager cp = do
@@ -442,11 +445,13 @@ createBaseProductHelper conf manager cp = do
   let Right GetProductsResponse {..} = baseProduct
       GetProductsResponseResource {..} = gprResource
       GetProductsResponseResourceItems {..} = gprrItems
-      GetProductsResponseResourceItem {..} = last gprriItems
-      pwBaseProduct@(PwBaseProduct _) = gprriResource
-      productId = bprId $ unwrapBaseProduct pwBaseProduct
-      productSku = bprSku $ unwrapBaseProduct pwBaseProduct
-  return (baseProduct, productId, productSku)
+  case lastMay gprriItems of
+    Just GetProductsResponseResourceItem {..} -> do
+      let pwBaseProduct@(PwBaseProduct _) = gprriResource
+          productId = bprId $ unwrapBaseProduct pwBaseProduct
+          productSku = bprSku $ unwrapBaseProduct pwBaseProduct
+      return (baseProduct, productId, productSku)
+    Nothing -> fail $ "Couldn't create this product, check your Shipwire dashboard"
 
 createOrderHelper :: ShipwireConfig -> Manager -> CreateOrder -> IO (Either ShipwireError (ShipwireReturn CreateOrderRequest), Id)
 createOrderHelper conf manager co = do
@@ -455,10 +460,11 @@ createOrderHelper conf manager co = do
   let Right GenericResponse {..} = exampleOrd
       Just GetOrdersResponseResource {..} = genericResponseResource
       GetOrdersResponseResourceItems {..} = gorrItems
-      GetOrdersResponseResourceItem {..} = head $ gorriItems
-      GetOrdersResponseResourceItemResource {..} = gorriResource
-      proId = gorrirId
-  return (order, proId)
+  case headMay gorriItems of
+    Just GetOrdersResponseResourceItem {..} -> do
+      let GetOrdersResponseResourceItemResource {..} = gorriResource
+      return (order, gorrirId)
+    Nothing -> fail $ "Couldn't get this order back, check your Shipwire dashboard."
 
 getOrderNo :: CreateOrder -> [T.Text]
 getOrderNo co = (unOrderNo $ fromJust $ coOrderNo co) : []
@@ -806,9 +812,15 @@ main = do
         result <- shipwire config $ retireProducts $ ProductsToRetire [productId]
         let Right RetireProductsResponse {..} = result
             MoreInfo {..} = fromJust $ rprMoreInfo
-            MoreInfoItems {..} = last miItems
-            MoreInfoItem {..} = last miiItems
-            status@Status {..} = miiStatus
+        status <- do
+          case lastMay miItems of
+            Just MoreInfoItems {..} -> do
+              case lastMay miiItems of
+                Just MoreInfoItem {..} -> do
+                  let status@Status {..} = miiStatus
+                  return status
+                Nothing -> fail $ "Couldn't retire this product, check your Shipwire dashboard"
+            Nothing -> fail $ "Couldn't retire this product, check your Shipwire dashboard"
         result `shouldSatisfy` isRight
         status `shouldBe` Status "deprecated"
 

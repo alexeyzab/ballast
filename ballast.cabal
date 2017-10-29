@@ -32,6 +32,7 @@ library
                      , vector               >= 0.10.9 && <0.13
                      , unordered-containers
                      , either-unwrap
+                     , safe >= 0.3 && <0.4
   default-language:    Haskell2010
   ghc-options: -Wall
 
@@ -49,7 +50,8 @@ test-suite tests
                        time,
                        either-unwrap,
                        http-client          >= 0.5 && <0.6,
-                       http-client-tls      >= 0.3 && <0.3.6
+                       http-client-tls      >= 0.3 && <0.3.6,
+                       safe >= 0.3 && <0.4
   default-language:    Haskell2010
 
 source-repository head
