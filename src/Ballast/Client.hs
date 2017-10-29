@@ -270,10 +270,9 @@ shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
               | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
+                    , queryString = paramsToByteString $ filterQuery params
                     }
       shipwireUser = unUsername email
       shipwirePass = unPassword pass
@@ -323,10 +322,9 @@ shipwireTest' ShipwireConfig {..} ShipwireRequest {..} manager = do
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
               | otherwise = filterBody params
-      reqURL  = paramsToByteString $ filterQuery params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody
-                    , queryString = reqURL
+                    , queryString = paramsToByteString $ filterQuery params
                     }
       shipwireUser = unUsername email
       shipwirePass = unPassword pass
