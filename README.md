@@ -15,11 +15,13 @@ You should set up two ENV variables: `SHIPWIRE_USER` and `SHIPWIRE_PASS` that re
 Get all receivings with `expand=all` query parameter:
 
 ```haskell
+import Ballast.Client
+
 main :: IO ()
 main = do
-  let config <- sandboxEnvConfig
+  config <- sandboxEnvConfig
   result <- shipwire config $ getReceivings -&- (ExpandReceivingsParam [ExpandAll])
-  return result
+  print result
 ```
 
 Create a new order:
