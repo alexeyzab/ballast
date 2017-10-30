@@ -261,8 +261,7 @@ validateAddress atv = request
     url = ".1/addressValidation"
     params = [Body (encode atv)]
 
-shipwire' :: (FromJSON (ShipwireReturn a))
-          => ShipwireConfig
+shipwire' :: ShipwireConfig
           -> ShipwireRequest a TupleBS8 BSL.ByteString
           -> IO (Response BSL.ByteString)
 shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
@@ -313,8 +312,7 @@ shipwireTest config tlsManager request = do
     Left s -> return (Left (ShipwireError s response))
     Right r -> return (Right r)
 
-shipwireTest' :: (FromJSON (ShipwireReturn a))
-              => ShipwireConfig
+shipwireTest' :: ShipwireConfig
               -> ShipwireRequest a TupleBS8 BSL.ByteString
               -> Manager
               -> IO (Response BSL.ByteString)
