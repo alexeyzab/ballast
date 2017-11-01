@@ -1896,8 +1896,8 @@ class (ToShipwireParam param) => ShipwireHasParam request param where
 
 -- | Add an optional query parameter
 (-&-)
-  :: ShipwireHasParam request param
-  => ShipwireRequest request b c -> param -> ShipwireRequest request b c
+  :: ShipwireHasParam r param
+  => ShipwireRequest r b c -> param -> ShipwireRequest r b c
 stripeRequest -&- param =
   stripeRequest
   { params = toShipwireParam param (params stripeRequest)
@@ -4057,7 +4057,6 @@ data GetProductsResponse = GetProductsResponse
   , gprMessage          :: ResponseMessage
   , gprResource         :: GetProductsResponseResource
   , gprWarnings         :: Maybe ResponseWarnings
-  -- , gprErrors           :: Maybe ResponseErrors
   , gprErrors           :: Maybe ProductError
   } deriving (Eq, Show)
 

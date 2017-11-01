@@ -16,6 +16,7 @@ Get all receivings with `expand=all` query parameter:
 
 ```haskell
 import Ballast.Client
+import Ballast.Types (sandboxEnvConfig, (-&-), ExpandProductsParam(..), ExpandProducts(..))
 
 main :: IO ()
 main = do
