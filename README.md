@@ -105,7 +105,7 @@ Steps to run the tests locally:
      and add a warehouse named `Test Warehouse`.
   3. Accept the `accurate dimensions` agreement by [creating a dummy
      product](https://merchant.beta.shipwire.com/app/products).
-  2. Install [Stack] (http://docs.haskellstack.org/en/stable/README.html#how-to-install)
+  2. Install [Stack](http://docs.haskellstack.org/en/stable/README.html#how-to-install).
   3. In your local Ballast directory, run `stack setup && stack build`.
   5. Run `stack test` in your local Ballast directory.
 
