@@ -28,6 +28,11 @@ main = do
 Create a new order:
 
 ```haskell
+{-# LANGUAGE OverloadedStrings #-}
+
+import Ballast.Client
+import Ballast.Types
+
 myOrder :: CreateOrder
 myOrder =
   CreateOrder
@@ -83,9 +88,9 @@ myOrder =
 
 main :: IO ()
 main = do
-  let config <- sandboxEnvConfig
+  config <- sandboxEnvConfig
   result <- shipwire config $ createOrder myOrder
-  return result
+  print result
 ```
 
 Testing
