@@ -162,10 +162,10 @@ module Ballast.Types
   , prodEnvConfig
   , sandboxEnvConfig
   , Params(..)
+  , Body(..)
+  , Query(..)
   , TupleBS8
   , (-&-)
-  , filterBody
-  , filterQuery
   , CreateReceivingRequest
   , GetReceivingsRequest
   , UpdatedAfter(..)
@@ -696,12 +696,12 @@ newtype Password = Password
 data ShipwireRequest a b c = ShipwireRequest
   { rMethod  :: Method -- ^ Method of ShipwireRequest
   , endpoint :: Text -- ^ Endpoint of ShipwireRequest
-  , params   :: [Params TupleBS8 BSL.ByteString] -- ^ Request params of ShipwireRequest
+  , params   :: Params TupleBS8 BSL.ByteString -- ^ Request params of ShipwireRequest
   }
 
 mkShipwireRequest :: Method
                   -> Text
-                  -> [Params TupleBS8 BSL.ByteString]
+                  -> Params TupleBS8 BSL.ByteString
                   -> ShipwireRequest a b c
 mkShipwireRequest m e p = ShipwireRequest m e p
 
@@ -1798,99 +1798,110 @@ sandboxEnvConfig = do
   (login, passw) <- credentialsEnv
   return $ ShipwireConfig ShipwireSandbox login passw
 
+newtype Query = Query {
+  unQuery :: TupleBS8
+  } deriving (Eq, Show)
+
+newtype Body = Body {
+  unBody :: BSL.ByteString
+  } deriving (Eq, Show)
+
 -- | Parameters for each request which include both the query and the body of a
 -- request
-data Params b c
-  = Query TupleBS8
-  | Body BSL.ByteString
-  deriving (Show)
+data Params b c = Params
+  { paramsBody :: (Maybe Body)
+  , paramsQuery :: [Query]
+  } deriving Show
+
+joinQueryParams :: Params b c -> Params b c -> Params b c
+joinQueryParams (Params _ xs) (Params b ys) = Params b (xs ++ ys)
 
 -- | Type alias for query parameters
 type TupleBS8 = (BS8.ByteString, BS8.ByteString)
 
 -- | Convert a parameter to a key/value
 class ToShipwireParam param where
-  toShipwireParam :: param -> [Params TupleBS8 c] -> [Params TupleBS8 c]
+  toShipwireParam :: param -> Params TupleBS8 c -> Params TupleBS8 c
 
 instance ToShipwireParam SKU where
   toShipwireParam (SKU i) =
-    (Query ("sku", TE.encodeUtf8 i) :)
+    joinQueryParams $ Params Nothing [Query ("sku", TE.encodeUtf8 i)]
 
 instance ToShipwireParam ParentId where
   toShipwireParam (ParentId i) =
-    (Query ("parentId", TE.encodeUtf8 i) :)
+    joinQueryParams $ Params Nothing [Query ("parentId", TE.encodeUtf8 i)]
 
 instance ToShipwireParam ProductIdParam where
   toShipwireParam (ProductIdParam xs) =
-    (Query ("productId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("productId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam ProductExternalIdParam where
   toShipwireParam (ProductExternalIdParam xs) =
-    (Query ("productExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("productExternalId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam WarehouseIdParam where
   toShipwireParam (WarehouseIdParam xs) =
-    (Query ("warehouseId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("warehouseId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam WarehouseExternalIdParam where
   toShipwireParam (WarehouseExternalIdParam xs) =
-    (Query ("warehouseExternalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("warehouseExternalId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam WarehouseRegionParam where
   toShipwireParam (WarehouseRegionParam xs) =
-    (Query ("warehouseRegion", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("warehouseRegion", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam WarehouseAreaParam where
   toShipwireParam (WarehouseAreaParam xs) =
-    (Query ("warehouseArea", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("warehouseArea", TE.encodeUtf8 (T.intercalate "," xs))]
 
 instance ToShipwireParam ChannelName where
   toShipwireParam (ChannelName n) =
-    (Query ("channelName", TE.encodeUtf8 n) :)
+    joinQueryParams $ Params Nothing [Query ("channelName", TE.encodeUtf8 n)]
 
 instance ToShipwireParam IncludeEmpty where
   toShipwireParam (IncludeEmpty b) =
-    (Query ("includeEmpty", TE.encodeUtf8 $ (T.pack . show) b) :)
+    joinQueryParams $ Params Nothing [Query ("includeEmpty", TE.encodeUtf8 $ (T.pack . show) b)]
 
 instance ToShipwireParam VendorIdParam where
   toShipwireParam (VendorIdParam vi) =
-    (Query ("vendorId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vi) :)
+    joinQueryParams $ Params Nothing [Query ("vendorId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vi)]
 
 instance ToShipwireParam VendorExternalIdParam where
   toShipwireParam (VendorExternalIdParam vei) =
-    (Query ("vendorExternalId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vei) :)
+    joinQueryParams $ Params Nothing [Query ("vendorExternalId", TE.encodeUtf8 $ T.intercalate "," $ map (T.pack . show) vei)]
 
 instance ToShipwireParam DisableAutoBreakLots where
   toShipwireParam (DisableAutoBreakLots d) =
-    (Query ("disableAutoBreakLots", TE.encodeUtf8 d) :)
+    joinQueryParams $ Params Nothing [Query ("disableAutoBreakLots", TE.encodeUtf8 d)]
 
 instance ToShipwireParam Mode where
   toShipwireParam m =
-    (Query ("mode", (modeToBS8 m)) :)
+    joinQueryParams $ Params Nothing [Query ("mode", (modeToBS8 m))]
 
 instance ToShipwireParam IncludeEmptyShipwireAnywhere where
   toShipwireParam (IncludeEmptyShipwireAnywhere i) =
-    (Query ("includeEmptyShipwireAnywhere", TE.encodeUtf8 i) :)
+    joinQueryParams $ Params Nothing [Query ("includeEmptyShipwireAnywhere", TE.encodeUtf8 i)]
 
 instance ToShipwireParam Offset where
   toShipwireParam (Offset o) =
-    (Query ("offset", TE.encodeUtf8 $ (T.pack . show) o) :)
+    joinQueryParams $ Params Nothing [Query ("offset", TE.encodeUtf8 $ (T.pack . show) o)]
 
 instance ToShipwireParam Total where
   toShipwireParam (Total t) =
-    (Query ("total", TE.encodeUtf8 $ (T.pack . show) t) :)
+    joinQueryParams $ Params Nothing [Query ("total", TE.encodeUtf8 $ (T.pack . show) t)]
 
 instance ToShipwireParam Previous where
   toShipwireParam (Previous p) =
-    (Query ("previous", TE.encodeUtf8 p) :)
+    joinQueryParams $ Params Nothing [Query ("previous", TE.encodeUtf8 p)]
 
 instance ToShipwireParam Next where
   toShipwireParam (Next n) =
-    (Query ("next", TE.encodeUtf8 n) :)
+    joinQueryParams $ Params Nothing [Query ("next", TE.encodeUtf8 n)]
 
 instance ToShipwireParam Limit where
   toShipwireParam (Limit l) =
-    (Query ("limit", TE.encodeUtf8 $ (T.pack . show) l) :)
+    joinQueryParams $ Params Nothing [Query ("limit", TE.encodeUtf8 $ (T.pack . show) l)]
 
 class (ToShipwireParam param) => ShipwireHasParam request param where
 
@@ -1902,20 +1913,6 @@ stripeRequest -&- param =
   stripeRequest
   { params = toShipwireParam param (params stripeRequest)
   }
-
--- | Find the body from the list of [Params TupleBS8 BSL.ByteString]
-filterBody :: [Params b c] -> BSL.ByteString
-filterBody [] = ""
-filterBody xs = case [c | Body c <- xs] of
-               [] -> ""
-               [c] -> c
-               _ -> error "Bad input"
-
--- | Find the query parameters from the list of
--- [Params TupleBS8 BSL.ByteString]
-filterQuery :: [Params (BS8.ByteString, BS8.ByteString) c] -> [(BS8.ByteString, BS8.ByteString)]
-filterQuery [] = []
-filterQuery xs = [b | Query b <- xs]
 
 ---------------------------------------------------------------------------
 -- Receiving Endpoint -- https://www.shipwire.com/w/developers/receiving --
@@ -2009,7 +2006,7 @@ newtype UpdatedAfter = UpdatedAfter
 
 instance ToShipwireParam UpdatedAfter where
   toShipwireParam (UpdatedAfter x) =
-    (Query ("updatedAfter", TE.encodeUtf8 $ utcToShipwire x) :)
+    joinQueryParams $ Params Nothing [Query ("updatedAfter", TE.encodeUtf8 $ utcToShipwire x)]
 
 newtype ReceivingStatusParams = ReceivingStatusParams
   { statusParam :: [ReceivingStatusParam]
@@ -2037,7 +2034,7 @@ statusParamToBS8 StatusTracked   = "tracked"
 
 instance ToShipwireParam ReceivingStatusParams where
   toShipwireParam (ReceivingStatusParams xs) =
-    (Query ("status", (BS8.intercalate "," (map statusParamToBS8 xs))) :)
+    joinQueryParams $ Params Nothing [Query ("status", (BS8.intercalate "," (map statusParamToBS8 xs)))]
 
 newtype OrderNoParam = OrderNoParam
   { orderNoParam :: [Text]
@@ -2045,7 +2042,7 @@ newtype OrderNoParam = OrderNoParam
 
 instance ToShipwireParam OrderNoParam where
   toShipwireParam (OrderNoParam xs) =
-    (Query ("orderNo", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("orderNo", TE.encodeUtf8 (T.intercalate "," xs))]
 
 newtype OrderIdParam = OrderIdParam
   { orderIdParam :: [Text]
@@ -2053,7 +2050,7 @@ newtype OrderIdParam = OrderIdParam
 
 instance ToShipwireParam OrderIdParam where
   toShipwireParam (OrderIdParam xs) =
-    (Query ("orderId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("orderId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 newtype ExternalIdParam = ExternalIdParam
   { externalIdParam :: [Text]
@@ -2061,7 +2058,7 @@ newtype ExternalIdParam = ExternalIdParam
 
 instance ToShipwireParam ExternalIdParam where
   toShipwireParam (ExternalIdParam xs) =
-    (Query ("externalId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("externalId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 newtype TransactionIdParam = TransactionIdParam
   { transactionIdParam :: [Text]
@@ -2069,7 +2066,7 @@ newtype TransactionIdParam = TransactionIdParam
 
 instance ToShipwireParam TransactionIdParam where
   toShipwireParam (TransactionIdParam xs) =
-    (Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("transactionId", TE.encodeUtf8 (T.intercalate "," xs))]
 
 newtype ExpandReceivingsParam = ExpandReceivingsParam
   { expandReceivingsParam :: [ExpandReceivings]
@@ -2095,7 +2092,7 @@ expandReceivingsToBS8 ExpandAll                    = "all"
 
 instance ToShipwireParam ExpandReceivingsParam where
   toShipwireParam (ExpandReceivingsParam xs) =
-    (Query ("expand", (BS8.intercalate "," (map expandReceivingsToBS8 xs))) :)
+    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandReceivingsToBS8 xs)))]
 
 newtype CommerceNameParam = CommerceNameParam
   { commerceNameParam :: [Text]
@@ -2103,7 +2100,7 @@ newtype CommerceNameParam = CommerceNameParam
 
 instance ToShipwireParam CommerceNameParam where
   toShipwireParam (CommerceNameParam ns) =
-    (Query ("commerceName", TE.encodeUtf8 (T.intercalate "," ns)) :)
+    joinQueryParams $ Params Nothing [Query ("commerceName", TE.encodeUtf8 (T.intercalate "," ns))]
 
 data ReceivingsResource = ReceivingsResource
   { receivingsResponseNext     :: Maybe ResponseNext
@@ -3118,9 +3115,9 @@ data IncludeClearedParam
 
 instance ToShipwireParam IncludeClearedParam where
   toShipwireParam IncludeCleared =
-    (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (1 :: Int)) :)
+    joinQueryParams $ Params Nothing [Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (1 :: Int))]
   toShipwireParam DontIncludeCleared =
-    (Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (0 :: Int)) :)
+    joinQueryParams $ Params Nothing [Query ("includeCleared", TE.encodeUtf8 $ (T.pack . show) (0 :: Int))]
 
 -----------------------------------------------------------------------
 -- Product Endpoint -- https://www.shipwire.com/w/developers/product --
@@ -3909,7 +3906,7 @@ newtype SkusParam = SkusParam
 
 instance ToShipwireParam SkusParam where
   toShipwireParam (SkusParam xs) =
-    (Query ("skus", BS8.intercalate "," xs) :)
+    joinQueryParams $ Params Nothing [Query ("skus", BS8.intercalate "," xs)]
 
 newtype IdsParam = IdsParam
   { unIdsParam :: [BS8.ByteString]
@@ -3917,7 +3914,7 @@ newtype IdsParam = IdsParam
 
 instance ToShipwireParam IdsParam where
   toShipwireParam (IdsParam xs) =
-    (Query ("ids", BS8.intercalate "," xs) :)
+    joinQueryParams $ Params Nothing [Query ("ids", BS8.intercalate "," xs)]
 
 newtype FlowParams = FlowParams
   { unFlowParams :: [FlowParam]
@@ -3941,7 +3938,7 @@ flowParamToBS QuoteStep      = "quote"
 
 instance ToShipwireParam FlowParams where
   toShipwireParam (FlowParams xs) =
-    (Query ("flow", BS8.intercalate "," (map flowParamToBS xs)) :)
+    joinQueryParams $ Params Nothing [Query ("flow", BS8.intercalate "," (map flowParamToBS xs))]
 
 newtype ProductStatusParams = ProductStatusParams
   { unProductStatusParams :: [ProductStatusParam]
@@ -3959,7 +3956,7 @@ productStatusParamToBS OutOfStock = "outofstock"
 
 instance ToShipwireParam ProductStatusParams where
   toShipwireParam (ProductStatusParams xs) =
-    (Query ("status", BS8.intercalate "," (map productStatusParamToBS xs)) :)
+    joinQueryParams $ Params Nothing [Query ("status", BS8.intercalate "," (map productStatusParamToBS xs))]
 
 data IncludeArchived = AnyArchived
   | IncludeArchived
@@ -3973,7 +3970,7 @@ includeArchivedToBS ExcludeArchived = "excludeArchived"
 
 instance ToShipwireParam IncludeArchived where
   toShipwireParam x =
-    (Query ("includeArchived", includeArchivedToBS x) :)
+    joinQueryParams $ Params Nothing [Query ("includeArchived", includeArchivedToBS x)]
 
 storageConfigurationToBS :: StorageConfiguration -> BS8.ByteString
 storageConfigurationToBS IndividualItemConfiguration = "INDIVIDUAL_ITEM"
@@ -3984,7 +3981,7 @@ storageConfigurationToBS KitConfiguration            = "KIT"
 
 instance ToShipwireParam StorageConfiguration where
   toShipwireParam x =
-    (Query ("storageConfiguration", storageConfigurationToBS x) :)
+    joinQueryParams $ Params Nothing [Query ("storageConfiguration", storageConfigurationToBS x)]
 
 newtype DescriptionParam = DescriptionParam
   { unDescriptionParam :: Text
@@ -3995,7 +3992,7 @@ replaceSpaces = T.intercalate "+" . T.words
 
 instance ToShipwireParam DescriptionParam where
   toShipwireParam (DescriptionParam x) =
-    (Query ("description", TE.encodeUtf8 $ replaceSpaces x) :)
+    joinQueryParams $ Params Nothing [Query ("description", TE.encodeUtf8 $ replaceSpaces x)]
 
 data ClassificationParam = ClassificationParamBaseProduct
   | ClassificationParamKit
@@ -4011,7 +4008,7 @@ classificationToBS ClassificationParamMarketingInsert = "marketingInsert"
 
 instance ToShipwireParam ClassificationParam where
   toShipwireParam x =
-    (Query ("classification", classificationToBS x) :)
+    joinQueryParams $ Params Nothing [Query ("classification", classificationToBS x)]
 
 newtype ExpandProductsParam = ExpandProductsParam
   { expandProductsParam :: [ExpandProducts]
@@ -4049,7 +4046,7 @@ expandProductsToBS8 ExpandVirtualKitContent  = "virtualKitContent"
 
 instance ToShipwireParam ExpandProductsParam where
   toShipwireParam (ExpandProductsParam xs) =
-    (Query ("expand", (BS8.intercalate "," (map expandProductsToBS8 xs))) :)
+    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandProductsToBS8 xs)))]
 
 data GetProductsResponse = GetProductsResponse
   { gprStatus           :: ResponseStatus
@@ -5426,7 +5423,7 @@ orderStatusParamToBS8 OrderTracked   = "tracked"
 
 instance ToShipwireParam OrderStatusParam where
   toShipwireParam (OrderStatusParam xs) =
-    (Query ("status", (BS8.intercalate "," (map orderStatusParamToBS8 xs))) :)
+    joinQueryParams $ Params Nothing [Query ("status", (BS8.intercalate "," (map orderStatusParamToBS8 xs)))]
 
 newtype ReferrerParam = ReferrerParam
   { unReferrerParam :: [Text]
@@ -5434,7 +5431,7 @@ newtype ReferrerParam = ReferrerParam
 
 instance ToShipwireParam ReferrerParam where
   toShipwireParam (ReferrerParam xs) =
-    (Query ("referrer", TE.encodeUtf8 (T.intercalate "," xs)) :)
+    joinQueryParams $ Params Nothing [Query ("referrer", TE.encodeUtf8 (T.intercalate "," xs))]
 
 data ExpandOrders = OrdersExpandAll
   | OrdersExpandHolds
@@ -5458,7 +5455,7 @@ expandOrdersToBS8 OrdersExpandSplitOrders = "splitOrders"
 
 instance ToShipwireParam ExpandOrdersParam where
   toShipwireParam (ExpandOrdersParam xs) =
-    (Query ("expand", (BS8.intercalate "," (map expandOrdersToBS8 xs))) :)
+    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandOrdersToBS8 xs)))]
 
 data GetOrdersResponseResource = GetOrdersResponseResource
   { gorrItems    :: GetOrdersResponseResourceItems

@@ -7,23 +7,23 @@ module Ballast.Client where
 import           Ballast.Types
 import           Data.Aeson                 (eitherDecode, encode)
 import           Data.Aeson.Types
+import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import           Data.Maybe                 (fromJust)
 import           Data.Monoid                ((<>))
-import           Data.String                (IsString)
 import qualified Data.Text                  as T
 import           Network.HTTP.Client
 import           Network.HTTP.Client.TLS
 import qualified Network.HTTP.Types.Method  as NHTM
 
 -- | Conversion of a key value pair to a query parameterized string
-paramsToByteString
-    :: (Monoid m, IsString m)
-    => [(m, m)]
-    -> m
+paramsToByteString ::
+    [Query]
+    -> BS8.ByteString
 paramsToByteString []           = mempty
-paramsToByteString ((x,y) : []) = x <> "=" <> y
-paramsToByteString ((x,y) : xs) =
-    mconcat [ x, "=", y, "&" ] <> paramsToByteString xs
+paramsToByteString (x : []) = (fst $ unQuery x) <> "=" <> (snd $ unQuery x)
+paramsToByteString (x : xs) =
+    mconcat [ (fst $ unQuery x), "=", (snd $ unQuery x), "&" ] <> paramsToByteString xs
 
 -- | Generate a real-time shipping quote
 -- https://www.shipwire.com/w/developers/rate/
@@ -31,7 +31,7 @@ createRateRequest :: GetRate -> ShipwireRequest RateRequest TupleBS8 BSL.ByteStr
 createRateRequest getRate = mkShipwireRequest NHTM.methodPost url params
   where
     url = "/rate"
-    params = [Body (encode getRate)]
+    params = Params (Just $ Body (encode getRate)) []
 
 -- | Get stock information for your products.
 -- https://www.shipwire.com/w/developers/stock/
@@ -39,7 +39,7 @@ getStockInfo :: ShipwireRequest StockRequest TupleBS8 BSL.ByteString
 getStockInfo = mkShipwireRequest NHTM.methodGet url params
   where
     url = "/stock"
-    params = []
+    params = Params Nothing []
 
 -- | Get an itemized list of receivings.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire0
@@ -47,7 +47,7 @@ getReceivings :: ShipwireRequest GetReceivingsRequest TupleBS8 BSL.ByteString
 getReceivings = mkShipwireRequest NHTM.methodGet url params
   where
     url = "/receivings"
-    params = []
+    params = Params Nothing []
 
 -- | Create a new receiving
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire1
@@ -55,7 +55,7 @@ createReceiving :: CreateReceiving -> ShipwireRequest CreateReceivingRequest Tup
 createReceiving crReceiving = mkShipwireRequest NHTM.methodPost url params
   where
     url = "/receivings"
-    params = [Body (encode crReceiving)]
+    params = Params (Just $ Body (encode crReceiving)) []
 
 -- | Get information about this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire2
@@ -64,7 +64,7 @@ getReceiving receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.append "/receivings/" $ getReceivingId receivingId
-    params = []
+    params = Params Nothing []
 
 -- | Modify information about this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire3
@@ -73,7 +73,7 @@ modifyReceiving receivingId modReceiving = request
   where
     request = mkShipwireRequest NHTM.methodPut url params
     url = T.append "/receivings/" $ getReceivingId receivingId
-    params = [Body (encode modReceiving)]
+    params = Params (Just $ Body (encode modReceiving)) []
 
 -- | Cancel this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire4
@@ -82,7 +82,7 @@ cancelReceiving receivingId = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/cancel"]
-    params = []
+    params = Params Nothing []
 
 -- | Cancel shipping labels on this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire5
@@ -91,7 +91,7 @@ cancelReceivingLabels receivingId = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/labels/cancel"]
-    params = []
+    params = Params Nothing []
 
 -- | Get the list of holds, if any, on this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire6
@@ -100,7 +100,7 @@ getReceivingHolds receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/holds"]
-    params = []
+    params = Params Nothing []
 
 -- | Get email recipients and instructions for this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire7
@@ -109,7 +109,7 @@ getReceivingInstructionsRecipients receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/instructionsRecipients"]
-    params = []
+    params = Params Nothing []
 
 -- | Get the contents of this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire8
@@ -118,7 +118,7 @@ getReceivingItems receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/items"]
-    params = []
+    params = Params Nothing []
 
 -- | Get shipping dimension and container information.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire9
@@ -127,7 +127,7 @@ getReceivingShipments receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/shipments"]
-    params = []
+    params = Params Nothing []
 
 -- | Get tracking information for this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire10
@@ -136,7 +136,7 @@ getReceivingTrackings receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/trackings"]
-    params = []
+    params = Params Nothing []
 
 -- | Get labels information for this receiving.
 -- https://www.shipwire.com/w/developers/receiving/#panel-shipwire11
@@ -145,7 +145,7 @@ getReceivingLabels receivingId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.concat ["/receivings/", getReceivingId receivingId, "/labels"]
-    params = []
+    params = Params Nothing []
 
 -- | Get an itemized list of products.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire0
@@ -154,7 +154,7 @@ getProducts = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = "/products"
-    params = []
+    params = Params Nothing []
 
 -- | Create new products of any classification.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire1
@@ -163,7 +163,7 @@ createProduct cpr = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = "/products"
-    params = [Body (encode cpr)]
+    params = Params (Just $ Body (encode cpr)) []
 
 -- | Modify products of any classification.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire2
@@ -172,7 +172,7 @@ modifyProducts mpr = request
   where
     request = mkShipwireRequest NHTM.methodPut url params
     url = "/products"
-    params = [Body (encode mpr)]
+    params = Params (Just $ Body (encode mpr)) []
 
 -- | Modify a product.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire3
@@ -181,7 +181,7 @@ modifyProduct mpr productId = request
   where
     request = mkShipwireRequest NHTM.methodPut url params
     url = T.append "/products/" $ T.pack . show $ unId productId
-    params = [Body (encode mpr)]
+    params = Params (Just $ Body (encode mpr)) []
 
 -- | Get information about a product.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire4
@@ -190,7 +190,7 @@ getProduct productId = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = T.append "/products/" $ T.pack . show $ unId productId
-    params = []
+    params = Params Nothing []
 
 -- | Indicates that the listed products will not longer be used.
 -- https://www.shipwire.com/w/developers/product/#panel-shipwire5
@@ -199,7 +199,7 @@ retireProducts ptr = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = "/products/retire"
-    params = [Body (encode ptr)]
+    params = Params (Just $ Body (encode ptr)) []
 
 -- | Get an itemized list of orders.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire0
@@ -208,7 +208,7 @@ getOrders = request
   where
     request = mkShipwireRequest NHTM.methodGet url params
     url = "/orders"
-    params = []
+    params = Params Nothing []
 
 -- | Get information about this order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire1
@@ -219,7 +219,7 @@ getOrder idw = request
     url = case idw of
       (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x]
       (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x]
-    params = []
+    params = Params Nothing []
 
 -- | Create a new order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire2
@@ -228,7 +228,7 @@ createOrder co = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = "/orders"
-    params = [Body (encode co)]
+    params = Params (Just $ Body (encode co)) []
 
 -- | Cancel this order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire4
@@ -239,7 +239,7 @@ cancelOrder idw = request
     url = case idw of
       (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x, "/cancel"]
       (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x, "/cancel"]
-    params = []
+    params = Params Nothing []
 
 -- | Get tracking information for this order.
 -- https://www.shipwire.com/w/developers/order/#panel-shipwire7
@@ -250,7 +250,7 @@ getOrderTrackings idwr = request
     url = case idwr of
       (WrappedId x) -> T.concat ["/orders/", T.pack . show $ unId x, "/trackings"]
       (WrappedExternalId x) -> T.concat ["/orders/E", unExternalId x, "/trackings"]
-    params = []
+    params = Params Nothing []
 
 -- | Validate Address
 -- https://www.shipwire.com/w/developers/address-validation
@@ -259,7 +259,7 @@ validateAddress atv = request
   where
     request = mkShipwireRequest NHTM.methodPost url params
     url = ".1/addressValidation"
-    params = [Body (encode atv)]
+    params = Params (Just $ Body (encode atv)) []
 
 shipwire' :: ShipwireConfig
           -> ShipwireRequest a TupleBS8 BSL.ByteString
@@ -268,10 +268,11 @@ shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
+              | paramsBody params == Nothing = mempty
+              | otherwise = unBody $ fromJust $ paramsBody params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody
-                    , queryString = paramsToByteString $ filterQuery params
+                    , queryString = paramsToByteString $ paramsQuery params
                     }
       shipwireUser = unUsername email
       shipwirePass = unPassword pass
@@ -319,10 +320,11 @@ shipwireTest' :: ShipwireConfig
 shipwireTest' ShipwireConfig {..} ShipwireRequest {..} manager = do
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
-              | otherwise = filterBody params
+              | paramsBody params == Nothing = mempty
+              | otherwise = unBody $ fromJust $ paramsBody params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody
-                    , queryString = paramsToByteString $ filterQuery params
+                    , queryString = paramsToByteString $ paramsQuery params
                     }
       shipwireUser = unUsername email
       shipwirePass = unPassword pass
