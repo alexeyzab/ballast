@@ -9,7 +9,7 @@ import           Data.Aeson                 (eitherDecode, encode)
 import           Data.Aeson.Types
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL
-import           Data.Maybe                 (fromJust)
+import           Data.Maybe                 (isNothing, fromJust)
 import           Data.Monoid                ((<>))
 import qualified Data.Text                  as T
 import           Network.HTTP.Client
@@ -21,9 +21,9 @@ paramsToByteString ::
     [Query]
     -> BS8.ByteString
 paramsToByteString []           = mempty
-paramsToByteString (x : []) = (fst $ unQuery x) <> "=" <> (snd $ unQuery x)
+paramsToByteString [x] = fst (unQuery x) <> "=" <> (snd $ unQuery x)
 paramsToByteString (x : xs) =
-    mconcat [ (fst $ unQuery x), "=", (snd $ unQuery x), "&" ] <> paramsToByteString xs
+    mconcat [fst $ unQuery x, "=", (snd $ unQuery x), "&"] <> paramsToByteString xs
 
 -- | Generate a real-time shipping quote
 -- https://www.shipwire.com/w/developers/rate/
@@ -268,7 +268,7 @@ shipwire' ShipwireConfig {..} ShipwireRequest {..} = do
   manager <- newManager tlsManagerSettings
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
-              | paramsBody params == Nothing = mempty
+              | isNothing (paramsBody params) = mempty
               | otherwise = unBody $ fromJust $ paramsBody params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody
@@ -320,7 +320,7 @@ shipwireTest' :: ShipwireConfig
 shipwireTest' ShipwireConfig {..} ShipwireRequest {..} manager = do
   initReq <- parseRequest $ T.unpack $ T.append (hostUri host) endpoint
   let reqBody | rMethod == NHTM.methodGet = mempty
-              | paramsBody params == Nothing = mempty
+              | isNothing (paramsBody params) = mempty
               | otherwise = unBody $ fromJust $ paramsBody params
       req = initReq { method = rMethod
                     , requestBody = RequestBodyLBS reqBody

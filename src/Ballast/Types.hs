@@ -850,7 +850,7 @@ instance FromJSON IsPoBox where
 
 type Items = [ItemInfo]
 
-data ItemInfo =
+newtype ItemInfo =
   ItemInfo (SKU, Quantity)
   deriving (Eq, Show)
 
@@ -1809,7 +1809,7 @@ newtype Body = Body {
 -- | Parameters for each request which include both the query and the body of a
 -- request
 data Params b c = Params
-  { paramsBody :: (Maybe Body)
+  { paramsBody :: Maybe Body
   , paramsQuery :: [Query]
   } deriving Show
 
@@ -1877,7 +1877,7 @@ instance ToShipwireParam DisableAutoBreakLots where
 
 instance ToShipwireParam Mode where
   toShipwireParam m =
-    joinQueryParams $ Params Nothing [Query ("mode", (modeToBS8 m))]
+    joinQueryParams $ Params Nothing [Query ("mode", modeToBS8 m)]
 
 instance ToShipwireParam IncludeEmptyShipwireAnywhere where
   toShipwireParam (IncludeEmptyShipwireAnywhere i) =
@@ -2092,7 +2092,7 @@ expandReceivingsToBS8 ExpandAll                    = "all"
 
 instance ToShipwireParam ExpandReceivingsParam where
   toShipwireParam (ExpandReceivingsParam xs) =
-    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandReceivingsToBS8 xs)))]
+    joinQueryParams $ Params Nothing [Query ("expand", BS8.intercalate "," (map expandReceivingsToBS8 xs))]
 
 newtype CommerceNameParam = CommerceNameParam
   { commerceNameParam :: [Text]
@@ -4046,7 +4046,7 @@ expandProductsToBS8 ExpandVirtualKitContent  = "virtualKitContent"
 
 instance ToShipwireParam ExpandProductsParam where
   toShipwireParam (ExpandProductsParam xs) =
-    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandProductsToBS8 xs)))]
+    joinQueryParams $ Params Nothing [Query ("expand", BS8.intercalate "," (map expandProductsToBS8 xs))]
 
 data GetProductsResponse = GetProductsResponse
   { gprStatus           :: ResponseStatus
@@ -4432,7 +4432,7 @@ instance FromJSON InclusionRulesResource where
 
 utcToShipwire :: UTCTime -> Text
 utcToShipwire ut =
-  (tshow day) <> "T" <> clockTime <> "-00:00"
+  tshow day <> "T" <> clockTime <> "-00:00"
   where tshow :: Show a => a -> Text
         tshow = T.pack . show
         day = utctDay ut
@@ -4440,13 +4440,13 @@ utcToShipwire ut =
         tod = snd $ utcToLocalTimeOfDay utc (timeToTimeOfDay time)
         atLeastTwo :: Text -> Int -> Text
         atLeastTwo t i
-          | i < 10 = t <> (tshow i)
+          | i < 10 = t <> tshow i
           | otherwise = tshow i
-        clockTime = (atLeastTwo "0" $ todHour tod)
+        clockTime = atLeastTwo "0" (todHour tod)
                  <> ":"
-                 <> (atLeastTwo "0" $ todMin tod)
+                 <> atLeastTwo "0" (todMin tod)
                  <> ":"
-                 <> (atLeastTwo "0" $ floor $ todSec tod)
+                 <> atLeastTwo "0" (floor $ todSec tod)
 
 newtype InsertAfterDate = InsertAfterDate
   { unInsertAfterDate :: UTCTime
@@ -5423,7 +5423,7 @@ orderStatusParamToBS8 OrderTracked   = "tracked"
 
 instance ToShipwireParam OrderStatusParam where
   toShipwireParam (OrderStatusParam xs) =
-    joinQueryParams $ Params Nothing [Query ("status", (BS8.intercalate "," (map orderStatusParamToBS8 xs)))]
+    joinQueryParams $ Params Nothing [Query ("status", BS8.intercalate "," (map orderStatusParamToBS8 xs))]
 
 newtype ReferrerParam = ReferrerParam
   { unReferrerParam :: [Text]
@@ -5455,7 +5455,7 @@ expandOrdersToBS8 OrdersExpandSplitOrders = "splitOrders"
 
 instance ToShipwireParam ExpandOrdersParam where
   toShipwireParam (ExpandOrdersParam xs) =
-    joinQueryParams $ Params Nothing [Query ("expand", (BS8.intercalate "," (map expandOrdersToBS8 xs)))]
+    joinQueryParams $ Params Nothing [Query ("expand", BS8.intercalate "," (map expandOrdersToBS8 xs))]
 
 data GetOrdersResponseResource = GetOrdersResponseResource
   { gorrItems    :: GetOrdersResponseResourceItems
@@ -5978,7 +5978,7 @@ instance FromJSON OrderShipFromResponse where
                 <$> o .:  "resource"
                 <*> o .:? "resourceLocation"
 
-data OrderShipFromResponseResource = OrderShipFromResponseResource
+newtype OrderShipFromResponseResource = OrderShipFromResponseResource
   { osfrrCompany :: Maybe ShipFromCompany
   } deriving (Eq, Show)
 
